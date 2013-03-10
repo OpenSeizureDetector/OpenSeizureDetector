@@ -1,0 +1,12 @@
+README - Audio Version of Seizure Detector
+==========================================
+
+This is an attempt to make a reliable seizure detector based on audio sensing.
+We can detect either breathing - looking for abnormal breathing patterns, or
+the sounds of the shaking movement.
+
+I am working on an initial feasibility study using a PC microphone to 
+seprate hardware problems from software ones - I know the PC hardware works!
+
+Once I think it is feasible, I will transfer it to an Arduino.
+

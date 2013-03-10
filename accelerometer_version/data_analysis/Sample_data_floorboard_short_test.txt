@@ -1,0 +1,12 @@
+Short Test
+==========
+Accelerometer on floorboard.  Only Z axis monitored.
+3.3V ADC reference.
+
+Tests were:
+no activity
+normal activity in room
+stamping on floorboard
+sitting on floorboard
+short stamp on floorboard
+lying shaking on floorboard.

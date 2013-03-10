@@ -1,0 +1,12 @@
+#!/usr/bin/python
+# Visualisation of accelerometer data logged by seizure_detector.
+#
+# Graham Jones, February 2013
+#
+import csv
+
+with open('input.csv','rb') as csvfile:
+    dataReader = csv.reader(csvfile,delimiter=',', quotechar='"')
+    for row in dataReader:
+        print row
+
