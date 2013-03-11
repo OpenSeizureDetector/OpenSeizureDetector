@@ -28,8 +28,8 @@ def initFeatures():
     temp = cv.CreateImage (cv.GetSize (grey), 32, 1)
 
     # the default parameters
-    # quality = 0.01
-    quality = 0.2
+    quality = 0.01
+    #quality = 0.2
     min_distance = 10
 
     # search the good points
@@ -54,7 +54,7 @@ def ptptdist(p0, p1):
     return dx**2 + dy**2
 
 
-def doAnalysis():
+def doAnalysis(features,status):
     print "doAnalysis()"
 
 if __name__ == '__main__':
@@ -83,11 +83,6 @@ if __name__ == '__main__':
         # create a grey version of the image
         cv.CvtColor (image, grey, cv.CV_BGR2GRAY)
 
-        if ((datetime.datetime.now() - last_analysis_time).total_seconds() 
-            > Analysis_Period):
-            doAnalysis()
-            features = initFeatures()
-            last_analysis_time = datetime.datetime.now()
 
         if need_to_init:
             features = initFeatures()
@@ -102,12 +97,26 @@ if __name__ == '__main__':
                 flags)
 
             # set back the points we keep
-            features = [ p for (st,p) in zip(status, features) if st]
+            #features = [ p for (st,p) in zip(status, features) if st]
+            #f = []
+            #for i in range(0,len(features)):
+            #    print "i=%d, len(features)=%d" % (i,len(features))
+            #    if (status[i]):
+            #        f.append(features[i])
+                               
 
             # draw the points as green circles
             for the_point in features:
                 cv.Circle (image, (int(the_point[0]), int(the_point[1])), 3, (0, 255, 0, 0), -1, 8, 0)
             
+        if ((datetime.datetime.now() - last_analysis_time).total_seconds() 
+            > Analysis_Period):
+            doAnalysis(features,status)
+            features = initFeatures()
+            last_analysis_time = datetime.datetime.now()
+
+
+
         # swapping
         prev_grey, grey = grey, prev_grey
         prev_pyramid, pyramid = pyramid, prev_pyramid
