@@ -9,8 +9,9 @@ IMG_STACK_LEN = 100
 ANALYSIS_LAYER = 6
 FFT_CHAN_MIN = 3
 FFT_CHAN_MAX = 20
-FREQ_THRESH = 0.50
-inputfps     = 15
+FREQ_THRESH = 0.05
+inputfps     = 25
+outputfps    = 30
 window1 = "Current"
 window2 = "Oldest"
 window3 = "Time Data"
@@ -22,6 +23,7 @@ ax1 = fig.add_subplot(211)
 ax2 = fig.add_subplot(212)
 fig.canvas.draw()
 freqChart = None
+timeChart = None
 pylab.ion()
 
 
@@ -37,19 +39,32 @@ def preProcessImage(inImg):
     return(outImg)
 # End of preProcessImage
 
-def doPlot(fftMat):
-    global freqChart,ax1,ax2,fig
-    pixelNo = 58
+def doPlot(dataMat,fftMat):
+    global timeChart,freqChart,ax1,ax2,fig
+    pixelNo = 28
     sampleFft = []
     freqs = []
+    vals = []
+    times = []
     freqBinWidth = 1.0*inputfps/IMG_STACK_LEN
     for x in range(IMG_STACK_LEN):
         freq = 1.0*x*freqBinWidth
         freqs.append(freq)
         sampleFft.append(fftMat[pixelNo,x])
+        times.append(x*1.0/inputfps)
+        vals.append(dataMat[pixelNo,x])
 
     # Throw away the DC component to help with scaling the graph.
     #    sample_fft[0]=sample_fft[1]
+    if (timeChart==None):
+        #pylab.xlim(0,50)
+        timeChart, = ax1.plot(times,vals)
+        pylab.xlabel("time (sec)")
+        pylab.ylabel("brightness")
+    else:
+        timeChart.set_xdata(times)
+        timeChart.set_ydata(vals)
+
     if (freqChart==None):
         pylab.xlim(0,50)
         freqChart, = ax2.plot(freqs,sampleFft)
@@ -105,7 +120,7 @@ def getSpectra(imgList):
     #    for y in range(0,nPixels):
     #        fftMat[y,x] = 0.0
 
-    doPlot(fftMat)
+    doPlot(dataMat,fftMat)
 
     return fftMat
 
@@ -140,14 +155,13 @@ def main():
     """
     Main program - controls grabbing images from video stream and loops around each frame.
     """
-    camera = cv.CaptureFromFile("rtsp://192.168.1.18/live_mpeg4.sdp")
-    #camera = cv.CaptureFromFile("testcards/testcard.mpg")
+    #camera = cv.CaptureFromFile("rtsp://192.168.1.18/live_mpeg4.sdp")
+    camera = cv.CaptureFromFile("testcards/sample1.mp4")
     #camera = cv.CaptureFromCAM(0)
     if (camera!=None):
         frameSize = (640,480)
-        #fps = 30
         videoFormat = cv.FOURCC('p','i','m','1')
-        vw = cv.CreateVideoWriter("seizure_test.mpg",videoFormat, inputfps,frameSize,1)
+        vw = cv.CreateVideoWriter("seizure_test.mpg",videoFormat, outputfps,frameSize,1)
 
         cv.NamedWindow(window1,cv.CV_WINDOW_AUTOSIZE)
         origImg = cv.QueryFrame(camera)
