@@ -15,10 +15,12 @@ import pylab
 import cv2.cv as cv
 
 inputfps = 30  # limit sample rate to 30 fps.
+outputfps = inputfps
 win_size = 10
 MAX_COUNT = 30
 Analysis_Period =2 # Seconds
 FFT_AMPL_THRESH = 50  # Threshold amplitude to detect movement (pixels/sec)
+X11 = True  # Whether to display the images usin Xwindows or not.
 
 image = None
 pt = None
@@ -43,9 +45,10 @@ def initFeatures():
     mask = cv.CreateImage (cv.GetSize (grey), 8, 1)
     
     # the default parameters
-    quality = 0.01
-    #quality = 0.2
-    min_distance = 65
+    #quality = 0.01
+    quality = 0.3
+    # min_distance = 65
+    min_distance = 20
 
     # Create a mask image to hide the top 10% of the image (which contains text)
     (w,h) = cv.GetSize(grey)
@@ -152,7 +155,7 @@ def doAnalysis(timeSeries):
     cv.DFT(dataMat,fftMat,cv.CV_DXT_ROWS)
     #cv.ShowImage("fft",fftMat)
 
-    doPlot(dataMat,fftMat,times)
+    if (X11): doPlot(dataMat,fftMat,times)
 
     # Look for the dominant frequency of each feature.
     freqBinSize = 1.0/(times[len(times)-1]-times[0]);
@@ -177,12 +180,19 @@ def doAnalysis(timeSeries):
 if __name__ == '__main__':
     timeSeries = []  # array of times that data points were collected.
     maxFreq = None
-    cv.NamedWindow ('Seizure_Detector', cv.CV_WINDOW_AUTOSIZE)
+    if (X11): cv.NamedWindow ('Seizure_Detector', cv.CV_WINDOW_AUTOSIZE)
 
-    #camera = cv.CaptureFromFile("rtsp://192.168.1.18/live_mpeg4.sdp")
-    camera = cv.CaptureFromFile("../testcards/testcard.mpg")
+    camera = cv.CaptureFromFile("rtsp://192.168.1.18/live_mpeg4.sdp")
+    #camera = cv.CaptureFromFile("../testcards/testcard.mpg")
     #camera = cv.CaptureFromFile("/home/graham/Videos/sample5.mp4")
     #camera = cv.CaptureFromCAM(0)
+
+    frameSize = (640,480)
+    videoFormat = cv.FOURCC('p','i','m','1')
+    # videoFormat = cv.FOURCC('l','m','p','4')
+    vw = cv.CreateVideoWriter("seizure_test.mpg",videoFormat, outputfps,frameSize,1)
+    if (vw == None):
+        print "ERROR - Failed to create VideoWriter...."
 
     last_analysis_time = datetime.datetime.now()
     last_frame_time = datetime.datetime.now()
@@ -245,7 +255,8 @@ if __name__ == '__main__':
         need_to_init = False
         
         # we can now display the image
-        cv.ShowImage ('Seizure_Detector', image)
+        if (X11): cv.ShowImage ('Seizure_Detector', image)
+        cv.WriteFrame(vw,image)
 
         # handle events
         c = cv.WaitKey(10)
