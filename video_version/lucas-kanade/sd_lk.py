@@ -27,6 +27,9 @@ class sd_lk:
     FFT_AMPL_THRESH = 50  # Threshold amplitude to detect movement (pixels/sec)
     X11 = True  # Whether to display the images usin Xwindows or not.
 
+    plotFeatureNo = 0
+
+
     # the default parameters for initFeatures()
     #quality = 0.01
     #quality = 0.3
@@ -130,7 +133,7 @@ class sd_lk:
         """
         Produce the debugging graphs.
         """
-        pixelNo = 1
+        pixelNo = self.plotFeatureNo
         sampleFft = []
         freqs = []
         vals = []
@@ -152,7 +155,6 @@ class sd_lk:
         if (self.timeChart==None):
             #pylab.xlim(0,50)
             self.timeChart, = self.ax1.plot(times,vals)
-            pylab.title("Feature Number %d" % (pixelNo))
             pylab.xlabel("time (sec)")
             pylab.ylabel("brightness")
         else:
@@ -177,6 +179,7 @@ class sd_lk:
         else:
             self.fftImg = self.ax3.imshow(fftMat,aspect='auto')
 
+        pylab.title("Feature Number %d" % (pixelNo))
 
         self.fig.canvas.draw()
         print "doPlot done"
@@ -270,8 +273,9 @@ class sd_lk:
                     self.alarmThreshExceededTime[featNo] = None
     # doAlarmCheck()
         
-
-
+    def onTrackbarChanged(self,value):
+        print "onTrackbarChanged - value=%d" % (value)
+        self.plotFeatureNo = value
 
     def sd_loop(self):
         """
@@ -280,7 +284,10 @@ class sd_lk:
         """
         self.timeSeries = []  # array of times that data points were collected.
         self.maxFreq = None
-        if (self.X11): cv.NamedWindow ('Seizure_Detector', cv.CV_WINDOW_AUTOSIZE)
+        if (self.X11): 
+            cv.NamedWindow ('Seizure_Detector', cv.CV_WINDOW_AUTOSIZE)
+            cv.CreateTrackbar('FeatureTrackbar','Seizure_Detector',
+                              0,self.MAX_COUNT,self.onTrackbarChanged)
         font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5, 0, 1, 8) 
 
         # Intialise the video input source 
