@@ -33,12 +33,12 @@ class sd_lk:
     # the default parameters for initFeatures()
     #quality = 0.01
     #quality = 0.3
-    quality = 0.2
+    quality = 0.1
     # min_distance = 65
     min_distance = 20
 
     # Settings for alarm initiation
-    alarmAmplThresh = 5
+    alarmAmplThresh = 100
     alarmFreqMin = 4   # minimum frequency bin number for alarm
     alarmFreqMax = 10  # maximum frequency bin number for alarm
     alarmWarnPeriod = 10 # number of seconds to be above threshold before warning
@@ -60,7 +60,7 @@ class sd_lk:
         Create an instance of the seizure detector class.
         This just initialises the de-bugging grap windows.
         """
-        self.fig = pylab.figure()
+        self.fig = pylab.figure(None,(5,7),96)
         self.ax1 = self.fig.add_subplot(311)
         self.ax2 = self.fig.add_subplot(312)
         self.ax3 = self.fig.add_subplot(313)
@@ -68,6 +68,7 @@ class sd_lk:
         self.freqChart = None
         self.timeChart = None
         self.fftImg = None
+        self.colorbar = None
         pylab.ion()
 
 
@@ -106,8 +107,10 @@ class sd_lk:
             (cv.CV_TERMCRIT_ITER | cv.CV_TERMCRIT_EPS, 20, 0.03))
 
         self.alarmThreshExceededTime = []
+        self.alarmActive = []
         for featNo in range (len(self.features)):
             self.alarmThreshExceededTime.append(None)
+            self.alarmActive.append(0)
 
         if (len(self.features)==0):
             print "***WARNING - No Features found in Image***"
@@ -152,34 +155,27 @@ class sd_lk:
 
         # Throw away the DC component to help with scaling the graph.
         sampleFft[0]=0
-        if (self.timeChart==None):
-            #pylab.xlim(0,50)
-            self.timeChart, = self.ax1.plot(times,vals)
-            pylab.xlabel("time (sec)")
-            pylab.ylabel("brightness")
-        else:
-            self.timeChart.set_xdata(times)
-            self.timeChart.set_ydata(vals)
 
-        if (self.freqChart==None):
-            pylab.xlim(0,50)
-            self.freqChart, = self.ax2.plot(freqs,sampleFft)
-            pylab.xlabel("freq (Hz)")
-            pylab.ylabel("amplitude")
-        else:
-            self.freqChart.set_xdata(freqs)
-            self.freqChart.set_ydata(sampleFft)
+        # Now plot the graphs
+        pylab.title("")
+        self.ax1.clear()
+        self.timeChart, = self.ax1.plot(times,vals)
+        self.ax1.set_title("Feature Number %d" % (pixelNo))
+        self.ax1.set_xlabel("time (sec)")
+        self.ax1.set_ylabel("vel (pix/sec)")
 
-        if (self.fftImg==None):
-            #pylab.xlim(0,50)
-            self.fftImg = self.ax3.imshow(fftMat,aspect='auto')
-            #self.fftImg.set_cmap('prism')
-            pylab.xlabel("freq (Hz)")
-            pylab.ylabel("PixelNo")
-        else:
-            self.fftImg = self.ax3.imshow(fftMat,aspect='auto')
+        self.ax2.clear()
+        self.freqChart, = self.ax2.plot(freqs,sampleFft)
+        self.ax2.set_xlabel("freq (Hz)")
+        self.ax2.set_ylabel("amplitude (pix)")
 
-        pylab.title("Feature Number %d" % (pixelNo))
+        self.ax3.clear()
+        self.fftImg = self.ax3.imshow(fftMat,aspect='auto')
+        # self.fftImg.set_cmap('prism')
+        self.ax3.set_xlabel("freq bin no")
+        self.ax3.set_ylabel("PixelNo")
+        if (self.colorbar == None):
+            self.colorbar = self.fig.colorbar(self.fftImg)
 
         self.fig.canvas.draw()
         print "doPlot done"
@@ -264,13 +260,16 @@ class sd_lk:
                             .total_seconds()>=self.alarmAlarmPeriod):
                         print "*****ALARM ON FEATURE %d, Amplitude = %f ******"\
                             % (featNo,self.maxAmpl[featNo])
+                        self.alarmActive[featNo] = 2
                     else:
                         print "*****Warning on feature %d, Amplitude = %f *****"\
                             % (featNo,self.maxAmpl[featNo])
+                        self.alarmActive[featNo] = 1
             else:
                 if (self.alarmThreshExceededTime[featNo] != None):
                     print "Alarm Reset on Feature %d" % (featNo)
                     self.alarmThreshExceededTime[featNo] = None
+                self.alarmActive[featNo] = 0
     # doAlarmCheck()
         
     def onTrackbarChanged(self,value):
@@ -335,6 +334,7 @@ class sd_lk:
                 self.initFeatures(grey)
                 self.timeSeries = []
                 self.maxFreq = None
+                last_analysis_time = datetime.datetime.now()
                 self.need_to_init = False
 
             # Now track the features, if we have some.
@@ -354,6 +354,15 @@ class sd_lk:
                     cv.Circle (self.image, 
                                (int(pointPos[0]), int(pointPos[1])), 
                                3, (0, 255, 0, 0), -1, 8, 0)
+                    if (self.alarmActive[featNo]==2):
+                        cv.Circle (self.image, 
+                                   (int(pointPos[0]), int(pointPos[1])), 
+                                   10, (0, 0, 255, 0), 5, 8, 0)
+                    if (self.alarmActive[featNo]==1):
+                        cv.Circle (self.image, 
+                                   (int(pointPos[0]), int(pointPos[1])), 
+                                   10, (0, 0, 255, 0), 2, 8, 0)
+
                     # there will be no maxFreq data until we have 
                     # run doAnalysis for the first time.
                     if (not self.maxFreq == None):
