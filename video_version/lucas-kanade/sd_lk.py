@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-# Investigating using the lucas-kanade motion tracking method for the 
-# seizure detector.
-# Based on the lkdemo.py file provided with openCV
-
+"""
+Investigating using the lucas-kanade motion tracking method for the 
+seizure detector.
+Based on the lkdemo.py file provided with openCV
+"""
 
 import sys
 import datetime
@@ -21,15 +22,26 @@ class sd_lk:
     outputfps = inputfps
     win_size = 10
     MAX_COUNT = 30
-    Analysis_Period =2 # Seconds
+    Analysis_Period =2 # Seconds (period between analysing time series)
+    Feature_Search_Period = 60 # Seconds (period between re-acquiring features to track)
     FFT_AMPL_THRESH = 50  # Threshold amplitude to detect movement (pixels/sec)
     X11 = True  # Whether to display the images usin Xwindows or not.
 
     # the default parameters for initFeatures()
     #quality = 0.01
-    quality = 0.3
+    #quality = 0.3
+    quality = 0.2
     # min_distance = 65
     min_distance = 20
+
+    # Settings for alarm initiation
+    alarmAmplThresh = 5
+    alarmFreqMin = 4   # minimum frequency bin number for alarm
+    alarmFreqMax = 10  # maximum frequency bin number for alarm
+    alarmWarnPeriod = 10 # number of seconds to be above threshold before warning
+    alarmAlarmPeriod = 20 # mumber of seconds to be above threshold before initiating alarm.
+
+    alarmThreshExceededTime = []  # Time that the threshold was exceeded (None if below threshold
 
     image = None
     pt = None
@@ -38,17 +50,21 @@ class sd_lk:
     last_frame_time = None
     last_analysis_time = None
 
+    timeSeries = []
+
     def __init__(self):
         """ 
         Create an instance of the seizure detector class.
         This just initialises the de-bugging grap windows.
         """
         self.fig = pylab.figure()
-        self.ax1 = self.fig.add_subplot(211)
-        self.ax2 = self.fig.add_subplot(212)
+        self.ax1 = self.fig.add_subplot(311)
+        self.ax2 = self.fig.add_subplot(312)
+        self.ax3 = self.fig.add_subplot(313)
         self.fig.canvas.draw()
         self.freqChart = None
         self.timeChart = None
+        self.fftImg = None
         pylab.ion()
 
 
@@ -59,10 +75,11 @@ class sd_lk:
         GoodFeaturesToTrack() function.
         """
         print "initFeatures()"
+        # cv.ShowImage ('initFeatures() grey',grey)
+        # Reset the frequency analysis data, as we are going to track new features.
         eig = cv.CreateImage (cv.GetSize (grey), 32, 1)
         temp = cv.CreateImage (cv.GetSize (grey), 32, 1)
-        mask = cv.CreateImage (cv.GetSize (grey), 8, 1)
-    
+        mask = cv.CreateImage (cv.GetSize (grey), 8, 1)    
 
         # Create a mask image to hide the top 10% of the image (which contains text)
         (w,h) = cv.GetSize(grey)
@@ -70,21 +87,30 @@ class sd_lk:
         cv.Rectangle(mask,(0,0),(w,int(0.1*h)),cv.Scalar(0,0,0),-1)
         # cv.ShowImage ('mask',mask)
 
-
-        # search the good points
-        features = cv.GoodFeaturesToTrack (
+        # search for the good points
+        self.features = cv.GoodFeaturesToTrack (
             grey, eig, temp,
             self.MAX_COUNT,
             self.quality, self.min_distance, mask, 3, 0, 0.04)
 
+        print "found %d features (MAX_COUNT=%d)" % (len(self.features),self.MAX_COUNT)
+
         # refine the corner locations
-        features = cv.FindCornerSubPix (
+        self.features = cv.FindCornerSubPix (
             grey,
-            features,
+            self.features,
             (self.win_size, self.win_size),  (-1, -1),
             (cv.CV_TERMCRIT_ITER | cv.CV_TERMCRIT_EPS, 20, 0.03))
 
-        return features
+        self.alarmThreshExceededTime = []
+        for featNo in range (len(self.features)):
+            self.alarmThreshExceededTime.append(None)
+
+        if (len(self.features)==0):
+            print "***WARNING - No Features found in Image***"
+            return False
+        else:
+            return True
     # init_features()
 
     def ptptdist(self,p0,p1):
@@ -109,6 +135,8 @@ class sd_lk:
         freqs = []
         vals = []
         nSamples,nFeatures = cv.GetSize(dataMat)
+        if (nFeatures-1<pixelNo):
+            pixelNo = nFeatures-1
         freqBinWidth = 1.0/(times[len(times)-1]-times[0]);
         for x in range(nSamples):
             freq = 1.0*x*freqBinWidth
@@ -139,19 +167,30 @@ class sd_lk:
         else:
             self.freqChart.set_xdata(freqs)
             self.freqChart.set_ydata(sampleFft)
+
+        if (self.fftImg==None):
+            #pylab.xlim(0,50)
+            self.fftImg = self.ax3.imshow(fftMat,aspect='auto')
+            #self.fftImg.set_cmap('prism')
+            pylab.xlabel("freq (Hz)")
+            pylab.ylabel("PixelNo")
+        else:
+            self.fftImg = self.ax3.imshow(fftMat,aspect='auto')
+
+
         self.fig.canvas.draw()
         print "doPlot done"
 
 
 
-    def doAnalysis(self,timeSeries):
+    def doAnalysis(self):
         """
         Analyse the time series motion of the features being tracked
         to look for ones which are oscillating, which could indicate a
         seizure
         """
-        nSamples = len(timeSeries)
-        nFeatures = len(timeSeries[0][1])
+        nSamples = len(self.timeSeries)
+        nFeatures = len(self.timeSeries[0][1])
         print "doAnalysis() - nSamples = %d, nFeatures = %d" % (nSamples,nFeatures)
 
         # Create a matrix with feature speeds in the y direction, 
@@ -161,56 +200,86 @@ class sd_lk:
         dataMat = cv.CreateMat(nFeatures,nSamples-1,cv.CV_32FC1)
         times = []
         for frameNo in range(nSamples-1):
-            dt = (timeSeries[frameNo+1][0] - timeSeries[frameNo][0]).total_seconds()
+            dt = (self.timeSeries[frameNo+1][0] - self.timeSeries[frameNo][0]).total_seconds()
             if (frameNo==0):
                 times.append(dt)
             else:
                 times.append(times[frameNo-1]+dt)
             for featNo in range(nFeatures):
-                ds = self.ptptdist(timeSeries[frameNo][1][featNo],
-                              timeSeries[frameNo+1][1][featNo])
+                ds = self.ptptdist(self.timeSeries[frameNo][1][featNo],
+                              self.timeSeries[frameNo+1][1][featNo])
                 v = ds/dt
                 # set the direction
-                #if(timeSeries[frameNo][1][featNo][1] >
-                #   timeSeries[frameNo+1][1][featNo][1]):
+                #if(self.timeSeries[frameNo][1][featNo][1] >
+                #   self.timeSeries[frameNo+1][1][featNo][1]):
                 #    v*=-1
                 dataMat[featNo,frameNo] = v
 
         #cv.ShowImage("dataMat",dataMat)
 
-        fftMat = cv.CreateMat(nFeatures,nSamples-1,cv.CV_32FC1)
-        cv.DFT(dataMat,fftMat,cv.CV_DXT_ROWS)
-        #cv.ShowImage("fft",fftMat)
+        self.fftMat = cv.CreateMat(nFeatures,nSamples-1,cv.CV_32FC1)
+        cv.DFT(dataMat,self.fftMat,cv.CV_DXT_ROWS)
+        #cv.ShowImage("fft",self.fftMat)
 
-        if (self.X11): self.doPlot(dataMat,fftMat,times)
+        if (self.X11): self.doPlot(dataMat,self.fftMat,times)
 
         # Look for the dominant frequency of each feature.
         freqBinSize = 1.0/(times[len(times)-1]-times[0]);
         print "freqBinSize = %f Hz" % (freqBinSize)
-        maxAmpl = numpy.zeros((nFeatures))
-        maxFreq = numpy.zeros((nFeatures))
+        self.maxAmpl = numpy.zeros((nFeatures))
+        self.maxFreq = numpy.zeros((nFeatures))
         for featNo in range(nFeatures):
-            maxAmpl[featNo] = self.FFT_AMPL_THRESH
-            maxFreq[featNo] = 0
+            self.maxAmpl[featNo] = self.FFT_AMPL_THRESH
+            self.maxFreq[featNo] = 0
             for freqBin in range(1,nSamples/2):
-                if (fftMat[featNo,freqBin]>maxAmpl[featNo]):
-                    maxAmpl[featNo] = fftMat[featNo,freqBin]
-                    maxFreq[featNo] = freqBinSize*freqBin
-
-        # for featNo in range(nFeatures):
-        #    print "FeatNo = %d, Freq = %f, ampl=%f" % (featNo,maxFreq[featNo],maxAmpl[featNo])
-
-        timeSeries = []
-        return (timeSeries,maxFreq,maxAmpl)
+                if (self.fftMat[featNo,freqBin]>self.maxAmpl[featNo]):
+                    self.maxAmpl[featNo] = self.fftMat[featNo,freqBin]
+                    self.maxFreq[featNo] = freqBinSize*freqBin
+        self.timeSeries = []
+        return True
     # doAnalysis()
+
+
+    def doAlarmCheck(self):
+        """ Check analysed data to see if we need to raise or reset an alarm.
+        """
+        print "doAlarmCheck()"
+        nSamples,nFeatures = cv.GetSize(self.fftMat)
+        tNow = datetime.datetime.now()
+        for featNo in range(nFeatures):
+            alarmState = False
+            for freqBin in range(self.alarmFreqMin,self.alarmFreqMax):
+                if (self.fftMat[featNo,freqBin]>self.alarmAmplThresh):
+                    alarmState = True
+            if (alarmState):
+                if (self.alarmThreshExceededTime[featNo] == None):
+                    print "Threshold Exceeded on Feature %d" % (featNo)
+                    self.alarmThreshExceededTime[featNo] = tNow
+                if ((tNow - self.alarmThreshExceededTime[featNo])\
+                        .total_seconds()>=self.alarmWarnPeriod):
+                    if ((tNow - self.alarmThreshExceededTime[featNo])\
+                            .total_seconds()>=self.alarmAlarmPeriod):
+                        print "*****ALARM ON FEATURE %d, Amplitude = %f ******"\
+                            % (featNo,self.maxAmpl[featNo])
+                    else:
+                        print "*****Warning on feature %d, Amplitude = %f *****"\
+                            % (featNo,self.maxAmpl[featNo])
+            else:
+                if (self.alarmThreshExceededTime[featNo] != None):
+                    print "Alarm Reset on Feature %d" % (featNo)
+                    self.alarmThreshExceededTime[featNo] = None
+    # doAlarmCheck()
+        
+
+
 
     def sd_loop(self):
         """
         The main seizure detector loop - call this function to start
         the seizure detector.
         """
-        timeSeries = []  # array of times that data points were collected.
-        maxFreq = None
+        self.timeSeries = []  # array of times that data points were collected.
+        self.maxFreq = None
         if (self.X11): cv.NamedWindow ('Seizure_Detector', cv.CV_WINDOW_AUTOSIZE)
         font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5, 0, 1, 8) 
 
@@ -231,6 +300,7 @@ class sd_lk:
 
         # Get the first frame.
         last_analysis_time = datetime.datetime.now()
+        last_feature_search_time = datetime.datetime.now()
         last_frame_time = datetime.datetime.now()
         frame = cv.QueryFrame(camera)
 
@@ -244,7 +314,7 @@ class sd_lk:
                 prev_grey = cv.CreateImage (cv.GetSize (frame), 8, 1)
                 pyramid = cv.CreateImage (cv.GetSize (frame), 8, 1)
                 prev_pyramid = cv.CreateImage (cv.GetSize (frame), 8, 1)
-                features = []
+                self.features = []
 
             # copy the captured frame to our self.image object.
             cv.Copy (frame, self.image)
@@ -254,51 +324,65 @@ class sd_lk:
 
             # Look for features to track.
             if self.need_to_init:
-                features = self.initFeatures(grey)
+                #cv.ShowImage ('loop_grey',grey)
+                self.initFeatures(grey)
+                self.timeSeries = []
+                self.maxFreq = None
+                self.need_to_init = False
 
             # Now track the features, if we have some.
-            if features != []:
+            if self.features != []:
                 # we have points to track, so track them and add them to
                 # our time series of positions.
-                features, status, track_error = cv.CalcOpticalFlowPyrLK (
+                self.features, status, track_error = cv.CalcOpticalFlowPyrLK (
                     prev_grey, grey, prev_pyramid, pyramid,
-                    features,
+                    self.features,
                     (self.win_size, self.win_size), 3,
                     (cv.CV_TERMCRIT_ITER|cv.CV_TERMCRIT_EPS, 20, 0.03),
                     self.flags)
-                timeSeries.append( (last_frame_time,features) )
+                self.timeSeries.append( (last_frame_time,self.features) )
                 # and plot them.
-                for featNo in range(len(features)):
-                    pointPos = features[featNo]
+                for featNo in range(len(self.features)):
+                    pointPos = self.features[featNo]
                     cv.Circle (self.image, 
                                (int(pointPos[0]), int(pointPos[1])), 
                                3, (0, 255, 0, 0), -1, 8, 0)
                     # there will be no maxFreq data until we have 
                     # run doAnalysis for the first time.
-                    if (not maxFreq == None):
-                        msg = "%d-%3.1f" % (featNo,maxFreq[featNo])
+                    if (not self.maxFreq == None):
+                        msg = "%d-%3.1f" % (featNo,self.maxFreq[featNo])
                         cv.PutText(self.image,
                                    msg, 
                                    (int(pointPos[0]+5),int(pointPos[1]+5)),
                                    font, (255,255,255)) 
                 # end of for loop over features
             else:
-                print "Oh no, no features to track, and you haven't told me to look for more."
+                #print "Oh no, no features to track, and you haven't told me to look for more."
+                # no features, so better look for some more...
+                self.need_to_init = True
 
             # Is it time to analyse the captured time series.
             if ((datetime.datetime.now() - last_analysis_time).total_seconds() 
                 > self.Analysis_Period):
-                if (len(timeSeries)>0):
-                    (timeSeries,maxFreq,maxAmpl) = self.doAnalysis(timeSeries)
-                    # features = initFeatures()
+                if (len(self.timeSeries)>0):
+                    self.doAnalysis()
+                    self.doAlarmCheck()
                     last_analysis_time = datetime.datetime.now()
                 else:
-                    print "Not doing analysis - no time series data..."
+                    # print "Not doing analysis - no time series data..."
+                    a = True
+
+            # Is it time to re-acquire the features to track.
+            if ((datetime.datetime.now() - last_feature_search_time).total_seconds() 
+                > self.Feature_Search_Period):
+                print "resetting..."
+                last_feature_search_time = datetime.datetime.now()
+                self.need_to_init = True
+
 
             # save current data for use next time around.
             prev_grey, grey = grey, prev_grey
             prev_pyramid, pyramid = pyramid, prev_pyramid
-            self.need_to_init = False
 
             # we can now display the image
             if (self.X11): cv.ShowImage ('Seizure_Detector', self.image)
