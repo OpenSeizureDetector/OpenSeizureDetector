@@ -188,12 +188,16 @@ class sd_lk:
         timeSeries = []  # array of times that data points were collected.
         maxFreq = None
         if (self.X11): cv.NamedWindow ('Seizure_Detector', cv.CV_WINDOW_AUTOSIZE)
+        font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5, 0, 1, 8) 
 
+        # Intialise the video input source 
+        # ('camera' - may be a file or network stream though).
         camera = cv.CaptureFromFile("rtsp://192.168.1.18/live_mpeg4.sdp")
         #camera = cv.CaptureFromFile("../testcards/testcard.mpg")
         #camera = cv.CaptureFromFile("/home/graham/Videos/sample5.mp4")
         #camera = cv.CaptureFromCAM(0)
 
+        # Set the VideoWriter that produces the output video file.
         frameSize = (640,480)
         videoFormat = cv.FOURCC('p','i','m','1')
         # videoFormat = cv.FOURCC('l','m','p','4')
@@ -201,13 +205,15 @@ class sd_lk:
         if (vw == None):
             print "ERROR - Failed to create VideoWriter...."
 
+        # Get the first frame.
         last_analysis_time = datetime.datetime.now()
         last_frame_time = datetime.datetime.now()
         frame = cv.QueryFrame(camera)
 
+        # Main loop - repeat forever
         while 1:
-
-            if self.image is None:
+            # Carry out initialisation, memory allocation etc. if necessary
+            if self.image is None:   
                 self.image = cv.CreateImage (cv.GetSize (frame), 8, 3)
                 self.image.origin = frame.origin
                 grey = cv.CreateImage (cv.GetSize (frame), 8, 1)
@@ -216,47 +222,53 @@ class sd_lk:
                 prev_pyramid = cv.CreateImage (cv.GetSize (frame), 8, 1)
                 features = []
 
+            # copy the captured frame to our self.image object.
             cv.Copy (frame, self.image)
 
             # create a grey version of the image
             cv.CvtColor (self.image, grey, cv.CV_BGR2GRAY)
 
-
+            # Look for features to track.
             if self.need_to_init:
                 features = self.initFeatures(grey)
 
-            elif features != []:
-                # we have points to track, so display them
+            # Now track the features, if we have some.
+            if features != []:
+                # we have points to track, so track them and add them to
+                # our time series of positions.
                 features, status, track_error = cv.CalcOpticalFlowPyrLK (
                     prev_grey, grey, prev_pyramid, pyramid,
                     features,
                     (self.win_size, self.win_size), 3,
                     (cv.CV_TERMCRIT_ITER|cv.CV_TERMCRIT_EPS, 20, 0.03),
                     self.flags)
-
-
-
                 timeSeries.append( (last_frame_time,features) )
+                # and plot them.
+                for featNo in range(len(features)):
+                    pointPos = features[featNo]
+                    cv.Circle (self.image, 
+                               (int(pointPos[0]), int(pointPos[1])), 
+                               3, (0, 255, 0, 0), -1, 8, 0)
+                    # there will be no maxFreq data until we have 
+                    # run doAnalysis for the first time.
+                    if (not maxFreq == None):
+                        msg = "%d-%3.1f" % (featNo,maxFreq[featNo])
+                        cv.PutText(self.image,
+                                   msg, 
+                                   (int(pointPos[0]+5),int(pointPos[1]+5)),
+                                   font, (255,255,255)) 
+                # end of for loop over features
+            else:
+                print "Oh no, no features to track, and you haven't told me to look for more."
 
+            # Is it time to analyse the captured time series.
             if ((datetime.datetime.now() - last_analysis_time).total_seconds() 
                 > self.Analysis_Period):
-                font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5, 0, 1, 8) 
                 (timeSeries,maxFreq,maxAmpl) = self.doAnalysis(timeSeries)
                 #features = initFeatures()
                 last_analysis_time = datetime.datetime.now()
 
-            for featNo in range(len(features)):
-                pointPos = features[featNo]
-                cv.Circle (self.image, (int(pointPos[0]), int(pointPos[1])), 3, (0, 255, 0, 0), -1, 8, 0)
-                if (not maxFreq == None):
-                    msg = "%d-%3.1f" % (featNo,maxFreq[featNo])
-                    cv.PutText(self.image,msg, (int(pointPos[0]+5),int(pointPos[1]+5)),font, (255,255,255)) 
-
-
-
-
-
-            # swapping
+            # save current data for use next time around.
             prev_grey, grey = grey, prev_grey
             prev_pyramid, pyramid = pyramid, prev_pyramid
             self.need_to_init = False
@@ -267,19 +279,21 @@ class sd_lk:
 
             # handle events
             c = cv.WaitKey(10)
-
             if c == 27:
                 # user has press the ESC key, so exit
                 break
 
-            frameTime = (datetime.datetime.now() - last_frame_time).total_seconds()
+            # Control frame rate by pausing if we are going too fast.
+            frameTime = (datetime.datetime.now() - last_frame_time)\
+                .total_seconds()
             actFps = 1.0/frameTime
             if (frameTime < 1/self.inputfps):
                 cv.WaitKey(1+int(1000.*(1./self.inputfps - frameTime)))
 
+            # Grab the next frame
             last_frame_time = datetime.datetime.now()
             frame = cv.QueryFrame(camera)
-
+    # End of main loop
 
 if __name__ == '__main__':
     sd = sd_lk()
