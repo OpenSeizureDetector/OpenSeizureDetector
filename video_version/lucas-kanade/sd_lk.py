@@ -20,6 +20,8 @@ class sd_lk:
     """
     inputfps = 30  # limit sample rate to 30 fps.
     outputfps = inputfps
+    plotFile = "plot.png"
+    videoOut = "video.mpg"
     win_size = 10
     MAX_COUNT = 30
     Analysis_Period =2 # Seconds (period between analysing time series)
@@ -178,6 +180,7 @@ class sd_lk:
             self.colorbar = self.fig.colorbar(self.fftImg)
 
         self.fig.canvas.draw()
+        self.fig.savefig(self.plotFile)
         print "doPlot done"
 
 
@@ -300,7 +303,7 @@ class sd_lk:
         frameSize = (640,480)
         videoFormat = cv.FOURCC('p','i','m','1')
         # videoFormat = cv.FOURCC('l','m','p','4')
-        vw = cv.CreateVideoWriter("seizure_test.mpg",videoFormat, self.outputfps,frameSize,1)
+        vw = cv.CreateVideoWriter(self.videoOut,videoFormat, self.outputfps,frameSize,1)
         if (vw == None):
             print "ERROR - Failed to create VideoWriter...."
 
