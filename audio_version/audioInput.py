@@ -13,12 +13,15 @@ class audioInput:
         self.frameSize = frameSize
 
         print "Initialising Audio System"
-        for card in alsaaudio.cards():
+        cardNo = 0
+        soundCards = alsaaudio.cards()
+        for card in soundCards:
                 print card
+        print "Using sound card: %s" % (soundCards[cardNo])
         # Set attributes: Mono, 8000 Hz, 16 bit little endian samples
         # PCM_NORMAL forces the system to wait for a full frame of data
         # when we call getFrame.
-        self.inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NORMAL)
+        self.inp = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NORMAL,'default')
         self.inp.setchannels(1)
         self.inp.setrate(self.audioSampleFreq)
         self.inp.setformat(alsaaudio.PCM_FORMAT_S16_LE)

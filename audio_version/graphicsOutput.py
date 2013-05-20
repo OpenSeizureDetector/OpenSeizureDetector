@@ -18,11 +18,14 @@ class graphicsOutput:
         self.firstRun = True
 
     def plotRawData(self,window):
+        ''' plots the raw audio data stored in the array 'window'.
+        at 8kHz and a window size of 800 samples, this correspons to 0.1 sec of data.
+        '''
         sampNo = []
         for sn in range(0,len(window)):
             sampNo.append(sn)
         if (self.timeChart==None): 
-            self.fig = pyplot.figure()
+            self.fig = pyplot.figure(figsize=(5.5,8))
             self.ax1 = self.fig.add_subplot(311)
             #self.ax1.set_autoscaley_on(False)
             self.timeChart, = self.ax1.plot(sampNo,window)
@@ -38,6 +41,10 @@ class graphicsOutput:
         self.fig.canvas.draw()
 
     def plotFFT(self,sample_fft,sampleFreq):
+        ''' Plots the fourier transform data stored in sample_fft.  The sample freq in Hz
+        has to be passed as sampleFreq to allow the bin size of the fft to be calculated.
+        at a sample frequency of 8kHz and 800 samples used in the analysis, the bin size will be 10Hz.
+        '''
         freqs = []
         freqBinWidth = 1.0*sampleFreq/(2*len(sample_fft)) # 2* is to get number of samples used for fft.
         for x in range(len(sample_fft)):
@@ -58,10 +65,11 @@ class graphicsOutput:
                 self.fig = pyplot.figure()
             self.ax2 = self.fig.add_subplot(312)
             self.freqChart, = self.ax2.plot(freqs,sample_fft)
+            # self.ax2.set_yscale('log')
             pyplot.xlabel("freq (Hz)")
             pyplot.ylabel("value");
             pyplot.ylim([0,50000]);
-            pyplot.xlim([0,1000]);
+            pyplot.xlim([0,4000]);
         else:
             self.freqChart.set_xdata(freqs)
             self.freqChart.set_ydata(sample_fft)
@@ -71,7 +79,11 @@ class graphicsOutput:
         pyplot.show()
 
     def plotAmplData(self,amplHist):
-        nSamplesOrig = 800
+        ''' Plots the latest 800 values in the amplHist array.
+        The samples are expected to be one sample per frame, so at 8kHz sample frequency
+        and a frame size of 200 samples, this means that we plot the last 20 seconds of data
+        '''
+        nSamplesOrig = 800 # we try to plot the last 800 samples in the history.
         nSamples = nSamplesOrig
         sampNo = []
         if (len(amplHist)<nSamples): nSamples = len(amplHist)
@@ -83,14 +95,41 @@ class graphicsOutput:
                 self.fig = pyplot.figure()
             self.ax3 = self.fig.add_subplot(313)
             self.amplChart, = self.ax3.plot(sampNo[-1*nSamples:],amplHist[-1*nSamples:])
-            pyplot.xlabel("sample No")
+            self.ax3.set_yscale('log')
+            pyplot.xlabel("frame No")
             pyplot.ylabel("value");
-            pyplot.ylim([0,200000]);
+            pyplot.ylim([100,1000000]);
             pyplot.xlim([0,nSamplesOrig]);
         else:
             self.amplChart.set_xdata(sampNo[-1*nSamples:])
             self.amplChart.set_ydata(amplHist[-1*nSamples:])
 
+        pyplot.show()
+        self.fig.canvas.draw()
+
+
+    def plotAmplAnalysis(self,amplHist,amplHistSmoothed):
+        ''' Plots the raw and smoothed amplitude history data
+        '''
+        sampNo = []
+        nSamples = len(amplHist)
+        for sn in range(0,nSamples):
+            sampNo.append(sn)
+        sampNoSm = []
+        nSamplesSm = len(amplHistSmoothed)
+        for sn in range(0,nSamplesSm):
+            sampNoSm.append(sn)
+        self.fig3 = pyplot.figure()
+        self.ax4 = self.fig3.add_subplot(111)
+        #print "len(sampNo)=%d, len(amplHist)=%d" % (len(sampNo),len(amplHist))
+        self.amplAnalysisChart, = self.ax4.plot(sampNo,amplHist)
+        self.ax4.plot(sampNoSm,amplHistSmoothed)
+        self.ax4.set_yscale('log')
+        pyplot.xlabel("frame No")
+        pyplot.ylabel("value");
+        #pyplot.ylim([0,1000000]);
+        #pyplot.xlim([0,nSamples]);
+        
         pyplot.show()
         self.fig.canvas.draw()
 

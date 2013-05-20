@@ -25,14 +25,18 @@ class breathDetector:
         self.imgUpdateCount = 5 * self.graphUpdateCount
         print "self.go = "
         print self.go
+
+        self.peakDetectCount = 800  # number of frames between peak detect analysis.
+        self.peakCount = 0
+
         self.debug = debug
 
         self.window = []   # This is the list of samples that we analyse.
         self.freqHistory = [] # frequency history (from series of FFT analyses)
         self.amplHistory = [] # history of amplitude in the specified frequency range.
 
-        self.freqWinMin = 52 #  Hz  - frequency window of interest - minimum
-        self.freqWinMax = 102 # Hz  - frequency window of interest - maximum
+        self.freqWinMin = 1800 #  Hz  - frequency window of interest - minimum
+        self.freqWinMax = 2200 # Hz  - frequency window of interest - maximum
 
         freqBinWidth = 1.0*self.sampleFreq/(self.windowSize) 
         print "freqBinWidth = %f" % (freqBinWidth)
@@ -65,6 +69,8 @@ class breathDetector:
         sample_fft = abs(numpy.fft.rfft(self.window)) # throw away imaginary bit
         self.freqHistory.append(sample_fft) # save for future analysis.
 
+        # print "Window size = %d, sample_fft size = %d" % (len(self.window),len(sample_fft))
+
         # trim frequency history array.
         if (len(self.freqHistory)>self.freqHistorySize):
             del self.freqHistory[0]
@@ -87,10 +93,29 @@ class breathDetector:
 
         amplTot = 0
         fft = self.freqHistory[len(self.freqHistory)-1]
+        #print "UpdateAmplHist - length of FFT = %d" % (len(fft))
         for binNo in range(self.freqWinMinBin,self.freqWinMaxBin+1):
             amplTot = amplTot + fft[binNo]
         #print "amplTot=%f" % (amplTot)
         self.amplHistory.append(amplTot/(self.freqWinMaxBin-self.freqWinMinBin+1))
+
+    def analyseAmplHist(self):
+        '''Analyse the amplitude history to look for breathing events.
+        '''
+
+        # First smooth by doing a moving average
+        amplWindowSize = 40 # frames.
+        self.amplHistorySmoothed = []
+        for frameNo in range(0,len(self.amplHistory)-amplWindowSize):
+            sumVal = 0
+            for i in range(0,amplWindowSize):
+                sumVal = sumVal + self.amplHistory[frameNo+i]
+            self.amplHistorySmoothed.append(sumVal/amplWindowSize)
+
+        print self.amplHistorySmoothed
+        #self.go.plotAmplAnalysis(self.amplHistory,self.amplHistorySmoothed)
+
+        self.amplHistory = []
 
     def run(self):
         """ run the breath detector main loop """
@@ -98,15 +123,23 @@ class breathDetector:
         while(1):
             frame = self.ai.getFrame()
             self.updateWindow(frame)
-            self.analyseWindow()
-            self.updateAmplHist()
-            self.updateGraphs()
+            if (len(self.window)<self.windowSize):
+                print "skipping analysis until we have full window of data"
+            else:
+                self.analyseWindow()
+                self.updateAmplHist()
+                self.updateGraphs()
+
+                if (self.peakCount >= self.peakDetectCount):
+                    self.analyseAmplHist()
+                    self.peakCount = 0
+                self.peakCount = self.peakCount + 1
 
 
 if __name__ == "__main__":
-    sampleFreq = 8000
-    frameSize = 200
-    windowSize = 800
+    sampleFreq = 8000 # Hz
+    frameSize = 200  # 0.025 sec at 8kHz
+    windowSize = 800 # 0.1 sec at 8kHz
 
     bd = breathDetector(sampleFreq,frameSize,windowSize,True)
     bd.run()
