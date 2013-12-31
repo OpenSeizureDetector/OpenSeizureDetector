@@ -1,0 +1,11 @@
+benFinder
+=========
+
+My first go at using a kinect depth sensor to find benjamin in an image of his
+bedroom - the first stage of spotting odd behaviour that may be indicative
+of a seizure.
+
+The application framework used is based on the excellent introductory book
+about using Python and opencv "OpenCV Computer Vision with Python" by
+Joseph Howse (http://www.packtpub.com/opencv-computer-vision-with-python/book).
+
