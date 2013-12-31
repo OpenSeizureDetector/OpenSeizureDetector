@@ -150,7 +150,10 @@ class CaptureManager(object):
             return
         
         if self._videoWriter is None:
-            fps = self._capture.get(cv2.cv.CV_CAP_PROP_FPS)
+            if (self._capture):
+                fps = self._capture.get(cv2.cv.CV_CAP_PROP_FPS)
+            else:
+                fps = -1.0;
             if fps <= 0.0:
                 # The capture's FPS is unknown so use an estimate.
                 if self._framesElapsed < 20:
@@ -159,14 +162,23 @@ class CaptureManager(object):
                     return
                 else:
                     fps = self._fpsEstimate
-            size = (int(self._capture.get(
-                        cv2.cv.CV_CAP_PROP_FRAME_WIDTH)),
-                    int(self._capture.get(
-                        cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
+            # if we are using an openCV image source, use that to get
+            # the size of the images, otherwise look at the dimensions
+            # of the current frame.
+            if (self._capture):
+                size = (int(self._capture.get(
+                    cv2.cv.CV_CAP_PROP_FRAME_WIDTH)),
+                        int(self._capture.get(
+                            cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
+            else:
+                print self._frame.shape
+                size = (self._frame.shape[1],self._frame.shape[0])
             self._videoWriter = cv2.VideoWriter(
                 self._videoFilename, self._videoEncoding,
                 fps, size)
-        
+        # Convert depth maps into bgr - gray scale videos dont play!!
+        if (self.channel == depth.CV_CAP_OPENNI_DEPTH_MAP):
+                self._frame = cv2.cvtColor(self._frame,cv2.COLOR_GRAY2BGR)
         self._videoWriter.write(self._frame)
 
 

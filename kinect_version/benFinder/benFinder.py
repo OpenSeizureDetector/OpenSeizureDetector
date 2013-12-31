@@ -45,11 +45,29 @@ class BenFinder(object):
         self.background_depth_img = None
     
     def loadBackgroundImages(self):
+        """ Load the background images to be used for background subtraction
+        from disk files.
+        """
         self.background_video_img = cv2.imread(BenFinder.BACKGROUND_VIDEO_FNAME)
         self.background_depth_img = cv2.imread(BenFinder.BACKGROUND_DEPTH_FNAME,
                                                cv2.CV_LOAD_IMAGE_GRAYSCALE)
-        cv2.imshow("background_video_img",self.background_video_img)
-        cv2.imshow("background_depth_img",self.background_depth_img)
+
+    def showBackgroundImage(self):
+        """ Display the background image used for subtraction in a separate window
+        """
+        # Load the images from disk if necessary.
+        if (not self.background_depth_img or not self.background_video_img):
+            self.loadBackgroundImages()
+        # Display the correct image
+        if (self._captureManager.channel == \
+            depth.CV_CAP_OPENNI_DEPTH_MAP):
+            cv2.imshow("background_depth_img",self.background_depth_img)
+        elif (self._captureManager.channel == \
+              depth.CV_CAP_OPENNI_BGR_IMAGE):
+            cv2.imshow("background_video_img",self.background_video_img)
+        else:
+            print "Error - Invalid Channel %d." % \
+                self._captureManager.channel
 
     def run(self):
         """Run the main loop."""
@@ -89,6 +107,7 @@ class BenFinder(object):
         b      -> toggle background subtraction on or off.
         s      -> Save current frame as background image.
         d      -> Toggle between video and depth map view
+        i      -> Display the background image that is being used for subtraction.
         escape -> Quit.
         
         """
@@ -97,9 +116,11 @@ class BenFinder(object):
             self._captureManager.writeImage('screenshot.png')
         elif keycode == 9: # tab
             if not self._captureManager.isWritingVideo:
+                print "Starting Video Recording..."
                 self._captureManager.startWritingVideo(
                     'screencast.avi')
             else:
+                print "Stopping video recording"
                 self._captureManager.stopWritingVideo()
         elif keycode == 120: # x
             self._shouldDrawDebugRects = \
@@ -111,6 +132,8 @@ class BenFinder(object):
             else:
                 print "switching to video"
                 self._captureManager.channel = depth.CV_CAP_OPENNI_BGR_IMAGE
+        elif (chr(keycode)=='i'):
+            self.showBackgroundImage()
         elif (chr(keycode)=='s'):
             print "Saving Background Image"
             if (self._captureManager.channel == depth.CV_CAP_OPENNI_DEPTH_MAP):

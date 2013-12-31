@@ -9,3 +9,9 @@ The application framework used is based on the excellent introductory book
 about using Python and opencv "OpenCV Computer Vision with Python" by
 Joseph Howse (http://www.packtpub.com/opencv-computer-vision-with-python/book).
 
+Note:
+To convert the video output (screencast.avi) to a more compressed file, use:
+>>  avconv -i screencast.avi -f avi -c:v mpeg4 -b:v 800k -g 300 -bf 2 example.avi
+(I don't know what this is really doing, but it reduced a 900MB screencast.avi
+to a 6.8MB compressed file - there is some loss of quality, but not bad).
+
