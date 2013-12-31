@@ -18,6 +18,7 @@
 
 
 import cv2
+import numpy
 import depth
 import filters
 from managers import WindowManager, CaptureManager
@@ -40,9 +41,11 @@ class BenFinder(object):
         self._faceTracker = FaceTracker()
         self._shouldDrawDebugRects = False
         self._backgroundSubtract = False
+        self._autoBackgroundSubtract = False
         self._curveFilter = filters.BGRPortraCurveFilter()
         self.background_video_img = None
         self.background_depth_img = None
+        self.autoBackgroundImg = None
     
     def loadBackgroundImages(self):
         """ Load the background images to be used for background subtraction
@@ -59,15 +62,18 @@ class BenFinder(object):
         if (not self.background_depth_img or not self.background_video_img):
             self.loadBackgroundImages()
         # Display the correct image
-        if (self._captureManager.channel == \
-            depth.CV_CAP_OPENNI_DEPTH_MAP):
-            cv2.imshow("background_depth_img",self.background_depth_img)
-        elif (self._captureManager.channel == \
-              depth.CV_CAP_OPENNI_BGR_IMAGE):
-            cv2.imshow("background_video_img",self.background_video_img)
+        if (self._autoBackgroundSubtract):
+            cv2.imshow("Auto Background Image", self.autoBackgroundImg)
         else:
-            print "Error - Invalid Channel %d." % \
-                self._captureManager.channel
+            if (self._captureManager.channel == \
+                depth.CV_CAP_OPENNI_DEPTH_MAP):
+                cv2.imshow("background_depth_img",self.background_depth_img)
+            elif (self._captureManager.channel == \
+                  depth.CV_CAP_OPENNI_BGR_IMAGE):
+                cv2.imshow("background_video_img",self.background_video_img)
+            else:
+                print "Error - Invalid Channel %d." % \
+                    self._captureManager.channel
 
     def run(self):
         """Run the main loop."""
@@ -79,15 +85,26 @@ class BenFinder(object):
             
             if frame is not None:
                 if (self._backgroundSubtract):
-                    if (self._captureManager.channel == \
-                        depth.CV_CAP_OPENNI_DEPTH_MAP):
-                        cv2.absdiff(frame,self.background_depth_img,frame)
-                    elif (self._captureManager.channel == \
-                          depth.CV_CAP_OPENNI_BGR_IMAGE):
-                        cv2.absdiff(frame,self.background_video_img,frame)
+                    if (self._autoBackgroundSubtract):
+                        if (self.autoBackgroundImg == None):
+                            self.autoBackgroundImg = numpy.float32(frame)
+                        cv2.accumulateWeighted(frame,
+                                               self.autoBackgroundImg,
+                                               0.05)
+                        bg = cv2.convertScaleAbs(self.autoBackgroundImg,
+                                                 alpha=1.0)
+                        cv2.absdiff(frame,bg,frame)
+                        cv2.convertScaleAbs(frame,frame,alpha=20)
                     else:
-                        print "Error - Invalid Channel %d." % \
-                            self._captureManager.channel
+                        if (self._captureManager.channel == \
+                            depth.CV_CAP_OPENNI_DEPTH_MAP):
+                            cv2.absdiff(frame,self.background_depth_img,frame)
+                        elif (self._captureManager.channel == \
+                              depth.CV_CAP_OPENNI_BGR_IMAGE):
+                            cv2.absdiff(frame,self.background_video_img,frame)
+                        else:
+                            print "Error - Invalid Channel %d." % \
+                                self._captureManager.channel
                     #ret,frame = cv2.threshold(frame,200,255,cv2.THRESH_TOZERO)
                 #self._faceTracker.update(frame)
                 #faces = self._faceTracker.faces
@@ -104,7 +121,8 @@ class BenFinder(object):
         space  -> Take a screenshot.
         tab    -> Start/stop recording a screencast.
         x      -> Start/stop drawing debug rectangles around faces.
-        b      -> toggle background subtraction on or off.
+        a      -> toggle automatic accumulated background subtraction on or off.
+        b      -> toggle simple background subtraction on or off.
         s      -> Save current frame as background image.
         d      -> Toggle between video and depth map view
         i      -> Display the background image that is being used for subtraction.
@@ -125,6 +143,22 @@ class BenFinder(object):
         elif keycode == 120: # x
             self._shouldDrawDebugRects = \
                 not self._shouldDrawDebugRects
+        elif (chr(keycode)=='a'):  # Autometic background subtraction
+            if (self._autoBackgroundSubtract == True):
+                print "Switching off auto background Subtraction"
+                self.autoBackgroundImage = None
+                self._autoBackgroundSubtract = False
+            else:
+                print "Switching on auto background subtraction"
+                self._autoBackgroundSubtract = True
+        elif (chr(keycode)=='b'):  # Simple background subtraction
+            if (self._backgroundSubtract == True):
+                print "Switching off background Subtraction"
+                self._backgroundSubtract = False
+            else:
+                print "Switching on background subtraction"
+                self.loadBackgroundImages()
+                self._backgroundSubtract = True
         elif (chr(keycode)=='d'):
             if (self._captureManager.channel == depth.CV_CAP_OPENNI_BGR_IMAGE):
                 print "switching to depth map..."
@@ -143,14 +177,6 @@ class BenFinder(object):
             else:
                 print "Invalid Channel %d - doing nothing!" \
                     % self._captureManager.channel
-        elif (chr(keycode)=='b'):  # Background subtraction
-            if (self._backgroundSubtract == True):
-                print "Switching off background Subtraction"
-                self._backgroundSubtract = False
-            else:
-                print "Switching on background subtraction"
-                self.loadBackgroundImages()
-                self._backgroundSubtract = True
                 
 
         elif keycode == 27: # escape
