@@ -111,8 +111,9 @@ class BenFinder(object):
                             depth.CV_CAP_OPENNI_DEPTH_MAP):
                             if (self.autoBackgroundImg == None):
                                 self.autoBackgroundImg = numpy.float32(frame)
-                            # First work out the region of interest by subtracting
-                            # The fixed background image to create a mask.
+                            # First work out the region of interest by 
+                            #    subtracting the fixed background image 
+                            #    to create a mask.
                             absDiff = cv2.absdiff(frame,self.background_depth_img)
                             benMask = filters.getBenMask(absDiff,8)
 
@@ -128,9 +129,10 @@ class BenFinder(object):
                             # Scale the difference image to make it more sensitive
                             # to changes.
                             cv2.convertScaleAbs(frame,frame,alpha=100)
-                            cv2.bitwise_and(frame,frame,dst=frame,mask=benMask)
+                            #frame = cv2.bitwise_and(frame,frame,dst=frame,mask=benMask)
+                            frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
                             bri = filters.getMean(frame,benMask)
-                            print bri
+                            print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
                         else:
                             print "Auto background subtract only works for depth images!"
                     else:

@@ -64,11 +64,14 @@ def getBenMask(src,threshold):
         return None
     else:
         # Draw the filled in contour onto the mask
-        cv2.drawContours(mask,[maxContour],-1,255,-1)
+        # Note we are drawing in colour '1' because this works nicely
+        # mathematically, but doesn't display on screen well at all - too
+        # close to black!!
+        cv2.drawContours(mask,[maxContour],-1,1,-1)
         # And draw it back onto the soruce image too as an outline.
         cv2.drawContours(src,[maxContour],-1,128,5)
         #cv2.imshow("src",src)
-        cv2.imshow("mask",mask)
+        #cv2.imshow("mask",mask)
 
     return mask
 

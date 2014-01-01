@@ -67,6 +67,10 @@ class CaptureManager(object):
     def channel(self):
         return self._channel
     
+    @property
+    def fps(self):
+        return self._fpsEstimate
+
     @channel.setter
     def channel(self, value):
         if self._channel != value:
