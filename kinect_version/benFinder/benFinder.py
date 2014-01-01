@@ -107,24 +107,39 @@ class BenFinder(object):
             if frame is not None:
                 if (self._backgroundSubtract):
                     if (self._autoBackgroundSubtract):
-                        if (self.autoBackgroundImg == None):
-                            self.autoBackgroundImg = numpy.float32(frame)
-                        cv2.accumulateWeighted(frame,
-                                               self.autoBackgroundImg,
-                                               0.05)
-                        # Convert the background image into the same format
-                        # as the main frame.
-                        bg = cv2.convertScaleAbs(self.autoBackgroundImg,
-                                                 alpha=1.0)
-                        # Subtract the background from the frame image
-                        cv2.absdiff(frame,bg,frame)
-                        # Scale the difference image to make it more sensitive
-                        # to changes.
-                        cv2.convertScaleAbs(frame,frame,alpha=100)
+                        if (self._captureManager.channel == \
+                            depth.CV_CAP_OPENNI_DEPTH_MAP):
+                            if (self.autoBackgroundImg == None):
+                                self.autoBackgroundImg = numpy.float32(frame)
+                            # First work out the region of interest by subtracting
+                            # The fixed background image to create a mask.
+                            absDiff = cv2.absdiff(frame,self.background_depth_img)
+                            benMask = filters.getBenMask(absDiff,8)
+
+                            cv2.accumulateWeighted(frame,
+                                                   self.autoBackgroundImg,
+                                                   0.05)
+                            # Convert the background image into the same format
+                            # as the main frame.
+                            bg = cv2.convertScaleAbs(self.autoBackgroundImg,
+                                                     alpha=1.0)
+                            # Subtract the background from the frame image
+                            cv2.absdiff(frame,bg,frame)
+                            # Scale the difference image to make it more sensitive
+                            # to changes.
+                            cv2.convertScaleAbs(frame,frame,alpha=100)
+                            cv2.bitwise_and(frame,frame,dst=frame,mask=benMask)
+                            bri = filters.getMean(frame,benMask)
+                            print bri
+                        else:
+                            print "Auto background subtract only works for depth images!"
                     else:
                         if (self._captureManager.channel == \
                             depth.CV_CAP_OPENNI_DEPTH_MAP):
                             cv2.absdiff(frame,self.background_depth_img,frame)
+                            benMask = filters.getBenMask(frame,8)
+                            bri = filters.getMean(frame,benMask)
+                            print bri
                         elif (self._captureManager.channel == \
                               depth.CV_CAP_OPENNI_BGR_IMAGE):
                             cv2.absdiff(frame,self.background_video_img,frame)

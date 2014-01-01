@@ -31,6 +31,52 @@ import cv2
 import numpy
 import utils
 
+def getBenMask(src,threshold):
+    """Returns a mask image that is the largest bright area in the 
+    source image src.   Threshold defines what we mean by bright (0-255)
+    The idea is that we do background subtraction from an image, and Benjamin
+    will be the largest area in the resulting image.
+    This is based on http://stackoverflow.com/questions/10262600/
+                    how-to-detect-region-of-large-of-white-pixels-using-opencv
+    """
+    # Apply threshold so we only have the bright parts of the image in src_th.
+    ret, src_th = cv2.threshold(src,threshold,255,0)
+    
+    # create a black mask the same size.
+    mask = numpy.zeros(src_th.shape,numpy.uint8)
+
+    # Find contours in thresholded image.
+    contours, hier = cv2.findContours(src_th,
+                                      cv2.RETR_LIST, 
+                                      cv2.CHAIN_APPROX_SIMPLE)
+
+    # Look for the contour surrounding the largest area.
+    maxArea = 0
+    maxContour = None
+    for cnt in contours:
+        if (cv2.contourArea(cnt)>maxArea):
+            maxArea = cv2.contourArea(cnt)
+            maxContour = cnt
+
+    # Check we found one!
+    if (maxContour == None):
+        print "getBenMask() - Something went wrong - no contours found!"
+        return None
+    else:
+        # Draw the filled in contour onto the mask
+        cv2.drawContours(mask,[maxContour],-1,255,-1)
+        # And draw it back onto the soruce image too as an outline.
+        cv2.drawContours(src,[maxContour],-1,128,5)
+        #cv2.imshow("src",src)
+        cv2.imshow("mask",mask)
+
+    return mask
+
+
+def getMean(src,mask):
+    mean = cv2.mean(src,mask = mask)
+    return mean
+
 
 def bgr2rgb(src, dst):
     """convert bgr image to rgb (and vice versa)
