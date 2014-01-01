@@ -91,10 +91,15 @@ class BenFinder(object):
                         cv2.accumulateWeighted(frame,
                                                self.autoBackgroundImg,
                                                0.05)
+                        # Convert the background image into the same format
+                        # as the main frame.
                         bg = cv2.convertScaleAbs(self.autoBackgroundImg,
                                                  alpha=1.0)
+                        # Subtract the background from the frame image
                         cv2.absdiff(frame,bg,frame)
-                        cv2.convertScaleAbs(frame,frame,alpha=20)
+                        # Scale the difference image to make it more sensitive
+                        # to changes.
+                        cv2.convertScaleAbs(frame,frame,alpha=100)
                     else:
                         if (self._captureManager.channel == \
                             depth.CV_CAP_OPENNI_DEPTH_MAP):
