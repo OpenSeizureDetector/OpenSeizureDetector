@@ -61,8 +61,8 @@ class CaptureManager(object):
         
         self._startTime = None
         self._framesElapsed = long(0)
-        self._fpsEstimate = None
-    
+        self._fpsEstimate = None    
+
     @property
     def channel(self):
         return self._channel

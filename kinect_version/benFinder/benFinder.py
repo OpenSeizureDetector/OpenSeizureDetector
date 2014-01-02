@@ -45,6 +45,7 @@ import filters
 from managers import WindowManager, CaptureManager
 import rects
 from trackers import FaceTracker
+from timeSeries import TimeSeries
 
 class BenFinder(object):
     BACKGROUND_VIDEO_FNAME = "background_video.png"
@@ -67,6 +68,7 @@ class BenFinder(object):
         self.background_video_img = None
         self.background_depth_img = None
         self.autoBackgroundImg = None
+        self._ts = TimeSeries()
     
     def loadBackgroundImages(self):
         """ Load the background images to be used for background subtraction
@@ -132,7 +134,10 @@ class BenFinder(object):
                             #frame = cv2.bitwise_and(frame,frame,dst=frame,mask=benMask)
                             frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
                             bri = filters.getMean(frame,benMask)
-                            print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
+                            #print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
+                            self._ts.addSamp(bri[0])
+                            self._ts.plotRawData()
+                            self._ts.findPeaks()
                         else:
                             print "Auto background subtract only works for depth images!"
                     else:
