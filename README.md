@@ -45,6 +45,7 @@ Microsoft Kinect (Depth Camera) Detection
 This is the most promising looking option at the moment - the depth camera can eliminate background noise very well, leaving just the image of the subject to analyse.   It also looks as though it is possible to detect breathing movements in the depth camera image.
 The thing that is missing at the moment is analysis of the image intensities to
 calculate rate of breathing.
+See http://nerdytoad.blogspot.co.uk/search/label/Kinect for examples of images etc.
 
 
 Graham Jones, 03 January 2014.  (grahamjones139+sd@gmail.com)
