@@ -47,6 +47,7 @@ class TimeSeries:
             self._ax1 = self._fig.add_subplot(111)
             self._timeChart = None
             self._peakChart = None
+            self._smoothChart = None
 
         self._times = []
         for s in range(0,tslen):
@@ -70,6 +71,8 @@ class TimeSeries:
         return (self._ts)
 
     def plotRawData(self):
+        # Only plot the graph if we have a full buffer of data, and only
+        # do it every 15 frames to save CPU effort.
         if (self.len < self._tslen):
             #print self.len, len(self._times)
             return False
@@ -90,12 +93,19 @@ class TimeSeries:
         if (self.len < self._tslen):
             return False
         else:
-            peakind = signal.find_peaks_cwt(self._ts, numpy.arange(1,30))
+            # Smooth the data, and create new times array to match.
+            ts2 = self.smoothFlat(self._ts,30)
+            times2 = self._times[:len(ts2)]  # Truncate times array to same lenght
+            # Find all the peaks in the data.
+            peakind = signal.find_peaks_cwt(ts2, numpy.arange(30,60),min_snr=1.0)
+
+            # Plot them
             pkx = []
             pky = []
+            #print peakind,len(self._times), len(self._ts), len(ts2)
             for peak in peakind:
-                pkx.append(self._times[peak])
-                pky.append(self._ts[peak])
+                pkx.append(times2[peak])
+                pky.append(ts2[peak])
                 
             if (self._rtPlot):
                 if (self._peakChart==None):
@@ -103,6 +113,21 @@ class TimeSeries:
                 else:
                     self._peakChart.set_xdata(pkx)
                     self._peakChart.set_ydata(pky)
-                self._fig.canvas.draw()
+
+                if (self._smoothChart==None):
+                    self._smoothChart, = self._ax1.plot(times2,ts2,'r')
+                else:
+                    self._smoothChart.set_xdata(times2)
+                    self._smoothChart.set_ydata(ts2)
             return True
 
+
+    def smoothFlat(self,ts,winLen):
+        """Do a simple moving average smoothing, using a window of lenghth
+        winLen frames.  Note that the returned array is smaller than the
+        original one, because only the area where the smoothing is valid
+        is returned to avoid edge effects.
+        """
+        w=numpy.ones(winLen,'d')
+        v=numpy.convolve(w/w.sum(),ts,mode='valid')
+        return v

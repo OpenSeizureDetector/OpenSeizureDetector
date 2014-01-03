@@ -69,6 +69,7 @@ class BenFinder(object):
         self.background_depth_img = None
         self.autoBackgroundImg = None
         self._ts = TimeSeries()
+        self._frameCount = 0
     
     def loadBackgroundImages(self):
         """ Load the background images to be used for background subtraction
@@ -136,8 +137,12 @@ class BenFinder(object):
                             bri = filters.getMean(frame,benMask)
                             #print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
                             self._ts.addSamp(bri[0])
-                            self._ts.plotRawData()
-                            self._ts.findPeaks()
+                            if (self._frameCount < 15):
+                                self._frameCount = self._frameCount +1
+                            else:
+                                self._ts.plotRawData()
+                                self._ts.findPeaks()
+                                self._frameCount = 0
                         else:
                             print "Auto background subtract only works for depth images!"
                     else:
