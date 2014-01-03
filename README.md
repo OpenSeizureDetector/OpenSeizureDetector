@@ -3,11 +3,12 @@ OpenSeizureDetector
 
 A suite of open source and open hardware projects designed to detect and 
 alert people to someone suffering from an epileptic seizure (fit).   
-This is a work in progress at the moment, and three different technologies 
+This is a work in progress at the moment, and four different technologies 
 are being developed to see which work best: 
    * Acceleration Detection
    * Audio Detection
    * Video Detection
+   * Microsoft Kinect (depth camera) Detection
 
 Acceleration Detection
 ======================
@@ -39,7 +40,11 @@ Video Detection
 ===============
 Getting there. See http://nerdytoad.blogspot.co.uk/2013/03/first-go-at-video-based-epileptic.html.
 
+Microsoft Kinect (Depth Camera) Detection
+=========================================
+This is the most promising looking option at the moment - the depth camera can eliminate background noise very well, leaving just the image of the subject to analyse.   It also looks as though it is possible to detect breathing movements in the depth camera image.
+The thing that is missing at the moment is analysis of the image intensities to
+calculate rate of breathing.
 
 
-
-Graham Jones, 02 February 2013.  (grahamjones139+sd@gmail.com)
+Graham Jones, 03 January 2014.  (grahamjones139+sd@gmail.com)
