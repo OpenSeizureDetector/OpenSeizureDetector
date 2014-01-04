@@ -32,22 +32,16 @@ from scipy import signal
 
 class TimeSeries:
 
-    def __init__(self,tslen = 300, freq = 30, rtPlot = True):
+    def __init__(self,tslen = 300, freq = 30):
         """ Initialise the time series to contain tslen samples,
         sampled at freq samples per second.
         """
         self._tslen = tslen
         self._freq  = freq
         self._ts = []
-        self._rtPlot = rtPlot
+        self._ts2 = None
+        self._rtPlot = False
 
-        if (rtPlot):
-            plt.ion()
-            self._fig = plt.figure()
-            self._ax1 = self._fig.add_subplot(111)
-            self._timeChart = None
-            self._peakChart = None
-            self._smoothChart = None
 
         self._times = []
         for s in range(0,tslen):
@@ -70,70 +64,85 @@ class TimeSeries:
     def rawData(self):
         return (self._ts)
 
-    def plotRawData(self):
-        # Only plot the graph if we have a full buffer of data, and only
-        # do it every 15 frames to save CPU effort.
+    def plotRawData(self,file=False,fname=None):
+        """Plots the time series data.  If file=false output is to the
+        screen.  Otherwise output is to a file named fname
+        """
+        # Only plot the graph if we have a full buffer of data, otherwise
+        # do nothing.
         if (self.len < self._tslen):
             #print self.len, len(self._times)
             return False
-        #print len(self._times), self._times
-        #print len(self._ts), self._ts
-        if (self._rtPlot):
-            if (self._timeChart==None):
-                self._timeChart, = self._ax1.plot(self._times,self._ts)
-                plt.xlabel("time(s)")
-                plt.ylabel("value")
-                plt.ylim([0,255])
+        # If we have not initialised the plotting sytem, do it now.
+        if (not self._rtPlot):
+            #plt.ion()
+            self._fig = plt.figure()
+            self._ax1 = self._fig.add_subplot(111)
+            self._timeChart = None
+            self._peakChart = None
+            self._smoothChart = None
+        if (self._timeChart==None):
+            self._timeChart, = self._ax1.plot(self._times,self._ts)
+            plt.xlabel("time(s)")
+            plt.ylabel("value")
+            plt.ylim([0,255])
+        else:
+            self._timeChart.set_ydata(self._ts)
+
+        if (not self._ts2 == None):
+            # Plot the smoothed data
+            if (self._smoothChart==None):
+                self._smoothChart, = self._ax1.plot(self._times2,self._ts2,'r')
             else:
-                self._timeChart.set_ydata(self._ts)
+                self._smoothChart.set_xdata(self._times2)
+                self._smoothChart.set_ydata(self._ts2)
+
+            # Plot peak positions
+            pkx = []
+            pky = []
+            for peak in self._peakind:
+                pkx.append(self._times2[peak])
+                pky.append(self._ts2[peak])
+
+            if (self._peakChart==None):
+                self._peakChart, = self._ax1.plot(pkx,pky,'ro')
+            else:
+                self._peakChart.set_xdata(pkx)
+                self._peakChart.set_ydata(pky)
+
+        if (file):
+            self._fig.savefig(fname)
+        else:
             self._fig.canvas.draw()
         return True
 
     def findPeaks(self):
         if (self.len < self._tslen):
-            return False
+            return (0,0,0)
         else:
             # Smooth the data, and create new times array to match.
-            ts2 = self.smoothFlat(self._ts,30)
-            times2 = self._times[:len(ts2)]  # Truncate times array to same lenght
+            self._ts2 = self.smoothFlat(self._ts,30)
+            self._times2 = self._times[:len(self._ts2)]  # Truncate times array to same lenght
             # Find all the peaks in the data.
             #peakind = signal.find_peaks_cwt(ts2, numpy.arange(20,70),min_snr=1.0)
-            maxtab,mintab = peakdet(ts2,2)
-            print maxtab
+            maxtab,mintab = peakdet(self._ts2,2)
+            #print maxtab
             if len(maxtab)>0:
-                peakind = maxtab[:,0].astype(int)
+                self._peakind = maxtab[:,0].astype(int)
+                if (self._peakind[0]==0):
+                    #print "Trimming off peak at position zero"
+                    self._peakind = self._peakind[1:]
             else:
-                peakind = []
+                self._peakind = []
             #print peakind
 
             ts_time = self._tslen / self._freq
-            rate = 60. * len(peakind)/ts_time # peaks per minute
+            rate = 60. * len(self._peakind)/ts_time # peaks per minute
 
-            print "%d peaks in %3.2f sec = %3.1f bpm" % \
-                (len(peakind),ts_time,rate)
+            #print "%d peaks in %3.2f sec = %3.1f bpm" % \
+            #    (len(self._peakind),ts_time,rate)
 
-            # Plot them
-            pkx = []
-            pky = []
-            #print peakind,len(self._times), len(self._ts), len(ts2)
-            print "%d peaks found" % len(peakind)
-            for peak in peakind:
-                pkx.append(times2[peak])
-                pky.append(ts2[peak])
-                
-            if (self._rtPlot):
-                if (self._peakChart==None):
-                    self._peakChart, = self._ax1.plot(pkx,pky,'ro')
-                else:
-                    self._peakChart.set_xdata(pkx)
-                    self._peakChart.set_ydata(pky)
-
-                if (self._smoothChart==None):
-                    self._smoothChart, = self._ax1.plot(times2,ts2,'r')
-                else:
-                    self._smoothChart.set_xdata(times2)
-                    self._smoothChart.set_ydata(ts2)
-            return True
+            return (len(self._peakind),ts_time,rate)
 
 
     def smoothFlat(self,ts,winLen):
