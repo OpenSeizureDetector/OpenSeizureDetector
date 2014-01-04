@@ -39,11 +39,13 @@ captureManager.channel = depth.CV_CAP_OPENNI_BGR_IMAGE
 
 captureManager.enterFrame()
 
-frame = captureManager.frame
+#frame = captureManager.frame
 
 captureManager.channel = depth.CV_CAP_OPENNI_DEPTH_MAP
 captureManager.writeImage("kintest1.png")
+captureManager.exitFrame()
+captureManager.enterFrame()
 captureManager.channel = depth.CV_CAP_OPENNI_BGR_IMAGE
 captureManager.writeImage("kintest2.png")
-
 captureManager.exitFrame()
+
