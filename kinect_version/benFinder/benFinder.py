@@ -52,6 +52,7 @@ from managers import WindowManager, CaptureManager
 import rects
 from timeSeries import TimeSeries
 from config_utils import ConfigUtil
+import webServer
 
 class BenFinder(object):
     configFname = "config.ini"
@@ -82,6 +83,7 @@ class BenFinder(object):
             self.autoBackgroundImg = None
             self._ts = TimeSeries()
             self._frameCount = 0
+            self._ws = webServer.benWebServer(self)
             self.run()
     
     def run(self):
