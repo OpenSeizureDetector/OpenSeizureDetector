@@ -67,6 +67,13 @@ class TimeSeries:
     def rawData(self):
         return (self._ts)
 
+    @property
+    def mean(self):
+        sumTs = 0.0
+        for val in self._ts:
+            sumTs = sumTs + val
+        return (sumTs/self.len)
+
     def plotRawData(self,file=False,fname=None):
         """Plots the time series data.  If file=false output is to the
         screen.  Otherwise output is to a file named fname
@@ -139,7 +146,7 @@ class TimeSeries:
                 self._peakind = []
             #print peakind
 
-            ts_time = self._tslen / self._freq
+            ts_time = float(self._tslen) / self._freq
             rate = 60. * len(self._peakind)/ts_time # peaks per minute
 
             #print "%d peaks in %3.2f sec = %3.1f bpm" % \

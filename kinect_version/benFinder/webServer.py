@@ -30,6 +30,7 @@
 # This uses the bottle framework to make a simple web server
 #
 import time
+import json
 import bottle
 #from bottle import route
 from threading import Thread
@@ -40,37 +41,75 @@ from threading import Thread
 class benWebServer():
     def __init__(self,bf):
         self.bf = bf  # benFinder class instance that we will control.
+        self._chartImgFname = None
+        self._backgroundImgFname = None
+        self._rawImgFname = None
+        self._maskedImgFname = None
+        self._dataFname = None
+        self._analysResults = None
+
         server = Thread(target = bottle.run, kwargs={'host':'0.0.0.0','port':8080})
         server.setDaemon(True)
         server.start()
 
+    def setChartImg(self,fname):
+        self._chartImgFname = fname
+
+    def setBgImg(self,fname):
+        self._backgroundImgFname = fname
+
+    def setRawImg(self,fname):
+        self._rawImgFname = fname
+
+    def setMaskedImg(self,fname):
+        self._maskedImgFname = fname
+
+    def setDataFname(self,fname):
+        self._dataFname = fname
+
+    def setAnalysisResults(self,resultsDict):
+        self._analysisResults = resultsDict
+
     def index(self):
         return "ok"
 
+    def getJSONData(self):
+        return json.dumps(self._analysisResults)
 
     def getFPS(self):
         print "getFPS"
-        return "%3.1f" % self.bf.fps
+        #return "%3.1f" % self.bf.fps
+        return "%3.1f" % self.analysisResults['fps']
 
     def getnPeaks(self):
-        return "%d" % self.bf.nPeaks
+        #return "%d" % self.bf.nPeaks
+        return "df" % self.analysisResults['nPeaks']
 
     def getTs_time(self):
-        return "%3.1f" % self.bf.ts_time
+        #return "%3.1f" % self.bf.ts_time
+        return "%3.1f" % self.analysisResults['ts_time']
 
     def getRate(self):
-        return "%3.1f " % self.bf.rate
+        #return "%3.1f " % self.bf.rate
+        return "%3.1f" % self.analysisResults['rate']
+
+    def getBri(self):
+        return "%3.1f" % self.analysisResults['bri']
 
     def getRawImg(self):
-        fname = self.bf.rawImgFname
+        fname = self._rawImgFname
         return self.serveStatic(fname)
 
     def getMaskedImg(self):
-        fname = self.bf.maskedImgFname
+        fname = self._maskedImgFname
         return self.serveStatic(fname)
 
     def getChartImg(self):
-        fname = self.bf.chartImgFname
+        fname = self._chartImgFname
+        return self.serveStatic(fname)
+
+    def getBgImg(self):
+        fname = self._backgroundImgFname
         return self.serveStatic(fname)
 
     def staticFiles(self,filepath):
@@ -92,6 +131,7 @@ def setRoutes(app):
     """
     bottle.route("/")(app.index)
     bottle.route("/static/<filepath:path>")(app.staticFiles)
+    bottle.route("/jsonData")(app.getJSONData)
     bottle.route("/fps")(app.getFPS)
     bottle.route("/ts_time")(app.getTs_time)
     bottle.route("/nPeaks")(app.getnPeaks)

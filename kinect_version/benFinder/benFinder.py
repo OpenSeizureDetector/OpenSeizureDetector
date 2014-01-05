@@ -43,7 +43,7 @@ __appname__ = "benFinder"
 __author__  = "Graham Jones"
 __version__ = "0.1"
 __license__ = "GNU GPL 3.0 or later"
-import os
+import os, time
 import cv2
 import numpy
 import depth
@@ -87,6 +87,11 @@ class BenFinder(object):
             self._ts_time = 0
             self._rate = 0
             self._ws = webServer.benWebServer(self)
+            self._ws.setBgImg(self.cfg.getConfigStr("background_depth"))
+            self._ws.setChartImg(self.cfg.getConfigStr("chart_fname"))
+            self._ws.setRawImg(self.cfg.getConfigStr("raw_image_fname"))
+            self._ws.setMaskedImg(self.cfg.getConfigStr("masked_image_fname"))
+            self._ws.setDataFname(self.cfg.getConfigStr("data_fname"))
             webServer.setRoutes(self._ws)
             self.run()
     
@@ -131,6 +136,17 @@ class BenFinder(object):
                     self._nPeaks,self._ts_time,self._rate = self._ts.findPeaks()
                     #print "%d peaks in %3.2f sec = %3.1f bpm" % \
                     #    (nPeaks,ts_time,rate)
+
+                    resultsDict = {}
+                    resultsDict['fps'] = self.fps
+                    resultsDict['bri'] = self._ts.mean
+                    resultsDict['nPeaks'] = self._nPeaks
+                    resultsDict['ts_time'] = self._ts_time
+                    resultsDict['rate'] = self._rate
+                    resultsDict['time_t'] = time.ctime()
+
+                    self._ws.setAnalysisResults(resultsDict)
+                    
 
                     self._ts.plotRawData(
                         file=True,
