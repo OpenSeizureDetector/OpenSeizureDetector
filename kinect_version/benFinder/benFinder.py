@@ -83,7 +83,11 @@ class BenFinder(object):
             self.autoBackgroundImg = None
             self._ts = TimeSeries()
             self._frameCount = 0
+            self._nPeaks = 0
+            self._ts_time = 0
+            self._rate = 0
             self._ws = webServer.benWebServer(self)
+            webServer.setRoutes(self._ws)
             self.run()
     
     def run(self):
@@ -124,9 +128,9 @@ class BenFinder(object):
                 if (self._frameCount < 15):
                     self._frameCount = self._frameCount +1
                 else:
-                    nPeaks,ts_time,rate = self._ts.findPeaks()
-                    print "%d peaks in %3.2f sec = %3.1f bpm" % \
-                        (nPeaks,ts_time,rate)
+                    self._nPeaks,self._ts_time,self._rate = self._ts.findPeaks()
+                    #print "%d peaks in %3.2f sec = %3.1f bpm" % \
+                    #    (nPeaks,ts_time,rate)
 
                     self._ts.plotRawData(
                         file=True,
@@ -140,6 +144,34 @@ class BenFinder(object):
                     self._frameCount = 0
             self._captureManager.exitFrame()
 
+
+    @property
+    def fps(self):
+        return self._captureManager.fps
+
+    @property
+    def nPeaks(self):
+        return self._nPeaks
+
+    @property
+    def ts_time(self):
+        return self._ts_time
+
+    @property
+    def rate(self):
+        return self._rate
+
+    @property
+    def rawImgFname(self):
+        return self.cfg.getConfigStr("raw_image_fname")
+
+    @property
+    def maskedImgFname(self):
+        return self.cfg.getConfigStr("masked_image_fname")
+
+    @property
+    def chartImgFname(self):
+        return self.cfg.getConfigStr("chart_fname")
 
     def save(self):
         """ Write a new background image to the appropriate file location."""
