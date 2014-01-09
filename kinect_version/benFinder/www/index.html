@@ -43,7 +43,9 @@ $(document).ready(function() {
 function refreshPage() {
    $.ajax({url:"/jsonData"}).done(function(dataStr) {
       data = JSON.parse(dataStr);
-      $("#summaryData").html("Rate="+data['rate']+" bpm");
+      $("#summaryData").html(
+          "Summary Data <br>"
+          +"Rate="+data['rate']+" bpm <br> Brightness="+data['bri']);
    d = new Date();
    $("#rawImg").attr("src", "/rawImg?"+d.getTime());
    $("#maskedImg").attr("src", "/maskedImg?"+d.getTime());

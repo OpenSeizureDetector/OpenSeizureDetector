@@ -143,8 +143,8 @@ class BenFinder(object):
                     # Collect the analysis results together and send them
                     # to the web server.
                     resultsDict = {}
-                    resultsDict['fps'] = self.fps
-                    resultsDict['bri'] = self._ts.mean
+                    resultsDict['fps'] = "%6.2f" % self.fps
+                    resultsDict['bri'] = "%6.2f" % self._ts.mean
                     resultsDict['nPeaks'] = self._nPeaks
                     resultsDict['ts_time'] = self._ts_time
                     resultsDict['rate'] = self._rate
