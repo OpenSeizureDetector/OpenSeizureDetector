@@ -110,7 +110,7 @@ class BenFinder(object):
                 #    subtracting the fixed background image 
                 #    to create a mask.
                 absDiff = cv2.absdiff(frame,self._background_depth_img)
-                benMask = filters.getBenMask(absDiff,8)
+                benMask,maskArea = filters.getBenMask(absDiff,8)
 
                 cv2.accumulateWeighted(frame,
                                        self.autoBackgroundImg,
@@ -145,6 +145,7 @@ class BenFinder(object):
                     resultsDict = {}
                     resultsDict['fps'] = "%6.2f" % self.fps
                     resultsDict['bri'] = "%6.2f" % self._ts.mean
+                    resultsDict['area'] = maskArea
                     resultsDict['nPeaks'] = self._nPeaks
                     resultsDict['ts_time'] = self._ts_time
                     resultsDict['rate'] = self._rate

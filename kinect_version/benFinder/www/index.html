@@ -45,7 +45,9 @@ function refreshPage() {
       data = JSON.parse(dataStr);
       $("#summaryData").html(
           "Summary Data <br>"
-          +"Rate="+data['rate']+" bpm <br> Brightness="+data['bri']);
+          +"Rate="+data['rate']+" bpm <br>"
+          +"Brightness="+data['bri']+"<br>"
+          +"Area="+data['area']);
    d = new Date();
    $("#rawImg").attr("src", "/rawImg?"+d.getTime());
    $("#maskedImg").attr("src", "/maskedImg?"+d.getTime());

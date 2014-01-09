@@ -32,7 +32,7 @@ import numpy
 import utils
 
 def getBenMask(src,threshold):
-    """Returns a mask image that is the largest bright area in the 
+    """Returns a mask image and area that is the largest bright area in the 
     source image src.   Threshold defines what we mean by bright (0-255)
     The idea is that we do background subtraction from an image, and Benjamin
     will be the largest area in the resulting image.
@@ -73,7 +73,7 @@ def getBenMask(src,threshold):
         #cv2.imshow("src",src)
         #cv2.imshow("mask",mask)
 
-    return mask
+    return mask,maxArea
 
 
 def getMean(src,mask):
