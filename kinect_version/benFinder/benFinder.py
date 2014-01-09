@@ -105,7 +105,7 @@ class BenFinder(object):
             if frame is not None:
                 if (self.autoBackgroundImg == None):
                     self.autoBackgroundImg = numpy.float32(frame)
-                rawFrame = frame
+                rawFrame = frame.copy()
                 # First work out the region of interest by 
                 #    subtracting the fixed background image 
                 #    to create a mask.
@@ -124,19 +124,24 @@ class BenFinder(object):
                 # Scale the difference image to make it more sensitive
                 # to changes.
                 cv2.convertScaleAbs(frame,frame,alpha=100)
-                #frame = cv2.bitwise_and(frame,frame,dst=frame,mask=benMask)
+                # Apply the mask so we only see the test subject.
                 frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
+                # Calculate the brightness of the test subject.
                 bri = filters.getMean(frame,benMask)
                 #print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
+                # Add the brightness to the time series ready for analysis.
                 self._ts.addSamp(bri[0])
                 # Only do the analysis every 15 frames (0.5 sec)
                 if (self._frameCount < 15):
                     self._frameCount = self._frameCount +1
                 else:
+                    # Look for peaks in the brightness (=movement).
                     self._nPeaks,self._ts_time,self._rate = self._ts.findPeaks()
                     #print "%d peaks in %3.2f sec = %3.1f bpm" % \
                     #    (nPeaks,ts_time,rate)
 
+                    # Collect the analysis results together and send them
+                    # to the web server.
                     resultsDict = {}
                     resultsDict['fps'] = self.fps
                     resultsDict['bri'] = self._ts.mean
@@ -144,10 +149,10 @@ class BenFinder(object):
                     resultsDict['ts_time'] = self._ts_time
                     resultsDict['rate'] = self._rate
                     resultsDict['time_t'] = time.ctime()
-
                     self._ws.setAnalysisResults(resultsDict)
                     
-
+                    # Plot the graph of brightness, and save the images
+                    # to disk.
                     self._ts.plotRawData(
                         file=True,
                         fname=self.cfg.getConfigStr("chart_fname"))

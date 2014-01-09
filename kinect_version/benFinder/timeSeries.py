@@ -122,7 +122,7 @@ class TimeSeries:
                 self._peakChart.set_ydata(pky)
 
         if (file):
-            self._fig.savefig(fname)
+            self._fig.savefig(fname,bbox_inches='tight')
         else:
             self._fig.canvas.draw()
         return True
