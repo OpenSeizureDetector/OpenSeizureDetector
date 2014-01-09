@@ -1,0 +1,31 @@
+<html>
+<head>
+</head>
+<body>
+<h1> BenFinder - Breathing Detection using Kinect</h1>
+<a href="/rawImg">
+  <img id="rawImg" src="/rawImg" alt="raw image" width="320" height="240">
+</a>
+<a href="/chartImg">
+  <img id="chartImg" src="/chartImg" alt="chart image" width="300" height="240">
+</a>
+<div style="font-size:250%;" id="summaryData">Summary Data </div>
+
+<script src=/static/jquery-1.10.2.min.js></script>
+<script>
+$(document).ready(function() {
+   setInterval(refreshPage,2000);
+});
+
+function refreshPage() {
+   $.ajax({url:"/jsonData"}).done(function(dataStr) {
+      data = JSON.parse(dataStr);
+      $("#summaryData").html("Rate="+data['rate']+" bpm");
+   d = new Date();
+   $("#rawImg").attr("src", "/rawImg?"+d.getTime());
+   $("#chartImg").attr("src", "/chartImg?"+d.getTime());
+});
+}
+</script>
+</body>
+</html>

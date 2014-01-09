@@ -71,7 +71,8 @@ class benWebServer():
         self._analysisResults = resultsDict
 
     def index(self):
-        return "ok"
+        bottle.redirect("/static/index.html")
+        #return "ok"
 
     def getJSONData(self):
         return json.dumps(self._analysisResults)

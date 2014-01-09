@@ -91,6 +91,7 @@ class TimeSeries:
             self._timeChart = None
             self._peakChart = None
             self._smoothChart = None
+            self._rtPlot = True
         if (self._timeChart==None):
             self._timeChart, = self._ax1.plot(self._times,self._ts)
             plt.xlabel("time(s)")
