@@ -87,7 +87,7 @@ class BenFinder(object):
                 (self._wkdir,self.cfg.getConfigStr("background_depth")),
                 cv2.CV_LOAD_IMAGE_GRAYSCALE)
             self.autoBackgroundImg = None
-            self._ts = TimeSeries()
+            self._ts = TimeSeries(tslen=self.cfg.getConfigInt("timeseries_length"))
             self._frameCount = 0
             self._nPeaks = 0
             self._ts_time = 0

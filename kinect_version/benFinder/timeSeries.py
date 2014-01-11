@@ -116,7 +116,7 @@ class TimeSeries:
                 pky.append(self._ts2[peak])
 
             if (self._peakChart==None):
-                self._peakChart, = self._ax1.plot(pkx,pky,'ro')
+                self._peakChart, = self._ax1.plot(pkx,pky,'ro',markersize=20,fillstyle='full')
             else:
                 self._peakChart.set_xdata(pkx)
                 self._peakChart.set_ydata(pky)
