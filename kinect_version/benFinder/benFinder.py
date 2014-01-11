@@ -50,6 +50,7 @@ import depth
 import filters
 from managers import WindowManager, CaptureManager
 import rects
+import utils
 from timeSeries import TimeSeries
 from config_utils import ConfigUtil
 import webServer
@@ -67,6 +68,11 @@ class BenFinder(object):
         self.debug = self.cfg.getConfigBool("debug")
         if (self.debug): print "Debug Mode"
 
+        self._wkdir = self.cfg.getConfigStr("working_directory")
+        if (self.debug): print "working_directory=%s\n" % self._wkdir
+        self._tmpdir = self.cfg.getConfigStr("tmpdir")
+        if (self.debug): print "tmpdir=%s\n" % self._tmpdir
+
         device = depth.CV_CAP_FREENECT
         self._captureManager = CaptureManager(
             device, None, True)
@@ -75,10 +81,10 @@ class BenFinder(object):
         if (save):
             self.save()
         else:
-            print "Loading background image %s." % \
-                self.cfg.getConfigStr("background_depth")
-            self._background_depth_img = cv2.imread(
-                self.cfg.getConfigStr("background_depth"),
+            print "Loading background image %s/%s." % \
+                (self._wkdir,self.cfg.getConfigStr("background_depth"))
+            self._background_depth_img = cv2.imread("%s/%s" % \
+                (self._wkdir,self.cfg.getConfigStr("background_depth")),
                 cv2.CV_LOAD_IMAGE_GRAYSCALE)
             self.autoBackgroundImg = None
             self._ts = TimeSeries()
@@ -87,11 +93,16 @@ class BenFinder(object):
             self._ts_time = 0
             self._rate = 0
             self._ws = webServer.benWebServer(self)
-            self._ws.setBgImg(self.cfg.getConfigStr("background_depth"))
-            self._ws.setChartImg(self.cfg.getConfigStr("chart_fname"))
-            self._ws.setRawImg(self.cfg.getConfigStr("raw_image_fname"))
-            self._ws.setMaskedImg(self.cfg.getConfigStr("masked_image_fname"))
-            self._ws.setDataFname(self.cfg.getConfigStr("data_fname"))
+            self._ws.setBgImg("%s/%s" % (self._tmpdir,
+                    self.cfg.getConfigStr("background_depth")))
+            self._ws.setChartImg("%s/%s" % (self._tmpdir,
+                    self.cfg.getConfigStr("chart_fname")))
+            self._ws.setRawImg("%s/%s" % (self._tmpdir,
+                    self.cfg.getConfigStr("raw_image_fname")))
+            self._ws.setMaskedImg("%s/%s" % (self._tmpdir,
+                    self.cfg.getConfigStr("masked_image_fname")))
+            self._ws.setDataFname("%s/%s" % (self._tmpdir,
+                    self.cfg.getConfigStr("data_fname")))
             webServer.setRoutes(self._ws)
             self.run()
     
@@ -143,25 +154,32 @@ class BenFinder(object):
                     # Collect the analysis results together and send them
                     # to the web server.
                     resultsDict = {}
-                    resultsDict['fps'] = "%6.2f" % self.fps
-                    resultsDict['bri'] = "%6.2f" % self._ts.mean
-                    resultsDict['area'] = maskArea
-                    resultsDict['nPeaks'] = self._nPeaks
+                    resultsDict['fps'] = "%3.0f" % self.fps
+                    resultsDict['bri'] = "%4.0f" % self._ts.mean
+                    resultsDict['area'] = "%6.0f" % maskArea
+                    resultsDict['nPeaks'] = "%d" % self._nPeaks
                     resultsDict['ts_time'] = self._ts_time
-                    resultsDict['rate'] = self._rate
+                    resultsDict['rate'] = "%d" % self._rate
                     resultsDict['time_t'] = time.ctime()
                     self._ws.setAnalysisResults(resultsDict)
-                    
+
+                    # Write the results to file as a json string
+                    utils.writeJSON(resultsDict,"%s/%s" % \
+                                    (self._tmpdir,
+                                     self.cfg.getConfigStr("data_fname")))
                     # Plot the graph of brightness, and save the images
                     # to disk.
                     self._ts.plotRawData(
                         file=True,
-                        fname=self.cfg.getConfigStr("chart_fname"))
-                    cv2.imwrite(self.cfg.getConfigStr(
-                        "raw_image_fname"),
-                        rawFrame)
-                    cv2.imwrite(self.cfg.getConfigStr(
-                        "masked_image_fname"),
+                        fname="%s/%s" % \
+                        (self._tmpdir,self.cfg.getConfigStr("chart_fname")))
+                        
+                    cv2.imwrite("%s/%s" % (self._tmpdir,
+                                           self.cfg.getConfigStr(
+                                               "raw_image_fname")),
+                                rawFrame)
+                    cv2.imwrite("%s/%s" % (self._tmpdir,self.cfg.getConfigStr(
+                        "masked_image_fname")),
                         frame)
                     self._frameCount = 0
             self._captureManager.exitFrame()

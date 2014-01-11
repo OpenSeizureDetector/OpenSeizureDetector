@@ -118,7 +118,7 @@ class BenFinder(object):
                             #    subtracting the fixed background image 
                             #    to create a mask.
                             absDiff = cv2.absdiff(frame,self.background_depth_img)
-                            benMask = filters.getBenMask(absDiff,8)
+                            benMask,maskArea = filters.getBenMask(absDiff,8)
 
                             cv2.accumulateWeighted(frame,
                                                    self.autoBackgroundImg,

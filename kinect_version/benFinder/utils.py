@@ -30,6 +30,7 @@
 import cv2
 import numpy
 import scipy.interpolate
+import json
 
 def createFlatView(array):
     """Return a 1D view of an array of any dimensionality."""
@@ -92,3 +93,10 @@ def widthHeightDividedBy(image, divisor):
     h, w = image.shape[:2]
     return (w/divisor, h/divisor)
 
+def writeJSON(dataDic,fname):
+    """ Write the dictionary dataDic to a file named fname as a JSON string. """
+    jsonStr = json.dumps(dataDic)
+    of = open(fname,'w')
+    of.write(jsonStr)
+    of.close()
+    

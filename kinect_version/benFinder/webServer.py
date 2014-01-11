@@ -99,19 +99,19 @@ class benWebServer():
 
     def getRawImg(self):
         fname = self._rawImgFname
-        return self.serveStatic(fname)
+        return bottle.static_file(fname,root='/')
 
     def getMaskedImg(self):
         fname = self._maskedImgFname
-        return self.serveStatic(fname)
+        return bottle.static_file(fname,root='/')
 
     def getChartImg(self):
         fname = self._chartImgFname
-        return self.serveStatic(fname)
+        return bottle.static_file(fname,root='/')
 
     def getBgImg(self):
         fname = self._backgroundImgFname
-        return self.serveStatic(fname)
+        return bottle.static_file(fname,root='/')
 
     def staticFiles(self,filepath):
         """ Used to serve the static files from the /static path"""
