@@ -58,7 +58,11 @@ import webServer
 class BenFinder(object):
     configFname = "config.ini"
     configSection = "benFinder"
- 
+
+    ALARM_STATUS_OK = 0   # All ok, no alarms.
+    ALARM_STATUS_WARN = 1 # Warning status
+    ALARM_STATUS_FULL = 2 # Full alarm status. 
+
     def __init__(self,save=False):
         configPath = "%s/%s" % (os.path.dirname(os.path.realpath(__file__)),
                                 self.configFname)
@@ -123,23 +127,26 @@ class BenFinder(object):
                 absDiff = cv2.absdiff(frame,self._background_depth_img)
                 benMask,maskArea = filters.getBenMask(absDiff,8)
 
-                cv2.accumulateWeighted(frame,
-                                       self.autoBackgroundImg,
-                                       0.05)
-                # Convert the background image into the same format
-                # as the main frame.
-                bg = cv2.convertScaleAbs(self.autoBackgroundImg,
-                                         alpha=1.0)
-                # Subtract the background from the frame image
-                cv2.absdiff(frame,bg,frame)
-                # Scale the difference image to make it more sensitive
-                # to changes.
-                cv2.convertScaleAbs(frame,frame,alpha=100)
-                # Apply the mask so we only see the test subject.
-                frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
-                # Calculate the brightness of the test subject.
-                bri = filters.getMean(frame,benMask)
-                #print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
+                if (maskArea <= self.cfg.getConfigInt('area_threshold')):
+                    bri=(0,0,0)
+                else:
+                    cv2.accumulateWeighted(frame,
+                                           self.autoBackgroundImg,0.05)
+                    # Convert the background image into the same format
+                    # as the main frame.
+                    bg = cv2.convertScaleAbs(self.autoBackgroundImg,
+                                             alpha=1.0)
+                    # Subtract the background from the frame image
+                    cv2.absdiff(frame,bg,frame)
+                    # Scale the difference image to make it more sensitive
+                    # to changes.
+                    cv2.convertScaleAbs(frame,frame,alpha=100)
+                    # Apply the mask so we only see the test subject.
+                    frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
+                    # Calculate the brightness of the test subject.
+                    bri = filters.getMean(frame,benMask)
+                    #print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
+
                 # Add the brightness to the time series ready for analysis.
                 self._ts.addSamp(bri[0])
                 # Only do the analysis every 15 frames (0.5 sec)
@@ -151,6 +158,16 @@ class BenFinder(object):
                     #print "%d peaks in %3.2f sec = %3.1f bpm" % \
                     #    (nPeaks,ts_time,rate)
 
+                    # Check for alarm levels
+                    if (self._rate > self.cfg.getConfigInt(
+                                               "rate_warn")):
+                        self._status= self.ALARM_STATUS_OK
+                    elif (self._rate > self.cfg.getConfigInt(
+                                               "rate_alarm")):
+                        self._status= self.ALARM_STATUS_WARN
+                    else:
+                        self._status= self.ALARM_STATUS_FULL
+
                     # Collect the analysis results together and send them
                     # to the web server.
                     resultsDict = {}
@@ -161,6 +178,7 @@ class BenFinder(object):
                     resultsDict['ts_time'] = self._ts_time
                     resultsDict['rate'] = "%d" % self._rate
                     resultsDict['time_t'] = time.ctime()
+                    resultsDict['status'] = self._status
                     self._ws.setAnalysisResults(resultsDict)
 
                     # Write the results to file as a json string

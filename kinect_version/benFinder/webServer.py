@@ -48,7 +48,7 @@ class benWebServer():
         self._dataFname = None
         self._analysResults = None
 
-        server = Thread(target = bottle.run, kwargs={'host':'0.0.0.0','port':8080})
+        server = Thread(target = bottle.run, kwargs={'server':'cherrypy','host':'0.0.0.0','port':8080})
         server.setDaemon(True)
         server.start()
 
