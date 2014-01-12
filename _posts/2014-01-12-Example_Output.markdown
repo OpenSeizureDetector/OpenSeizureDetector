@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Example Output
+image: resources/img/website_output.png
 category: Meta
 
 excerpt: Example output from the web interface to benFinder.
