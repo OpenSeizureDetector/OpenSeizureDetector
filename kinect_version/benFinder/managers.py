@@ -107,6 +107,10 @@ class CaptureManager(object):
     @property
     def isWritingVideo(self):
         return self._videoFilename is not None
+
+    @property
+    def hasEnteredFrame(self):
+        return self._enteredFrame
     
     def enterFrame(self):
         """Capture the next frame, if any.

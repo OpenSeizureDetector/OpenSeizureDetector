@@ -31,6 +31,9 @@
     </div>
     <div style="font-size:250%;" id="summaryData">Summary Data </div>
   </div>
+  <div class="newline">
+    <a href="/saveBgImg"> Save Background Image Now</a>
+  </div>
 
 <!-- ---------------------------------------------- -->
 
@@ -41,10 +44,12 @@ $(document).ready(function() {
 });
 
 function refreshPage() {
+   statusStrs=['OK','Warning','ALARM!!!!','Not Found']
    $.ajax({url:"/jsonData"}).done(function(dataStr) {
       data = JSON.parse(dataStr);
       $("#summaryData").html(
           "Summary Data <br>"
+          +"Status="+data['status']+" - "+statusStrs[data['status']]+"<br>"
           +"Rate="+data['rate']+" bpm <br>"
           +"Brightness="+data['bri']+"<br>"
           +"Area="+data['area']);

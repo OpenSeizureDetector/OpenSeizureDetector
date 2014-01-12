@@ -62,6 +62,8 @@ class BenFinder(object):
     ALARM_STATUS_OK = 0   # All ok, no alarms.
     ALARM_STATUS_WARN = 1 # Warning status
     ALARM_STATUS_FULL = 2 # Full alarm status. 
+    ALARM_STATUS_NOT_FOUND = 3 # Benjamin not found in image 
+                               # (area below config area_threshold parameter)
 
     def __init__(self,save=False):
         configPath = "%s/%s" % (os.path.dirname(os.path.realpath(__file__)),
@@ -83,13 +85,9 @@ class BenFinder(object):
         self._captureManager.channel = depth.CV_CAP_OPENNI_DEPTH_MAP
 
         if (save):
-            self.save()
+            self.saveBgImg()
         else:
-            print "Loading background image %s/%s." % \
-                (self._wkdir,self.cfg.getConfigStr("background_depth"))
-            self._background_depth_img = cv2.imread("%s/%s" % \
-                (self._wkdir,self.cfg.getConfigStr("background_depth")),
-                cv2.CV_LOAD_IMAGE_GRAYSCALE)
+            self.loadBgImg()
             self.autoBackgroundImg = None
             self._ts = TimeSeries(tslen=self.cfg.getConfigInt("timeseries_length"))
             self._frameCount = 0
@@ -107,6 +105,7 @@ class BenFinder(object):
                     self.cfg.getConfigStr("masked_image_fname")))
             self._ws.setDataFname("%s/%s" % (self._tmpdir,
                     self.cfg.getConfigStr("data_fname")))
+            self._ws.setAnalysisResults({})
             webServer.setRoutes(self._ws)
             self.run()
     
@@ -127,25 +126,25 @@ class BenFinder(object):
                 absDiff = cv2.absdiff(frame,self._background_depth_img)
                 benMask,maskArea = filters.getBenMask(absDiff,8)
 
+                cv2.accumulateWeighted(frame,
+                                       self.autoBackgroundImg,0.05)
+                # Convert the background image into the same format
+                # as the main frame.
+                bg = cv2.convertScaleAbs(self.autoBackgroundImg,
+                                         alpha=1.0)
+                # Subtract the background from the frame image
+                cv2.absdiff(frame,bg,frame)
+                # Scale the difference image to make it more sensitive
+                # to changes.
+                cv2.convertScaleAbs(frame,frame,alpha=100)
+                # Apply the mask so we only see the test subject.
+                frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
+
                 if (maskArea <= self.cfg.getConfigInt('area_threshold')):
                     bri=(0,0,0)
                 else:
-                    cv2.accumulateWeighted(frame,
-                                           self.autoBackgroundImg,0.05)
-                    # Convert the background image into the same format
-                    # as the main frame.
-                    bg = cv2.convertScaleAbs(self.autoBackgroundImg,
-                                             alpha=1.0)
-                    # Subtract the background from the frame image
-                    cv2.absdiff(frame,bg,frame)
-                    # Scale the difference image to make it more sensitive
-                    # to changes.
-                    cv2.convertScaleAbs(frame,frame,alpha=100)
-                    # Apply the mask so we only see the test subject.
-                    frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
                     # Calculate the brightness of the test subject.
                     bri = filters.getMean(frame,benMask)
-                    #print "%4.0f, %3.0f" % (bri[0],self._captureManager.fps)
 
                 # Add the brightness to the time series ready for analysis.
                 self._ts.addSamp(bri[0])
@@ -158,15 +157,18 @@ class BenFinder(object):
                     #print "%d peaks in %3.2f sec = %3.1f bpm" % \
                     #    (nPeaks,ts_time,rate)
 
-                    # Check for alarm levels
-                    if (self._rate > self.cfg.getConfigInt(
-                                               "rate_warn")):
-                        self._status= self.ALARM_STATUS_OK
-                    elif (self._rate > self.cfg.getConfigInt(
-                                               "rate_alarm")):
-                        self._status= self.ALARM_STATUS_WARN
+                    if (maskArea > self.cfg.getConfigInt('area_threshold')):
+                        # Check for alarm levels
+                        if (self._rate > self.cfg.getConfigInt(
+                                "rate_warn")):
+                            self._status= self.ALARM_STATUS_OK
+                        elif (self._rate > self.cfg.getConfigInt(
+                                "rate_alarm")):
+                            self._status= self.ALARM_STATUS_WARN
+                        else:
+                            self._status= self.ALARM_STATUS_FULL
                     else:
-                        self._status= self.ALARM_STATUS_FULL
+                        self._status = self.ALARM_STATUS_NOT_FOUND
 
                     # Collect the analysis results together and send them
                     # to the web server.
@@ -231,12 +233,22 @@ class BenFinder(object):
     def chartImgFname(self):
         return self.cfg.getConfigStr("chart_fname")
 
-    def save(self):
+    def saveBgImg(self):
         """ Write a new background image to the appropriate file location."""
+        if (self._captureManager.hasEnteredFrame):
+            self._captureManager.exitFrame()
         self._captureManager.enterFrame()
         print "Writing image to %s." % self.cfg.getConfigStr("background_depth")
         self._captureManager.writeImage(self.cfg.getConfigStr("background_depth"))
         self._captureManager.exitFrame()
+        self.loadBgImg()
+
+    def loadBgImg(self):
+        print "Loading background image %s/%s." % \
+            (self._wkdir,self.cfg.getConfigStr("background_depth"))
+        self._background_depth_img = cv2.imread("%s/%s" % \
+                    (self._wkdir,self.cfg.getConfigStr("background_depth")),
+                    cv2.CV_LOAD_IMAGE_GRAYSCALE)
 
     
 if __name__=="__main__":

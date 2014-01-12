@@ -40,7 +40,7 @@ from threading import Thread
 
 class benWebServer():
     def __init__(self,bf):
-        self.bf = bf  # benFinder class instance that we will control.
+        self._bf = bf  # benFinder class instance that we will control.
         self._chartImgFname = None
         self._backgroundImgFname = None
         self._rawImgFname = None
@@ -57,6 +57,10 @@ class benWebServer():
 
     def setBgImg(self,fname):
         self._backgroundImgFname = fname
+
+    def saveBgImg(self):
+        self._bf.saveBgImg()
+        bottle.redirect("/")
 
     def setRawImg(self,fname):
         self._rawImgFname = fname
@@ -79,19 +83,15 @@ class benWebServer():
 
     def getFPS(self):
         print "getFPS"
-        #return "%3.1f" % self.bf.fps
         return "%3.1f" % self.analysisResults['fps']
 
     def getnPeaks(self):
-        #return "%d" % self.bf.nPeaks
         return "df" % self.analysisResults['nPeaks']
 
     def getTs_time(self):
-        #return "%3.1f" % self.bf.ts_time
         return "%3.1f" % self.analysisResults['ts_time']
 
     def getRate(self):
-        #return "%3.1f " % self.bf.rate
         return "%3.1f" % self.analysisResults['rate']
 
     def getBri(self):
@@ -139,4 +139,5 @@ def setRoutes(app):
     bottle.route("/rate")(app.getRate)    
     bottle.route("/rawImg")(app.getRawImg)    
     bottle.route("/maskedImg")(app.getMaskedImg)
+    bottle.route("/saveBgImg")(app.saveBgImg)
     bottle.route("/chartImg")(app.getChartImg)
