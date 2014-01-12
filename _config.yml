@@ -1,14 +1,14 @@
 # Name of your blog (this will show up at the top of your page and in the RSS feed)
-name: Sample Jekyll Blog
+name: OpenSeizureDetector
 
 # Short description (goes below the title; it will also be used in the RSS feed)
-description: This is a sample Jekyll Blog.
+description: OpenSeizureDetector is a system to detect and alarm epileptic seizures without contact with the patient or bed etc.  
 
 # Your name, as you want it to appear underneath each post and in the footer
-author: Your Name
+author: Graham Jones
 
 # Your email if you want it to be linked on the contact page
-author_email: you@example.com
+author_email: grahamjones139+osd@gmail.com
 
 # The directory for category index pages. Change it to something else if
 # for example you want links like /categories/category1 instead of /category1
@@ -21,7 +21,7 @@ category_dir: /
 baseurl: 
 
 # The URL of your actual domain. This will be used to make absolute links in the RSS feed.
-url: http://yourdomain.com/
+url: http://openseizuredetector.org.uk
 
 #### Under the Hood Stuff #####
 

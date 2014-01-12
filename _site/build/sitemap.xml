@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+      <loc>http://yourdomain.com/Meta/2012/03/15/guest-blogs/</loc>
+      <lastmod>2012-03-15</lastmod>
+      <changefreq>never</changefreq>
+  </url>
+  <url>
+      <loc>http://yourdomain.com/Design/2012/02/10/code-snippets/</loc>
+      <lastmod>2012-02-10</lastmod>
+      <changefreq>never</changefreq>
+  </url>
+  <url>
+      <loc>http://yourdomain.com/Design/2012/01/19/using-web-icons/</loc>
+      <lastmod>2012-01-19</lastmod>
+      <changefreq>never</changefreq>
+  </url>
+  <url>
+      <loc>http://yourdomain.com/Meta/2012/01/18/hello-world/</loc>
+      <lastmod>2012-01-18</lastmod>
+      <changefreq>never</changefreq>
+  </url>
+</urlset>
