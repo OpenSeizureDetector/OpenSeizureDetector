@@ -66,6 +66,8 @@ class BenFinder(object):
                                # (area below config area_threshold parameter)
 
     def __init__(self,save=False):
+        print "benFinder.__init__()"
+        print os.path.realpath(__file__)
         configPath = "%s/%s" % (os.path.dirname(os.path.realpath(__file__)),
                                 self.configFname)
         print configPath
@@ -187,6 +189,9 @@ class BenFinder(object):
                     utils.writeJSON(resultsDict,"%s/%s" % \
                                     (self._tmpdir,
                                      self.cfg.getConfigStr("data_fname")))
+                    utils.writeLog(resultsDict,"%s/%s" % \
+                                    (self._tmpdir,
+                                     "benFinder_alarms.log"))
                     # Plot the graph of brightness, and save the images
                     # to disk.
                     self._ts.plotRawData(

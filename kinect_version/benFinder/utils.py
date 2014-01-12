@@ -100,3 +100,10 @@ def writeJSON(dataDic,fname):
     of.write(jsonStr)
     of.close()
     
+def writeLog(dataDic,fname):
+    """Append to log file fname"""
+    jsonStr = json.dumps(dataDic)
+    of = open(fname,'a')
+    of.write(jsonStr)
+    of.write("\n")
+    of.close()
