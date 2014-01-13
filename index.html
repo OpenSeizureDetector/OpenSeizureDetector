@@ -3,7 +3,43 @@ layout: default
 title: Home
 ---
 
+<p>OpenSeizureDetector is a suite of programmes and hardware designs 
+intended to detect a tonic-clonic (grand mal) <a href="http://en.wikipedia.org/wiki/Epileptic_seizure">epileptic seizure</a> (fit).</p>
+<p>There are commercial seizure detectors available on the market,
+but all the ones I have seen requre either a connection to the patient, or
+installation on or under a mattress.   Unfortunately our son, Benjamin is
+autistic and would not tolerate having anything attached to him, and he 
+refuses to sleep in his bed - instead he sleeps on the floor behind his
+bedroom door.   This means that nothing needing attachment to the patient or
+installation in a bed will be of use to us.  There is some more information
+about Benjamin and his challenges <a href="{{site.baseurl}}/meta/2014/01/13/About_Benjamin/">here</a>.</p>
+
+I have experimented with detecting a seizure using vibration (an accelerometer), video (tracking movement), audio (haven't got far with this), and using a
+depth camera such as a 
+<a href="http://en.wikipedia.org/wiki/Kinect">Microsoft Kinect sensor</a>.
+The Kinect version is the most promising at the moment, and is the subject
+of most of this site, but you can find information about the other versions
+on my <a href="https://github.com/jones139/OpenSeizureDetector">github repository</a> and my <a href="http://nerdytoad.blogspot.co.uk/search/label/Seizure_Detector">blog</a>.
+
+The current prototype system comprises two halves:
+<ul>
+  <li><i class="icon-link"></i>   A number of Raspberry Pi based BenTV <a href="{{site.baseurl}}/meta/2014/01/13/Digital_Video_Monitors/">Digital Video Monitors</a></li>
+  <li><i class="icon-link"></i>   <a href="{{site.baseurl}}/meta/2014/01/13/Kinect_Seizure_Detector/">Kinect Based Seizure Detector Prototype</a></li>
+</ul>
+
+<h2>Current Status</h2>
+At the moment it is a functioning prototype - it can detect that I am breathing,
+ and alarm if I can hold my breath long enough (it is using a 30 second time 
+series, and it is hard to stay perfectly still for that long!).
+The benTV digital video monitors talk to the web interface to display the 
+results and display alarms by chaning colour (I don't trust it enough yet to 
+make an audible alarm in the night...).
+
+
+
+
 <!-- Show last 5 posts here -->
+<!--
 {% for post in site.posts limit: 5  %}
 	<article>
 
@@ -18,3 +54,4 @@ title: Home
 
 	</article>
 {% endfor %}
+-->

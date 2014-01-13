@@ -3,8 +3,7 @@ layout: post
 title: More Information
 category: Meta
 
-excerpt: More information on how this project has developed is available on
-another <a href="http://nerdytoad.blogspot.co.uk/search/label/Seizure_Detector">blog</a>.
+excerpt: More information on how this project has developed is available on another <a href="http://nerdytoad.blogspot.co.uk/search/label/Seizure_Detector">blog</a>.
 
 ---
 

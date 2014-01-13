@@ -2,7 +2,7 @@
 name: OpenSeizureDetector
 
 # Short description (goes below the title; it will also be used in the RSS feed)
-description: OpenSeizureDetector is a system to detect and alarm epileptic seizures without contact with the patient or bed etc.  See <a href="https://github.com/jones139/OpenSeizureDetector/">Github Repository</a> for source code.  
+description: OpenSeizureDetector is a system to detect and alarm epileptic seizures without contact with the patient or bed etc.    
 
 # Your name, as you want it to appear underneath each post and in the footer
 author: Graham Jones

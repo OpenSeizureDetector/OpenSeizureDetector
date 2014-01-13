@@ -21,4 +21,4 @@ Bottom right is the text summary of the current analysis.
 
 The display updates every second.
 
-<img src="resources/img/website_output.png">
+<img src="{{site.baseurl}}/resources/img/website_output.png">
