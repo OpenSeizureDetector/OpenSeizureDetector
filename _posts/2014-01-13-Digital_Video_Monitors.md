@@ -8,6 +8,8 @@ excerpt: A Ditigal replacement for my analogue video monitoring system.
 ---
 
 
+<a href="{{site.baseurl}}/resources/img/ip_camera.jpg"><img class="img_med" style="float:right;width:300px;" src="{{site.baseurl}}/resources/img/ip_camera.jpg"></a>
+
 I converted my analogue monitoring system to digital by installing a wifi ip 
 camera in Benjamin's bedroom and connecting it to my home network.
 
