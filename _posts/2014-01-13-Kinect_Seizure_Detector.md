@@ -44,7 +44,7 @@ It provides a web based interface (on port 8080) that is based on the 'bottle' f
 The basic computation that it does is:
 <ol>
 <li>Grab a depth image from the kinect camera</li>
-<li>Subtract a pre-set background image - this means we only analyse the test, subject, not noise in the background</li>.
+<li>Subtract a pre-set background image - this means we only analyse the test, subject, not noise in the background.</li>
 <li>Add the new image to a rolling average image, which is used as a short term background</li>
 <li>Subtract the rolling average image from the current image</li>
 <li>This gives us the very small differences between the current frame and the average - multiply by a factor to give bigger numbers so we can display the resulting image.</li>
