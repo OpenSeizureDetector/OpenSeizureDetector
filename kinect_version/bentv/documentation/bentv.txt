@@ -1,0 +1,45 @@
+BENTV Setup
+===========
+
+Download raspbian distribution for raspberry pi, and install onto SD card using
+	dd if=<raspbian image filename>.img of=/dev/sdb
+(takes about 22 mins on my laptop)
+
+Add the following to /etc/rc.local (before the final exit statement!):
+	setterm -blank 0
+	/home/pi/bentv.sh &
+
+Create /home/pi/bentv.sh containing the following and make it executable:
+	#!/bin/sh
+	while :
+	do
+		/usr/bin/omxplayer --live --win "34 16 680 500" \
+				rtsp://guest:guest@192.168.1.24/12
+	done
+
+Change /etc/hostname to something recognisable (bentv3pi etc.)
+Change /etc/hosts to match your new hostname for the 127.0.1.1 entry (or sudo reports errors!)
+
+Configure the wireless networking - make sure that /etc/network/interfaces looks like:
+	auto lo
+	iface lo inet loopback
+	iface eth0 inet dhcp
+	allow-hotplug wlan0
+	iface wlan0 inet manual
+	wpa-roam /etc/wpa_supplicant/wpa_supplicant.conf
+	iface default inet dhcp
+
+and that /etc/wpa_supplicant/wpa_supplicant.conf looks like:
+	ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+	update_config=1
+	network={
+	        ssid="SSID"
+	        psk="password
+	}
+
+Install omxplayer:
+	sudo apt-get update
+	sudo apt-get upgrade
+	sudo apt-get install omxplayer
+
+Reboot and it SHOULD work!
