@@ -30,6 +30,16 @@
 #    Note that this program does NOT display the video images - this is done
 #       using omxplayer, which is started separately using the bentv.sh script.
 #
+# User Interface:
+#    The user interface uses a single button.   A short button press cycles
+#       between the various modes of the user interface (camera, fit detector).
+#    A long press actually does somethign, depending on the mode.  
+#       In camera mode it moves the web camera around its various preset 
+#          positions.
+#       In fit detector mode it instructs the fit detector to save a new
+#          background image.
+#
+#
 ##########################################################################
 #
 import time
@@ -106,8 +116,9 @@ class bentv_ui:
         self.longPress = False
         self.initScreen()
         self.initGPIO()
-        self.UIMode = self.FITDECT_MODE
-        self.changeUIMode()
+        self.UIMode = self.CAMERA_MODE  # Next line changes mode to start in
+                                        # FITDECT_MODE.
+        self.changeUIMode()  # Initialises the messages.
 
     def getIpAddr(self,ifname):
         """Return the IP Address of the given interface (e.g 'wlan0')
@@ -190,30 +201,30 @@ class bentv_ui:
 
     def serviceUI(self):
         """Respond to button presses."""
-        if (self.shortPress):
+        if (self.longPress):
             if (self.UIMode == self.CAMERA_MODE):
                 self.moveCamera(self.pinNo)
             elif (self.UIMode == self.FITDECT_MODE):
                 self.setFitDectBackground()
             else:
                 print "Unrecognised UIMode %d." % self.UIMode
-            self.shortPress = False
-
-        if (self.longPress):
-            self.changeUIMode()
             self.longPress = False
+
+        if (self.shortPress):
+            self.changeUIMode()
+            self.shortPress = False
 
     def changeUIMode(self):
         """Change the UI mode - toggle between camera and fit detector"""
         if (self.UIMode == self.CAMERA_MODE):
             print "Entering FitDetector Mode"
             self.textLine1 = "Fit Detector Mode"
-            self.textLine2 = " Press button to reset background.  Long press to change mode."
+            self.textLine2 = " Press long button press to reset background.  Short press to change mode."
             self.UIMode = self.FITDECT_MODE
         else:
             print "Entering Camera Mode"
             self.textLine1 = "Camera Mode"
-            self.textLine2 = " Press button to move camera.  Long press to change mode."
+            self.textLine2 = " Press long button press to move camera.  Short press to change mode."
             self.UIMode = self.CAMERA_MODE
             self.alarmStatus = self.ALARM_STATUS_NOT_FOUND
         self.lastDisplayUpdateTime = time.time() #Force message to display for
