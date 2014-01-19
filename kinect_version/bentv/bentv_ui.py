@@ -1,6 +1,6 @@
 #!/usr/bin/python
 ##########################################################################
-# bentv_ui, Copyright Graham Jones 2013 (grahamjones139@gmail.com)
+# bentv_ui, Copyright Graham Jones 2013, 2014 (grahamjones139@gmail.com)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -40,6 +40,15 @@ import socket, fcntl, struct        # Needed to get IP address
 from config_utils import ConfigUtil
 import json
 
+haveGPIO = True
+try:
+    import RPi.GPIO as GPIO 
+except:
+    print "failed to import RPi.GPIO"
+    haveGPIO = False
+
+
+
 class bentv_ui:
     # Basic Configuration
     configFname = "config.ini"
@@ -49,10 +58,14 @@ class bentv_ui:
     # Initialise some instance variables.
     screen = None
     font = None
-    textLine1 = "BenTV_UI"
+    textLine1 = "Camera_Mode"
     textLine2 = "Waiting for Button Press to move camera"
     presetNo = 1
     presetTxt = ['NULL','Behind Door', 'Corner', 'Chair', 'Bed']
+
+    # UI Modes
+    CAMERA_MODE = 0
+    FITDECT_MODE = 1
 
     # Alarms
     ALARM_STATUS_OK = 0   # All ok, no alarms.
@@ -82,11 +95,19 @@ class bentv_ui:
         self.debug = self.cfg.getConfigBool("debug")
         if (self.debug): print "Debug Mode"
         
+        self.debounce_ms = self.cfg.getConfigInt("debounce_ms")
+        self.shortpress_ms = self.cfg.getConfigInt("shortpress_ms")
+        
         self.hostname, self.ipaddr = self.getHostName()
         print self.hostname, self.ipaddr
+        self.timeDown = 0.0
         self.presetNo = 1
+        self.shortPress = False
+        self.longPress = False
         self.initScreen()
         self.initGPIO()
+        self.UIMode = self.FITDECT_MODE
+        self.changeUIMode()
 
     def getIpAddr(self,ifname):
         """Return the IP Address of the given interface (e.g 'wlan0')
@@ -107,28 +128,98 @@ class bentv_ui:
         return (hostname,ipaddr)
 
     def initGPIO(self):
-        """Initialise the GPIO pins - not we use GPIO pin numbers, not physical
+        """Initialise the GPIO pins - note we use GPIO pin numbers, not physical
         pin numbers on rpi."""
-        haveGPIO = True
-        try:
-            import RPi.GPIO as GPIO 
-        except:
-            print "failed to import RPi.GPIO"
-            haveGPIO = False
+        global haveGPIO
         pinNo = self.cfg.getConfigInt("gpiono")
+        self.pinNo = pinNo
         if (self.debug): print "gpioNo = %d" % pinNo
         if (haveGPIO):
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(pinNo, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             # very long debounce time to prevent presses while camera is moving.
-            GPIO.add_event_detect(pinNo,
-                                  GPIO.RISING, 
-                                  callback=self.moveCamera, 
-                                  bouncetime=1000)
+            #GPIO.add_event_detect(pinNo,
+            #                      GPIO.FALLING, 
+            #                      callback=self.buttonCallback
+            #                      ,bouncetime=100)
         else:
             print "no GPIO - simulating camera move"
             self.moveCamera(1)
 
+        self.lastButtonVal = 1
+        self.lastButtonTime = time.time()
+
+    def buttonCallback(self,pinNo):
+        """ called on falling edge - it waits for rising edge to see how long
+        the button press was. """
+        print "Button Down"
+        self.timeDown = time.time()
+        GPIO.wait_for_edge(pinNo,GPIO.RISING)
+        print "Button Up"
+        print "time of press = %f" % (time.time()-self.timeDown)
+
+    def pollButtons(self):
+        """poll the buttons, and set a variable to say if we have detected
+        a single, double or long click."""
+        global haveGPIO
+    
+        if (haveGPIO):
+            ip = GPIO.input(self.pinNo)
+            tnow = time.time()
+            if (ip != self.lastButtonVal):
+                print "button state changed"
+                if (ip):
+                    keyPressLength = (tnow - self.lastButtonTime)*1000. #ms
+                    print "Keypress Length = %f sec" % (keyPressLength)
+                    if (keyPressLength<self.debounce_ms):
+                        print "Ignoring very short keypress"
+                        self.shortPress = False
+                        self.longPress = False
+                    elif (keyPressLength<self.shortpress_ms):
+                        print "short press"
+                        self.shortPress = True
+                        self.longPress = False
+                    else:
+                        self.shortPress = False
+                        self.longPress = True
+                self.lastButtonVal = ip
+                self.lastButtonTime = tnow
+        else:
+            pass
+            # do nothing if we do not have GPIO access.
+
+    def serviceUI(self):
+        """Respond to button presses."""
+        if (self.shortPress):
+            if (self.UIMode == self.CAMERA_MODE):
+                self.moveCamera(self.pinNo)
+            elif (self.UIMode == self.FITDECT_MODE):
+                self.setFitDectBackground()
+            else:
+                print "Unrecognised UIMode %d." % self.UIMode
+            self.shortPress = False
+
+        if (self.longPress):
+            self.changeUIMode()
+            self.longPress = False
+
+    def changeUIMode(self):
+        """Change the UI mode - toggle between camera and fit detector"""
+        if (self.UIMode == self.CAMERA_MODE):
+            print "Entering FitDetector Mode"
+            self.textLine1 = "Fit Detector Mode"
+            self.textLine2 = " Press button to reset background.  Long press to change mode."
+            self.UIMode = self.FITDECT_MODE
+        else:
+            print "Entering Camera Mode"
+            self.textLine1 = "Camera Mode"
+            self.textLine2 = " Press button to move camera.  Long press to change mode."
+            self.UIMode = self.CAMERA_MODE
+            self.alarmStatus = self.ALARM_STATUS_NOT_FOUND
+        self.lastDisplayUpdateTime = time.time() #Force message to display for
+                                                 # a little while before being
+                                                 # overwritten.
+        self.display_text()
 
     def display_text(self):
         """ Write the given text onto the display area of the screen"""
@@ -220,7 +311,7 @@ class bentv_ui:
 
  
     def getBenFinderData(self):
-        print "getBenfinderData"
+        #print "getBenfinderData"
         h = httplib2.Http(".cache")
         h.add_credentials(self.cfg.getConfigStr('uname'), 
                           self.cfg.getConfigStr('passwd'))
@@ -228,7 +319,7 @@ class bentv_ui:
                      (self.cfg.getConfigStr('benfinderserver'),
                       self.cfg.getConfigStr('benfinderport'),
                       self.cfg.getConfigStr('benfinderurl'))
-        print requestStr
+        #print requestStr
         try:
             resp, content = h.request(requestStr,
                                       "GET")
@@ -239,14 +330,58 @@ class bentv_ui:
                               int(dataDict['status']),
                                   self.statusStrs[int(dataDict['status'])]
                              )
-            print dataDict['time_t']
+            #print dataDict['time_t']
             self.textLine2 = " Fit Detector Time = %s  " % dataDict['time_t']
-            print resp,content
+            #print resp,content
             return True
         except:
             print "Error:",sys.exc_info()[0]
             self.textLine1 = "No Connection to Fit Detector"
             return False
+
+    def setFitDectBackground(self):
+        """Tell the fit detector to initialise its background image from
+        the current image."""
+        print "setFitDectBackground()"
+        h = httplib2.Http(".cache")
+        h.add_credentials(self.cfg.getConfigStr('uname'), 
+                          self.cfg.getConfigStr('passwd'))
+        requestStr = "%s:%s/%s" % \
+                     (self.cfg.getConfigStr('benfinderserver'),
+                      self.cfg.getConfigStr('benfinderport'),
+                      self.cfg.getConfigStr('benfinderbackgroundurl'))
+        print requestStr
+        try:
+            resp, content = h.request(requestStr,
+                                      "GET")
+            print resp,content
+            self.textLine1 = "Fit Detector Background Image Reset"
+            self.textLine2 = " Press button to reset background.  Long press to change mode."
+        except:
+            print "Error:",sys.exc_info()[0]
+            self.textLine1 = "Error Initialising Fit Detector Background"
+            self.textLine2 = " Press button to reset background.  Long press to change mode."
+        self.lastDisplayUpdateTime = time.time() #Force message to display for
+                                                 # a little while before being
+                                                 # overwritten.
+        self.display_text()
+
+
+    def run(self):
+        """bentv main loop"""
+        self.lastDisplayUpdateTime = time.time()
+        while 1: 
+            tnow = time.time()
+            self.pollButtons()
+            self.serviceUI()
+            if (tnow-self.lastDisplayUpdateTime >= 1.0):
+                if (self.UIMode == self.FITDECT_MODE):
+                    self.getBenFinderData()
+            if (tnow-self.lastDisplayUpdateTime >= 1.0):
+                self.display_text()
+                self.lastDisplayUpdateTime = tnow
+            #print "main loop..."
+            time.sleep(0.2)
         
 
 #############################################
@@ -256,9 +391,4 @@ if __name__ == "__main__":
     bentv = bentv_ui()
     #init_screen()
     print "starting main loop..."
-    while 1: 
-        print "main loop..."
-        bentv.display_text()
-        bentv.getBenFinderData()
-        time.sleep(1)
-
+    bentv.run()
