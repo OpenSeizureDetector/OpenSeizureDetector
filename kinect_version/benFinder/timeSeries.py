@@ -32,6 +32,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy
 from scipy import signal
+import time
+import cv2
 
 class TimeSeries:
 
@@ -42,6 +44,7 @@ class TimeSeries:
         self._tslen = tslen
         self._freq  = freq
         self._ts = []
+        self._imgArr = []  # Array of images.
         self._ts2 = None
         self._rtPlot = False
 
@@ -59,13 +62,29 @@ class TimeSeries:
         if (self.len>self._tslen):
             del self._ts[0]
 
+    def addImg(self,img):
+        """ Adds an image to the end of the image time series, and truncats
+        the series to tslen if necessary.
+        """
+        self._imgArr.append(img)
+        if (self.lenImgArr > self._tslen):
+            del self._imgArr[0]
+
     @property
     def len(self):
         return (len(self._ts))
 
     @property
+    def lenImgArr(self):
+            return (len(self._imgArr))
+
+    @property
     def rawData(self):
         return (self._ts)
+
+    @property
+    def imgArr(self):
+        return (self._imgArr)
 
     @property
     def mean(self):
@@ -166,6 +185,36 @@ class TimeSeries:
         v=numpy.convolve(w/w.sum(),ts,mode='valid')
         return v
 
+    def writeToFile(self,fnameRoot):
+        """Write the whole time series, and images to files of root filename fname"""
+        # Write brightness timeseries to file.
+        print "writeToFile"
+        tstampStr = time.strftime("%Y%m%d%H%M%S", time.localtime())
+        print tstampStr
+        fname = "%s-%s.dat" % (fnameRoot,tstampStr)
+        print fname
+        f = open(fname,"w")
+        for i in range(0,self.len):
+            f.write("%d %d\n" % (i,self._ts[i]))
+        f.close()
+
+        # Write image array to video file.
+        fname = "%s-%s.mjpg" % (fnameRoot,tstampStr)
+        print fname
+        print self._imgArr[0].shape
+        height,width = self._imgArr[0].shape 
+        vw = cv2.VideoWriter()
+        #fourcc = cv2.cv.FOURCC(*'FMP4')
+        fourcc = cv2.cv.FOURCC(*'MJPG')
+        #fourcc = cv2.cv.FOURCC('M','J','P','G')
+        #print fourcc
+        # Note - the isColor parameter is VERY important - spent two hours
+        # trying to work out why I was getting empty videos!!!!
+        vw.open(fname,fourcc,30,(width,height),isColor=False)
+        #print vw
+        for i in range(0,self.len):
+            vw.write(self._imgArr[i])
+        vw.release()
 
 
 

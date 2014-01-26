@@ -2,7 +2,7 @@
 #
 #############################################################################
 #
-# Copyright Graham Jones, December 2013 
+# Copyright Graham Jones, 2013-2014
 #
 #  Original version by Joseph Howse in his book, "OpenCV Computer Vision with 
 #      Python" (Packt Publishing, 2013).
@@ -91,8 +91,10 @@ class BenFinder(object):
         else:
             self.loadBgImg()
             self.autoBackgroundImg = None
+            self._status = self.ALARM_STATUS_OK
             self._ts = TimeSeries(tslen=self.cfg.getConfigInt("timeseries_length"))
             self._frameCount = 0
+            self._outputFrameCount = 0
             self._nPeaks = 0
             self._ts_time = 0
             self._rate = 0
@@ -150,8 +152,24 @@ class BenFinder(object):
 
                 # Add the brightness to the time series ready for analysis.
                 self._ts.addSamp(bri[0])
-                # Only do the analysis every 15 frames (0.5 sec)
-                if (self._frameCount < 15):
+                self._ts.addImg(rawFrame)
+
+                # Write timeseries to a file every 'output_framecount' frames.
+                if (self._outputFrameCount >= self.cfg.getConfigInt('output_framecount')):
+                    # Write timeseries to file
+                    self._ts.writeToFile("%s/%s" % \
+                        ( self.cfg.getConfigStr('tmpdir'),
+                          self.cfg.getConfigStr('ts_fname')
+                      ))
+                    self._outputFrameCount = 0
+                else:
+                    self._outputFrameCount = self._outputFrameCount + 1
+                    
+
+                # Only do the analysis every 15 frames (0.5 sec), or whatever
+                # is specified in configuration file analysis_framecount
+                # parameter.
+                if (self._frameCount < self.cfg.getConfigInt('analysis_framecount')):
                     self._frameCount = self._frameCount +1
                 else:
                     # Look for peaks in the brightness (=movement).
@@ -159,6 +177,7 @@ class BenFinder(object):
                     #print "%d peaks in %3.2f sec = %3.1f bpm" % \
                     #    (nPeaks,ts_time,rate)
 
+                    oldStatus = self._status
                     if (maskArea > self.cfg.getConfigInt('area_threshold')):
                         # Check for alarm levels
                         if (self._rate > self.cfg.getConfigInt(
@@ -171,6 +190,18 @@ class BenFinder(object):
                             self._status= self.ALARM_STATUS_FULL
                     else:
                         self._status = self.ALARM_STATUS_NOT_FOUND
+
+
+                    if (oldStatus == self.ALARM_STATUS_OK and
+                        self._status == self.ALARM_STATUS_WARN) or \
+                        (oldStatus == self.ALARM_STATUS_WARN and 
+                         self._status == self.ALARM_STATUS_FULL):
+                                # Write timeseries to file
+                                self._ts.writeToFile("%s/%s" % \
+                                    ( self.cfg.getConfigStr('tmpdir'),
+                                      self.cfg.getConfigStr('alarm_ts_fname')
+                                  ))
+                        
 
                     # Collect the analysis results together and send them
                     # to the web server.
