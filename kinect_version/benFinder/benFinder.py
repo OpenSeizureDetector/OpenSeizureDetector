@@ -158,7 +158,7 @@ class BenFinder(object):
                 if (self._outputFrameCount >= self.cfg.getConfigInt('output_framecount')):
                     # Write timeseries to file
                     self._ts.writeToFile("%s/%s" % \
-                        ( self.cfg.getConfigStr('tmpdir'),
+                        ( self.cfg.getConfigStr('output_directory'),
                           self.cfg.getConfigStr('ts_fname')
                       ))
                     self._outputFrameCount = 0
@@ -198,7 +198,7 @@ class BenFinder(object):
                          self._status == self.ALARM_STATUS_FULL):
                                 # Write timeseries to file
                                 self._ts.writeToFile("%s/%s" % \
-                                    ( self.cfg.getConfigStr('tmpdir'),
+                                    ( self.cfg.getConfigStr('output_directory'),
                                       self.cfg.getConfigStr('alarm_ts_fname')
                                   ))
                         
