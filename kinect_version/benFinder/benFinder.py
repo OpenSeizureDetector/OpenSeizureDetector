@@ -134,6 +134,7 @@ class BenFinder(object):
                                        self.autoBackgroundImg,0.05)
                 # Convert the background image into the same format
                 # as the main frame.
+                #bg = self.autoBackgroundImg
                 bg = cv2.convertScaleAbs(self.autoBackgroundImg,
                                          alpha=1.0)
                 # Subtract the background from the frame image
@@ -275,7 +276,12 @@ class BenFinder(object):
             self._captureManager.exitFrame()
         self._captureManager.enterFrame()
         print "Writing image to %s." % self.cfg.getConfigStr("background_depth")
-        self._captureManager.writeImage(self.cfg.getConfigStr("background_depth"))
+        self._captureManager.writeImage("%s/%s" % 
+                                        (self._wkdir,
+                                         self.cfg.getConfigStr("background_depth")
+                                     ))
+        print self._captureManager.frame
+        print self._captureManager.frame.dtype
         self._captureManager.exitFrame()
         self.loadBgImg()
 
@@ -284,7 +290,10 @@ class BenFinder(object):
             (self._wkdir,self.cfg.getConfigStr("background_depth"))
         self._background_depth_img = cv2.imread("%s/%s" % \
                     (self._wkdir,self.cfg.getConfigStr("background_depth")),
-                    cv2.CV_LOAD_IMAGE_GRAYSCALE)
+                                                cv2.CV_LOAD_IMAGE_GRAYSCALE)
+        #                                        cv2.CV_LOAD_IMAGE_UNCHANGED)
+        print self._background_depth_img
+        print self._background_depth_img.dtype
 
     
 if __name__=="__main__":

@@ -39,8 +39,16 @@ def getBenMask(src,threshold):
     This is based on http://stackoverflow.com/questions/10262600/
                     how-to-detect-region-of-large-of-white-pixels-using-opencv
     """
+    # Convert to 8 bit image so threshold function will work
+    if (src.dtype == "uint16"):
+        print "Converting to 8 bit"
+        src8 = cv2.convertScaleAbs(src)
+        print src8.dtype
+    else:
+        src8 = src
+        
     # Apply threshold so we only have the bright parts of the image in src_th.
-    ret, src_th = cv2.threshold(src,threshold,255,0)
+    ret, src_th = cv2.threshold(src8,threshold,255,0)
     
     # create a black mask the same size.
     mask = numpy.zeros(src_th.shape,numpy.uint8)

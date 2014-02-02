@@ -91,6 +91,7 @@ class CaptureManager(object):
                     self._frame = imgBGR
                 elif (self.channel == depth.CV_CAP_OPENNI_DEPTH_MAP):
                     depthMap, timestamp = freenect.sync_get_depth()
+                    #depthMap = depthMap.astype(numpy.uint16)
                     depthMap = depthMap.astype(numpy.uint8)
                     self._frame = depthMap
                 else:
@@ -154,6 +155,7 @@ class CaptureManager(object):
         
         # Write to the image file, if any.
         if self.isWritingImage:
+            #print self._frame.dtype
             cv2.imwrite(self._imageFilename, self._frame)
             self._imageFilename = None
         
