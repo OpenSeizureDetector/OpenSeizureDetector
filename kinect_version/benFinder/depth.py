@@ -34,6 +34,7 @@ import numpy
 CV_CAP_OPENNI = 900 # OpenNI (for Microsoft Kinect)
 CV_CAP_OPENNI_ASUS = 910 # OpenNI (for Asus Xtion)
 CV_CAP_FREENECT = 920    # Microsoft Kinect using libfreenect driver.
+CV_CAP_FILE = 999     # Use a file for input, not a live device.
 
 # Channels of an OpenNI-compatible depth generator.
 CV_CAP_OPENNI_DEPTH_MAP = 0 # Depth values in mm (CV_16UC1)

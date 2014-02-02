@@ -37,12 +37,16 @@ import filters
 class CaptureManager(object):
     
     def __init__(self, capture, previewWindowManager = None,
-                 shouldMirrorPreview = False):
+                 shouldMirrorPreview = False, inFile = None):
         
         self.previewWindowManager = previewWindowManager
         self.shouldMirrorPreview = shouldMirrorPreview
 
-        if (capture!=depth.CV_CAP_FREENECT):
+        if (capture==depth.CV_CAP_FILE):
+            print "CaptureManager.__init__ - using file input %s" % inFile
+            self._capture = cv2.VideoCapture(inFile)
+            self._uselibFreenect = False
+        elif (capture!=depth.CV_CAP_FREENECT):
             self._capture = cv2.VideoCapture(capture)
             self._uselibFreenect = False
             print "Using OpenCV Video Capture"
@@ -99,6 +103,8 @@ class CaptureManager(object):
                     self._frame = None
             else:
                 _, self._frame = self._capture.retrieve(channel = self.channel)
+                self._frame = cv2.cvtColor(self._frame, cv2.COLOR_BGR2GRAY)
+                #self._frame = self._frame.astype(numpy.uint8)
         return self._frame
     
     @property

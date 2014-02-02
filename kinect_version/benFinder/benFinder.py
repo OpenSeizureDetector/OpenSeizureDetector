@@ -65,7 +65,7 @@ class BenFinder(object):
     ALARM_STATUS_NOT_FOUND = 3 # Benjamin not found in image 
                                # (area below config area_threshold parameter)
 
-    def __init__(self,save=False):
+    def __init__(self,save=False, inFile = None):
         print "benFinder.__init__()"
         print os.path.realpath(__file__)
         configPath = "%s/%s" % (os.path.dirname(os.path.realpath(__file__)),
@@ -81,9 +81,14 @@ class BenFinder(object):
         self._tmpdir = self.cfg.getConfigStr("tmpdir")
         if (self.debug): print "tmpdir=%s\n" % self._tmpdir
 
-        device = depth.CV_CAP_FREENECT
+
+        if (inFile):
+            device = depth.CV_CAP_FILE
+        else:
+            device = depth.CV_CAP_FREENECT
+
         self._captureManager = CaptureManager(
-            device, None, True)
+            device, None, True, inFile=inFile)
         self._captureManager.channel = depth.CV_CAP_OPENNI_DEPTH_MAP
 
         if (save):
@@ -127,6 +132,8 @@ class BenFinder(object):
                 # First work out the region of interest by 
                 #    subtracting the fixed background image 
                 #    to create a mask.
+                #print frame
+                #print self._background_depth_img
                 absDiff = cv2.absdiff(frame,self._background_depth_img)
                 benMask,maskArea = filters.getBenMask(absDiff,8)
 
@@ -304,13 +311,20 @@ if __name__=="__main__":
             description=__doc__.replace('\r\n', '\n').split('\n--snip--\n')[0])
     parser.add_option('-s', '--save', action="count", dest="save",
         default=0, help="Save a new background image.")
+    parser.add_option('-f', '--file', dest="fname",
+        help="Save a new background image.")
  
     opts, args  = parser.parse_args()
  
+    print opts
+    print args
     
     if (opts.save):
         print "Saving new background Image"
         BenFinder(save=True)
         print "Done!"
+    elif (opts.fname):
+        print "Running from file (not live kinect)"
+        BenFinder(inFile=opts.fname)
     else:
         BenFinder(save=False)
