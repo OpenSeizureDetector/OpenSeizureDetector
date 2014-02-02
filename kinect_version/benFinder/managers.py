@@ -58,6 +58,7 @@ class CaptureManager(object):
         self._channel = 0
         self._enteredFrame = False
         self._frame = None
+        self._nFrames = 0
         self._imageFilename = None
         self._videoFilename = None
         self._videoEncoding = None
@@ -102,9 +103,15 @@ class CaptureManager(object):
                     print "Error - Unrecognised channel %d." % self.channel
                     self._frame = None
             else:
-                _, self._frame = self._capture.retrieve(channel = self.channel)
+                retVal, self._frame = self._capture.retrieve(channel = self.channel)
+                self._nFrames = self._nFrames + 1
+                #print retVal, type(self._frame), 
+                # self._frame.size, frameCount, self._nFrames
                 self._frame = cv2.cvtColor(self._frame, cv2.COLOR_BGR2GRAY)
                 #self._frame = self._frame.astype(numpy.uint8)
+        else:
+            pass
+            #print self._enteredFrame, self._frame
         return self._frame
     
     @property
@@ -133,6 +140,9 @@ class CaptureManager(object):
         else:
             if self._capture is not None:
                 self._enteredFrame = self._capture.grab()
+                #print (self._frame)
+                
+
     
     def exitFrame(self):
         """Draw to the window. Write to files. Release the frame."""
@@ -216,7 +226,7 @@ class CaptureManager(object):
                         int(self._capture.get(
                             cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)))
             else:
-                print self._frame.shape
+                #print self._frame.shape
                 size = (self._frame.shape[1],self._frame.shape[0])
             self._videoWriter = cv2.VideoWriter(
                 self._videoFilename, self._videoEncoding,

@@ -82,15 +82,24 @@ class BenFinder(object):
         if (self.debug): print "tmpdir=%s\n" % self._tmpdir
 
 
+        # Check if we are running from live kinect or a file.
         if (inFile):
             device = depth.CV_CAP_FILE
         else:
             device = depth.CV_CAP_FREENECT
 
+        # Initialise the captureManager
         self._captureManager = CaptureManager(
             device, None, True, inFile=inFile)
         self._captureManager.channel = depth.CV_CAP_OPENNI_DEPTH_MAP
 
+        # If we are runnign from a file, use the first frame as the
+        # background image.
+        if (inFile):
+            self.saveBgImg()
+
+        # If we have asked to save the background image, do that, and exit,
+        # otherwise initialise the seizure detector.
         if (save):
             self.saveBgImg()
         else:
@@ -208,7 +217,7 @@ class BenFinder(object):
                                 self._ts.writeToFile("%s/%s" % \
                                     ( self.cfg.getConfigStr('output_directory'),
                                       self.cfg.getConfigStr('alarm_ts_fname')
-                                  ))
+                                  ),bgImg=self._background_depth_img)
                         
 
                     # Collect the analysis results together and send them
@@ -246,8 +255,11 @@ class BenFinder(object):
                         "masked_image_fname")),
                         frame)
                     self._frameCount = 0
+            else:
+                print "Null frame received - assuming end of file and exiting"
+                break
             self._captureManager.exitFrame()
-
+                
 
     @property
     def fps(self):
