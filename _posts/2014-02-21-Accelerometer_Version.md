@@ -23,7 +23,7 @@ It uses fourier transforms to obtain the frequency spectrum of the accelerometer
 
 # Testing
 And here is a simple demonstration of it working - you can hear the warning 'pip' and the alarm 'buzz' in the background when I shake my arm to simulate a seizure. 
-[![Demo Video](https://lh3.googleusercontent.com/e9RF1-CexlMlUvNHQBvaK8PIdPpEoiF5q_8MGxw_aaQ=s216-p-no)](https://plus.google.com/u/0/photos/yourphotos?pid=5843066251226050578&oid=106497137253664241170 =200x)
+[![Demo Video](https://lh3.googleusercontent.com/e9RF1-CexlMlUvNHQBvaK8PIdPpEoiF5q_8MGxw_aaQ=s216-p-no 200x)](https://plus.google.com/u/0/photos/yourphotos?pid=5843066251226050578&oid=106497137253664241170)
 
 The analysis of the data from me shaking my arm to simulate a seizure with the device warn on the wrist or on the biscep is shown below:
 ![chart](https://lh4.googleusercontent.com/8J4-USZfbs1DFzxRUbRSvSEd93HSY_LM13jhw3tfxbk=s216-p-no)
