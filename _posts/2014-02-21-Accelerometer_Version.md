@@ -26,7 +26,7 @@ And here is a simple demonstration of it working - you can hear the warning 'pip
 [![Demo Video](https://lh3.googleusercontent.com/e9RF1-CexlMlUvNHQBvaK8PIdPpEoiF5q_8MGxw_aaQ=s216-p-no)](https://plus.google.com/u/0/photos/yourphotos?pid=5843066251226050578&oid=106497137253664241170)
 
 The analysis of the data from me shaking my arm to simulate a seizure with the device warn on the wrist or on the biscep is shown below:
-![chart](https://lh4.googleusercontent.com/8J4-USZfbs1DFzxRUbRSvSEd93HSY_LM13jhw3tfxbk=s216-p-no)
+[![chart](https://lh4.googleusercontent.com/8J4-USZfbs1DFzxRUbRSvSEd93HSY_LM13jhw3tfxbk=s216-p-no)](https://lh4.googleusercontent.com/8J4-USZfbs1DFzxRUbRSvSEd93HSY_LM13jhw3tfxbk=s216-p-no)
 It shows that the sensitivity is comfortably above the background noise level when worn on the wrist, but if it is worn on the biscep the signal is close to the noise level.   This means that this is a viable seizure detector, provided the patient will wear the accelerometer on the wrist (or maybe ankle).
 
 # Futhther Development
