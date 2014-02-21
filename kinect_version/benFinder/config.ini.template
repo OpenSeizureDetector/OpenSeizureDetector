@@ -13,6 +13,6 @@ timeseries_length=900  ; frames
 rate_alarm=2  ; alarm if breathing rate <= 2 breaths per minute
 rate_warn=4   ; warning if breathign rate <= 4 breaths per minute
 analysis_framecount=15 ; number of frames between carrying out full analysis.
-output_framecount = 18000 ; number of frames between writing timeseries to disk.
+output_framecount = 54000 ; number of frames between writing timeseries to disk.
 ts_fname=routine_output
 alarm_ts_fname=alarm_output
