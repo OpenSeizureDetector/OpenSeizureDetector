@@ -185,8 +185,10 @@ class TimeSeries:
         v=numpy.convolve(w/w.sum(),ts,mode='valid')
         return v
 
-    def writeToFile(self,fnameRoot):
-        """Write the whole time series, and images to files of root filename fname"""
+    def writeToFile(self,fnameRoot, bgImg=None):
+        """Write the whole time series, and images to files of root filename fname.
+        if bgImg is provided, it is written as the first frame (assumed to be
+        background image used in analysis)."""
         # Write brightness timeseries to file.
         print "writeToFile"
         tstampStr = time.strftime("%Y%m%d%H%M%S", time.localtime())
@@ -212,6 +214,10 @@ class TimeSeries:
         # trying to work out why I was getting empty videos!!!!
         vw.open(fname,fourcc,30,(width,height),isColor=False)
         #print vw
+        # If a background image has been provided, write that as the fist
+        # frame of the file.
+        if (bgImg != None):
+            vw.write(bgImg)
         for i in range(0,self.len):
             vw.write(self._imgArr[i])
         vw.release()

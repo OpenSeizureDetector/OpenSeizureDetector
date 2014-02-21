@@ -65,7 +65,7 @@ class BenFinder(object):
     ALARM_STATUS_NOT_FOUND = 3 # Benjamin not found in image 
                                # (area below config area_threshold parameter)
 
-    def __init__(self,save=False):
+    def __init__(self,save=False, inFile = None):
         print "benFinder.__init__()"
         print os.path.realpath(__file__)
         configPath = "%s/%s" % (os.path.dirname(os.path.realpath(__file__)),
@@ -81,11 +81,25 @@ class BenFinder(object):
         self._tmpdir = self.cfg.getConfigStr("tmpdir")
         if (self.debug): print "tmpdir=%s\n" % self._tmpdir
 
-        device = depth.CV_CAP_FREENECT
+
+        # Check if we are running from live kinect or a file.
+        if (inFile):
+            device = depth.CV_CAP_FILE
+        else:
+            device = depth.CV_CAP_FREENECT
+
+        # Initialise the captureManager
         self._captureManager = CaptureManager(
-            device, None, True)
+            device, None, True, inFile=inFile)
         self._captureManager.channel = depth.CV_CAP_OPENNI_DEPTH_MAP
 
+        # If we are runnign from a file, use the first frame as the
+        # background image.
+        if (inFile):
+            self.saveBgImg()
+
+        # If we have asked to save the background image, do that, and exit,
+        # otherwise initialise the seizure detector.
         if (save):
             self.saveBgImg()
         else:
@@ -127,6 +141,8 @@ class BenFinder(object):
                 # First work out the region of interest by 
                 #    subtracting the fixed background image 
                 #    to create a mask.
+                #print frame
+                #print self._background_depth_img
                 absDiff = cv2.absdiff(frame,self._background_depth_img)
                 benMask,maskArea = filters.getBenMask(absDiff,8)
 
@@ -134,6 +150,7 @@ class BenFinder(object):
                                        self.autoBackgroundImg,0.05)
                 # Convert the background image into the same format
                 # as the main frame.
+                #bg = self.autoBackgroundImg
                 bg = cv2.convertScaleAbs(self.autoBackgroundImg,
                                          alpha=1.0)
                 # Subtract the background from the frame image
@@ -200,7 +217,7 @@ class BenFinder(object):
                                 self._ts.writeToFile("%s/%s" % \
                                     ( self.cfg.getConfigStr('output_directory'),
                                       self.cfg.getConfigStr('alarm_ts_fname')
-                                  ))
+                                  ),bgImg=self._background_depth_img)
                         
 
                     # Collect the analysis results together and send them
@@ -238,8 +255,11 @@ class BenFinder(object):
                         "masked_image_fname")),
                         frame)
                     self._frameCount = 0
+            else:
+                print "Null frame received - assuming end of file and exiting"
+                break
             self._captureManager.exitFrame()
-
+                
 
     @property
     def fps(self):
@@ -275,7 +295,12 @@ class BenFinder(object):
             self._captureManager.exitFrame()
         self._captureManager.enterFrame()
         print "Writing image to %s." % self.cfg.getConfigStr("background_depth")
-        self._captureManager.writeImage(self.cfg.getConfigStr("background_depth"))
+        self._captureManager.writeImage("%s/%s" % 
+                                        (self._wkdir,
+                                         self.cfg.getConfigStr("background_depth")
+                                     ))
+        print self._captureManager.frame
+        print self._captureManager.frame.dtype
         self._captureManager.exitFrame()
         self.loadBgImg()
 
@@ -284,7 +309,10 @@ class BenFinder(object):
             (self._wkdir,self.cfg.getConfigStr("background_depth"))
         self._background_depth_img = cv2.imread("%s/%s" % \
                     (self._wkdir,self.cfg.getConfigStr("background_depth")),
-                    cv2.CV_LOAD_IMAGE_GRAYSCALE)
+                                                cv2.CV_LOAD_IMAGE_GRAYSCALE)
+        #                                        cv2.CV_LOAD_IMAGE_UNCHANGED)
+        print self._background_depth_img
+        print self._background_depth_img.dtype
 
     
 if __name__=="__main__":
@@ -295,13 +323,20 @@ if __name__=="__main__":
             description=__doc__.replace('\r\n', '\n').split('\n--snip--\n')[0])
     parser.add_option('-s', '--save', action="count", dest="save",
         default=0, help="Save a new background image.")
+    parser.add_option('-f', '--file', dest="fname",
+        help="Save a new background image.")
  
     opts, args  = parser.parse_args()
  
+    print opts
+    print args
     
     if (opts.save):
         print "Saving new background Image"
         BenFinder(save=True)
         print "Done!"
+    elif (opts.fname):
+        print "Running from file (not live kinect)"
+        BenFinder(inFile=opts.fname)
     else:
         BenFinder(save=False)
