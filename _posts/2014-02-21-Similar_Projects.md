@@ -10,6 +10,7 @@ excerpt: Links to Related Projects
 # Seizure Detectors
 * [Dravet Foundation's EIC BBK](http://www.eicbbk.org/programa-deteccion-nocturna-de-crisis-epilepticas) - They are working on a project with exactly the same goals as this, so I am hopeful that we will be able to colaborate on algoriths etc., even if the projects remain separate.
 * [My Accelerometer Based Prototype](https://github.com/jones139/OpenSeizureDetector/tree/master/accelerometer_version).
+* Links to some commercial bed/mattress based seizure detectors are provided [here](http://www.epilepsysociety.org.uk/alarms-and-safety-aids#.UwfYeR-trVM).
 
 
 # Related Technology
