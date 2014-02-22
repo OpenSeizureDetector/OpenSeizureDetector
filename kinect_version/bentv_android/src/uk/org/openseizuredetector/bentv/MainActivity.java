@@ -28,12 +28,13 @@ public class MainActivity extends Activity {
         //videoView.requestFocus();
         //videoView.start();
         
-        Intent i = new Intent("org.videolan.vlc.VLCApplication.gui.video.VideoPlayerActivity");
-        i.setAction(Intent.ACTION_VIEW);		
-        i.setData(Uri.parse(url));
-        startActivity(i);        
+        //Intent i = new Intent("org.videolan.vlc.VLCApplication.gui.video.VideoPlayerActivity");
+        //i.setAction(Intent.ACTION_VIEW);		
+        //i.setData(Uri.parse(url));
+        //startActivity(i);        
         
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
+        setContentView(R.layout.bentv_table_layout);
     }
 
 
