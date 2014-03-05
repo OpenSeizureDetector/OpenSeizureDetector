@@ -5,11 +5,16 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 import android.widget.MediaController;
 import android.widget.Button;
+import android.widget.ArrayAdapter;
+import android.widget.SpinnerAdapter;
+import android.app.ActionBar;
 
 public class MainActivity extends Activity {
     @Override
@@ -18,12 +23,19 @@ public class MainActivity extends Activity {
         //setContentView(R.layout.activity_main);
         setContentView(R.layout.bentv_table_layout);
 
-	findViewById(R.id.pos1Button).setOnClickListener(mGlobal_OnClickListener);
-	findViewById(R.id.pos2Button).setOnClickListener(mGlobal_OnClickListener);
-	findViewById(R.id.pos3Button).setOnClickListener(mGlobal_OnClickListener);
-        findViewById(R.id.pos4Button).setOnClickListener(mGlobal_OnClickListener);
-        
-        String url = "rtsp://guest:guest@192.168.1.24/12";
+	findViewById(R.id.rawImgView).
+	    setOnClickListener(mGlobal_OnClickListener);
+        findViewById(R.id.maskedImgView).
+	    setOnClickListener(mGlobal_OnClickListener);
+	findViewById(R.id.chartImgView).
+	    setOnClickListener(mGlobal_OnClickListener);
+	findViewById(R.id.webCamView).
+	    setOnClickListener(mGlobal_OnClickListener);
+
+	SpinnerAdapter mSpinnerAdapter = ArrayAdapter.createFromResource(this, 
+		   R.array.spinner,
+          android.R.layout.simple_spinner_dropdown_item);
+        //String url = "rtsp://guest:guest@192.168.1.24/12";
                 
         
         //VideoView videoView = (VideoView)findViewById(R.id.your_video_view);
@@ -48,44 +60,101 @@ public class MainActivity extends Activity {
     final OnClickListener mGlobal_OnClickListener = new OnClickListener() {
         public void onClick(final View v) {
             switch(v.getId()) {
-                case R.id.pos1Button:
-                    //Inform the user the button1 has been clicked
-                    Toast.makeText(getApplicationContext(), 
-				   "Button1 clicked.", 
-				   Toast.LENGTH_SHORT).show();                
-                break;
-                case R.id.pos2Button:
+                case R.id.rawImgView:
                     //Inform the user the button2 has been clicked
                     Toast.makeText(getApplicationContext(), 
-				   "Button2 clicked.", 
+				   "rawImgView clicked.", 
 				   Toast.LENGTH_SHORT).show();                
+		    setModeSingleView();
                 break;
-                case R.id.pos3Button:
+                case R.id.maskedImgView:
                     //Inform the user the button2 has been clicked
                     Toast.makeText(getApplicationContext(), 
-				   "Button3 clicked.", 
+				   "maskedImgView clicked.", 
 				   Toast.LENGTH_SHORT).show();                
+		    setModeSingleView();
                 break;
-                case R.id.pos4Button:
+                case R.id.chartImgView:
                     //Inform the user the button2 has been clicked
                     Toast.makeText(getApplicationContext(), 
-				   "Button4 clicked.", 
+				   "chartImgView clicked.", 
 				   Toast.LENGTH_SHORT).show();                
+		    setModeSingleView();
+                break;
+                case R.id.webCamView:
+                    //Inform the user the button2 has been clicked
+                    Toast.makeText(getApplicationContext(), 
+				   "webCamView clicked.", 
+				   Toast.LENGTH_SHORT).show();                
+		    setModeSingleView();
                 break;
             }
         }
     };
 
+    public boolean setModeSingleView() {
+	setContentView(R.layout.bentv_single_image_layout);
+	ActionBar actionBar = getActionBar();
+	actionBar.setDisplayHomeAsUpEnabled(true);
+	return true;
+    }
+
+    @Override
+    public boolean onNavigateUp() {
+	// Respond to the action bar Home/Back button.
+	setContentView(R.layout.bentv_table_layout);
+	ActionBar actionBar = getActionBar();
+	actionBar.setDisplayHomeAsUpEnabled(false);
+	return true;
+
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+	// Handle presses on the action bar items
+	switch (item.getItemId()) {
+        case R.id.action_search:
+	    Toast.makeText(getApplicationContext(), 
+			   "action_search clicked.", 
+			   Toast.LENGTH_SHORT).show();                
+            return true;
+        case R.id.action_compose:
+	    Toast.makeText(getApplicationContext(), 
+			   "action_compose clicked.", 
+			   Toast.LENGTH_SHORT).show();                
+            return true;
+        case R.id.movecamera_1:
+	    Toast.makeText(getApplicationContext(), 
+			   "movecamera_1 clicked.", 
+			   Toast.LENGTH_SHORT).show();                
+            return true;
+        case R.id.movecamera_2:
+	    Toast.makeText(getApplicationContext(), 
+			   "movecamera_2 clicked.", 
+			   Toast.LENGTH_SHORT).show();                
+            return true;
+        case R.id.movecamera_3:
+	    Toast.makeText(getApplicationContext(), 
+			   "movecamera_3 clicked.", 
+			   Toast.LENGTH_SHORT).show();                
+            return true;
+        case R.id.movecamera_4:
+	    Toast.makeText(getApplicationContext(), 
+			   "movecamera_4 clicked.", 
+			   Toast.LENGTH_SHORT).show();                
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+	}
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-    
-    public void onClick(View view) {
-
+	// Inflate the menu items for use in the action bar
+	MenuInflater inflater = getMenuInflater();
+	inflater.inflate(R.menu.action_bar, menu);
+	return super.onCreateOptionsMenu(menu);
     }
 
 }

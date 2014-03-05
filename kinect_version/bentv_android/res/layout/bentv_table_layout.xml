@@ -3,39 +3,15 @@
 	android:layout_height="fill_parent" 
 	xmlns:android="http://schemas.android.com/apk/res/android">
 	<TableRow>
-	  android:layout_span="2"
-	  <LinearLayout>
-	    android:gravity="center"
-		<Button 
-	    	android:id="@+id/pos1Button"
-	    	android:text="Door"
-	    	android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content" />
-		<Button 
-	    	android:id="@+id/pos2Button"
-	    	android:text="Corner"
-	    	android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content" />
-		<Button 
-	    	android:id="@+id/pos3Button"
-	    	android:text="Chair"
-	    	android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content" />
-		<Button 
-	    	android:id="@+id/pos4Button"
-	    	android:text="Bed"
-	    	android:layout_width="wrap_content"
-	    	android:layout_height="wrap_content" />
-	  </LinearLayout>
-	</TableRow>
-	<TableRow>
 	  <ImageView
               android:id="@+id/rawImgView"
+	      android:layout_weight="1"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/raw_img" />
 	  <ImageView
               android:id="@+id/maskedImgView"
+	      android:layout_weight="1"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/masked_img" />
@@ -43,21 +19,25 @@
 	<TableRow>
 	  <ImageView
               android:id="@+id/chartImgView"
+	      android:layout_weight="1"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/chart_img" />
 	  <ImageView
               android:id="@+id/webCamView"
+	      android:layout_weight="1"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
 	      android:scaleType="fitXY"
               android:src="@drawable/webcam_img" />
 	</TableRow>
-	<TableRow>
+<!--	<TableRow>
 	  <TextView
 	      android:text="Seizure Detector Output"
+	      android:layout_weight="1"
 	      android:layout_width="wrap_content"
 	      android:layout_height="wrap_content"
 	      android:layout_column="1" />
 	</TableRow>
+-->
 </TableLayout>

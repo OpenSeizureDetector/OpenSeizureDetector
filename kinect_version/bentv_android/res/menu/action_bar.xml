@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" 
+      >
+   <item android:id="@+id/action_search"
+          android:icon="@drawable/abc_ic_go"
+          android:title="action_search"
+	  android:showAsAction="ifRoom|withText"
+	  />
+    <item android:id="@+id/action_compose"
+          android:icon="@drawable/abc_ic_go"
+          android:title="action_compose" 
+	  android:showAsAction="ifRoom|withText"
+	  />    
+    <item android:id="@+id/movecamera_1"
+          android:title="Behind Door" 
+	  android:showAsAction="never"
+	  />    
+    <item android:id="@+id/movecamera_2"
+          android:title="Corner" 
+	  android:showAsAction="never"
+	  />    
+    <item android:id="@+id/movecamera_3"
+          android:title="Chair" 
+	  android:showAsAction="never"
+	  />    
+    <item android:id="@+id/movecamera_4"
+          android:title="Bed" 
+	  android:showAsAction="never"
+	  />    
+
+</menu>
