@@ -14,7 +14,6 @@ eggs
 parts
 bin
 gen
-build.xml
 var
 sdist
 develop-eggs
