@@ -2,6 +2,15 @@
 	android:layout_width="fill_parent" 
 	android:layout_height="fill_parent" 
 	xmlns:android="http://schemas.android.com/apk/res/android">
+        <TableRow>
+	  <TextView
+              android:id="@+id/sdOutput"
+	      android:text="Seizure Detector Output"
+	      android:layout_weight="1"
+	      android:layout_width="wrap_content"
+	      android:layout_height="wrap_content"
+	      android:layout_column="1" />
+	</TableRow>
 	<TableRow>
 	  <ImageView
               android:id="@+id/rawImgView"
@@ -15,14 +24,14 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/masked_img" />
-	</TableRow>
-	<TableRow>
 	  <ImageView
               android:id="@+id/chartImgView"
 	      android:layout_weight="1"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/chart_img" />
+	</TableRow>
+<!--	<TableRow>
 	  <ImageView
               android:id="@+id/webCamView"
 	      android:layout_weight="1"
@@ -30,14 +39,6 @@
               android:layout_height="wrap_content"
 	      android:scaleType="fitXY"
               android:src="@drawable/webcam_img" />
-	</TableRow>
-<!--	<TableRow>
-	  <TextView
-	      android:text="Seizure Detector Output"
-	      android:layout_weight="1"
-	      android:layout_width="wrap_content"
-	      android:layout_height="wrap_content"
-	      android:layout_column="1" />
 	</TableRow>
 -->
 </TableLayout>
