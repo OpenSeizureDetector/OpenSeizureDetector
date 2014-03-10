@@ -10,6 +10,7 @@ import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
@@ -30,6 +31,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.Object;
+import java.util.HashMap;
+//import java.util.Map;
 import java.net.URL;
 import java.net.URLConnection;
 import org.apache.http.HttpResponse;
@@ -40,13 +43,25 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 public class MainActivity extends Activity {
+    SettingsData mPref;
+    CountDownTimer mTimer;
     // Image update period (in ms)
     private static final int UPDATE_DELAY = 5000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
+
+	PreferenceManager.setDefaultValues(this, 
+					   R.xml.prefs, 
+					   false);
+	mPref = new SettingsData(this.getApplicationContext());
+	Toast.makeText(getApplicationContext(), 
+		       "Period="+mPref.mUpdatePeriod, 
+		       Toast.LENGTH_SHORT).show();            
+
+
+      //setContentView(R.layout.activity_main);
         setContentView(R.layout.bentv_table_layout);
 
 	findViewById(R.id.rawImgView).
@@ -58,9 +73,9 @@ public class MainActivity extends Activity {
 	//findViewById(R.id.webCamView).
 	//    setOnClickListener(mGlobal_OnClickListener);
 
-	SpinnerAdapter mSpinnerAdapter = ArrayAdapter.createFromResource(this, 
-		   R.array.spinner,
-          android.R.layout.simple_spinner_dropdown_item);
+	//SpinnerAdapter mSpinnerAdapter = ArrayAdapter.createFromResource(this, 
+	//	   R.array.spinner,
+        //  android.R.layout.simple_spinner_dropdown_item);
         //String url = "rtsp://guest:guest@192.168.1.24/12";
                 
         
@@ -86,7 +101,8 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
 	Log.v("MainActivity.onStart","Starting Timer");
-        timer.start();
+        //timer.start();
+	startTimer();
     }
 
     @Override
@@ -96,7 +112,7 @@ public class MainActivity extends Activity {
 	Toast.makeText(getApplicationContext(), 
 		       "Stopping Timer", 
 		       Toast.LENGTH_SHORT).show();            
-	timer.cancel();
+	stopTimer();
     }
 
 
@@ -155,11 +171,26 @@ public class MainActivity extends Activity {
 
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+	super.onActivityResult(requestCode,resultCode,data);
+	Log.v("onActivityResult","requestCode="+requestCode+" resultCode="+resultCode);
+	HashMap<String,Object> map = (HashMap<String,Object>)getIntent().getSerializableExtra("Prefs");
+	mPref.setMap(map);
+	mPref.savePrefs();
+	Toast.makeText(getApplicationContext(), 
+		       "onActivityResult - period="+mPref.mUpdatePeriod, 
+		       Toast.LENGTH_SHORT).show();                }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle presses on the action bar items
 	switch (item.getItemId()) {
         case R.id.action_settings:
-	    Intent intent = new Intent(this, SettingsActivity.class);              
+	    //Intent intent = new Intent(this, SettingsActivity.class);         
+	    //intent.putExtra("Prefs",mPref.getMap());
+	    //startActivityForResult(intent,1);
+	    Intent intent = new Intent(this, PrefActivity.class);         
+	    //intent.putExtra("Prefs",mPref.getMap());
 	    startActivity(intent);
             return true;
         case R.id.movecamera_1:
@@ -196,26 +227,35 @@ public class MainActivity extends Activity {
     }
 
 
-    /**
-     *********************************************
-     * The timer to update the images regularly  *
-     *********************************************/
-    final CountDownTimer timer = new CountDownTimer(Long.MAX_VALUE, UPDATE_DELAY) {
-	    @Override
-	    public void onTick(long millisUntilFinished) {
-		new DownLoadImageTask().execute("http://192.168.1.14:8080/rawImg",findViewById(R.id.rawImgView));
-		new DownLoadImageTask().execute("http://192.168.1.14:8080/maskedImg",findViewById(R.id.maskedImgView));
-		new DownLoadImageTask().execute("http://192.168.1.14:8080/chartImg",findViewById(R.id.chartImgView));
-		//new DownLoadImageTask().execute("http://192.168.1.24/tmpfs/auto.jpg",findViewById(R.id.webCamView));
-		new DownLoadSeizureDataTask().execute("http://192.168.1.14:8080/jsonData",findViewById(R.id.sdOutput));
-	    }
+    private void stopTimer() {
+	if (mTimer!=null) mTimer.cancel();
+    }
+
+    private void startTimer() {
+	/**
+*********************************************
+* The timer to update the images regularly  *
+*********************************************/
+	Toast.makeText(getApplicationContext(), 
+		       "Setting timer to "+mPref.mUpdatePeriod, 
+		       Toast.LENGTH_SHORT).show();                
+	if (mTimer!=null) mTimer.cancel();
+	final CountDownTimer mTimer = new CountDownTimer(Long.MAX_VALUE, mPref.mUpdatePeriod) {
+		@Override
+		public void onTick(long millisUntilFinished) {
+		    new DownLoadImageTask().execute("http://192.168.1.14:8080/rawImg",findViewById(R.id.rawImgView));
+		    new DownLoadImageTask().execute("http://192.168.1.14:8080/maskedImg",findViewById(R.id.maskedImgView));
+		    new DownLoadImageTask().execute("http://192.168.1.14:8080/chartImg",findViewById(R.id.chartImgView));
+		    //new DownLoadImageTask().execute("http://192.168.1.24/tmpfs/auto.jpg",findViewById(R.id.webCamView));
+		    new DownLoadSeizureDataTask().execute("http://192.168.1.14:8080/jsonData",findViewById(R.id.sdOutput));
+		}
 	    
-	    @Override
-	    public void onFinish() {
-		// don't care timer should never "finish" since Long.MAXVALUE is 200 years in the future
-	    }
-	};
-    
+		@Override
+		public void onFinish() {
+		    // don't care timer should never "finish" since Long.MAXVALUE is 200 years in the future
+		}
+	    };
+    }
 
 
 
