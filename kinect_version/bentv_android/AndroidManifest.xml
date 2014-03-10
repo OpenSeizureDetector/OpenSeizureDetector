@@ -26,12 +26,6 @@
             </intent-filter>
         </activity>
 	<activity
-	    android:name="uk.org.openseizuredetector.bentv.SettingsActivity"
-	    android:label="benTV Settings"
-	    android:parentActivityName="uk.org.openseizuredetector.bentv.MainActivity"
-	    >
-	</activity>
-	<activity
 	    android:name="uk.org.openseizuredetector.bentv.PrefActivity"
 	    android:label="benTV Settings"
 	    android:parentActivityName="uk.org.openseizuredetector.bentv.MainActivity"
