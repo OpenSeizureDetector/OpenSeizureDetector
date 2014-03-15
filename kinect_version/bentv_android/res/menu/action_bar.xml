@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" 
       >
+    <item android:id="@+id/action_background"
+          android:icon="@drawable/abc_ic_go"
+          android:title="Reset Background" 
+	  android:showAsAction="ifRoom|withText"
+	  />    
     <item android:id="@+id/action_settings"
           android:icon="@drawable/abc_ic_go"
           android:title="Settings" 

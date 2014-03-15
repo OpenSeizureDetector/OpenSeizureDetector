@@ -40,5 +40,10 @@
         android:title="Filename of the chart image File."
         android:summary=""
         android:defaultValue="chartImg.png" />
+    <EditTextPreference
+        android:key="SDResetURL"
+        android:title="URL to reset background image"
+        android:summary=""
+        android:defaultValue="saveBgImg" />
 
 </PreferenceScreen>

@@ -5,11 +5,11 @@
         <TableRow>
 	  <TextView
               android:id="@+id/sdOutput"
-	      android:text="Seizure Detector Output"
+	      android:text="Initialising - Seizure Detector Output Will Appear Here."
 	      android:layout_weight="1"
 	      android:layout_width="wrap_content"
 	      android:layout_height="wrap_content"
-	      android:layout_column="1" />
+	      android:layout_column="0" />
 	</TableRow>
 	<TableRow>
 	  <ImageView
@@ -30,6 +30,15 @@
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/chart_img" />
+	</TableRow>
+        <TableRow>
+	  <TextView
+              android:id="@+id/statusTextView"
+	      android:text="Initialising - Status messages will appear here."
+	      android:layout_weight="1"
+	      android:layout_width="wrap_content"
+	      android:layout_height="wrap_content"
+	      android:layout_column="0" />
 	</TableRow>
 <!--	<TableRow>
 	  <ImageView

@@ -6,6 +6,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnPreparedListener;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
@@ -31,11 +35,14 @@ import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.lang.Object;
 import java.util.HashMap;
 //import java.util.Map;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -54,6 +61,7 @@ public class MainActivity extends Activity {
     public String mSDRawImgFname = "rawImg";
     public String mSDMaskedImgFname = "maskedImg";
     public String mSDChartImgFname = "chartImg";
+    public String mSDResetURL = "saveBgImg";
 
     // Image update period (in ms)
     private static final int UPDATE_DELAY = 5000;
@@ -66,21 +74,17 @@ public class MainActivity extends Activity {
 					   R.xml.prefs, 
 					   false);
 	initFromSettings();
-	Toast.makeText(getApplicationContext(), 
-		       "Period="+mUpdatePeriod, 
-		       Toast.LENGTH_SHORT).show();            
 
-
-      //setContentView(R.layout.activity_main);
         setContentView(R.layout.bentv_table_layout);
 
-	findViewById(R.id.rawImgView).
-	    setOnClickListener(mGlobal_OnClickListener);
-        findViewById(R.id.maskedImgView).
-	    setOnClickListener(mGlobal_OnClickListener);
-	findViewById(R.id.chartImgView).
-	    setOnClickListener(mGlobal_OnClickListener);
-	//findViewById(R.id.webCamView).
+	playWebCamAudio();
+	
+
+	//findViewById(R.id.rawImgView).
+	//    setOnClickListener(mGlobal_OnClickListener);
+        //findViewById(R.id.maskedImgView).
+	//    setOnClickListener(mGlobal_OnClickListener);
+	//findViewById(R.id.chartImgView).
 	//    setOnClickListener(mGlobal_OnClickListener);
 
 	//SpinnerAdapter mSpinnerAdapter = ArrayAdapter.createFromResource(this, 
@@ -119,9 +123,9 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
 	Log.v("MainActivity.onStop","Stopping Timer");
-	Toast.makeText(getApplicationContext(), 
-		       "Stopping Timer", 
-		       Toast.LENGTH_SHORT).show();            
+	//Toast.makeText(getApplicationContext(), 
+	//	       "Stopping Timer", 
+	//	       Toast.LENGTH_SHORT).show();            
 	stopTimer();
     }
 
@@ -162,6 +166,35 @@ public class MainActivity extends Activity {
         }
     };
 
+
+    public void playWebCamAudio() {
+	try {
+	    MediaPlayer mediaPlayer = new MediaPlayer();
+	    
+	    mediaPlayer.setDataSource("rtsp://guest:guest@192.168.1.24/11");
+	    mediaPlayer.prepare();
+	    mediaPlayer.setOnPreparedListener(new OnPreparedListener() {
+		    public void onPrepared(MediaPlayer mp) {
+			mp.start();
+		    }
+		});
+	    mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+	} catch (IllegalArgumentException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (SecurityException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IllegalStateException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	}
+    }
+
+
     public boolean setModeSingleView() {
 	setContentView(R.layout.bentv_single_image_layout);
 	ActionBar actionBar = getActionBar();
@@ -176,7 +209,6 @@ public class MainActivity extends Activity {
 	ActionBar actionBar = getActionBar();
 	actionBar.setDisplayHomeAsUpEnabled(false);
 	return true;
-
     }
 
 
@@ -185,6 +217,9 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle presses on the action bar items
 	switch (item.getItemId()) {
+        case R.id.action_background:
+	    resetBackground();
+            return true;
         case R.id.action_settings:
 	    Intent intent = new Intent(this, PrefActivity.class);         
 	    startActivity(intent);
@@ -225,21 +260,19 @@ public class MainActivity extends Activity {
 
     private void initFromSettings() {
 	/** Initialise member variables from Android Preferences */
-	Toast.makeText(getApplicationContext(), 
-		       "initFromSettings()", 
-		       Toast.LENGTH_SHORT).show();
 	Log.v("openseizuredetector","initFromSettings()");
 	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);	
     	mAudibleAlarm = settings.getBoolean("AudibleAlarm", false);
     	mPreventSleep = settings.getBoolean("PreventSleep", true);
-
+	this.findViewById(android.R.id.content).setKeepScreenOn(mPreventSleep);
 	String periodStr = settings.getString("UpdatePeriod","1000");
     	mUpdatePeriod = Integer.parseInt(periodStr);
-	mSDBaseURL = settings.getString("SDBaseURL","http://192.168.1.14:8080/");
+	mSDBaseURL = settings.getString("SDBaseURL","http://192.168.1.14:8080");
 	mSDDataFname = settings.getString("SDDataFname","JSONData");
 	mSDRawImgFname = settings.getString("SDRawImgFname","rawImg");
 	mSDMaskedImgFname = settings.getString("SDMaskedImgFname","maskedImg");
 	mSDChartImgFname = settings.getString("SDChartImgFname","chartImg");
+	mSDResetURL = settings.getString("SDResetURL","saveBgImg");
     }
 
 
@@ -252,20 +285,17 @@ public class MainActivity extends Activity {
 *********************************************
 * The timer to update the images regularly  *
 *********************************************/
-	Toast.makeText(getApplicationContext(), 
-		       "Setting timer to "+mUpdatePeriod, 
-		       Toast.LENGTH_SHORT).show();                
 	if (mTimer!=null) mTimer.cancel();
 	Log.v("startTimer","Setting Timer to "+mUpdatePeriod+" ms");
 	final CountDownTimer mTimer = new CountDownTimer(Long.MAX_VALUE, 1000) {
 		@Override
 		public void onTick(long millisUntilFinished) {
 		    Log.v("onTick","onTick - period = "+mUpdatePeriod+" ms");
-		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDRawImgFname,findViewById(R.id.rawImgView));
-		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDMaskedImgFname,findViewById(R.id.maskedImgView));
-		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDChartImgFname,findViewById(R.id.chartImgView));
-		    //new DownLoadImageTask().execute("http://192.168.1.24/tmpfs/auto.jpg",findViewById(R.id.webCamView));
-		    new DownLoadSeizureDataTask().execute(mSDBaseURL+"/"+mSDDataFname,findViewById(R.id.sdOutput));
+		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDRawImgFname,findViewById(R.id.rawImgView),findViewById(R.id.statusTextView));
+		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDMaskedImgFname,findViewById(R.id.maskedImgView),findViewById(R.id.statusTextView));
+		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDChartImgFname,findViewById(R.id.chartImgView),findViewById(R.id.statusTextView));
+		    //new DownLoadImageTask().execute("http://192.168.1.24/tmpfs/auto.jpg",findViewById(R.id.webCamView),findViewById(R.id.statusTextView));
+		    new DownLoadSeizureDataTask().execute(mSDBaseURL+"/"+mSDDataFname,findViewById(R.id.sdOutput),findViewById(R.id.statusTextView));
 		}
 	    
 		@Override
@@ -278,13 +308,70 @@ public class MainActivity extends Activity {
     }
 
 
+    private void setBeeps(int status) {
+	ToneGenerator toneG;
+	if ( mAudibleAlarm ) {
+	    switch (status) {
+	    case 0: // ok
+		break;
+	    case 1: // warning
+		toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 50);      	
+		// 200 is duration in ms
+		toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_NETWORK_LITE, 100);
+		break;
+	    case 2: // alarm
+		toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+		toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200);
+		break;
+	    case 3: // ben not found
+		break;
+	    }
+	}
+	else {
+	    Log.v("setBeeps","Quiet Alarm");
+	}
+    }
+
+
+    public void resetBackground() {
+	/** Reset the seizure detector background image */
+	Log.v("resetBackground","resetBackground");
+	new ResetBackgroundTask().execute(mSDBaseURL+"/"+mSDResetURL,findViewById(R.id.statusTextView));
+    }
+
+    public class ResetBackgroundTask extends AsyncTask<Object, Void, String> {
+	/** The system calls this to perform work in a worker thread and
+	 * delivers it the parameters given to AsyncTask.execute() */
+	TextView statusTextView;
+	protected String doInBackground(Object... params) {
+	    statusTextView = (TextView)params[1];
+	    return loadSeizureDataFromNetwork((String)params[0]);
+	}
+    
+	/** The system calls this to perform work in the UI thread and delivers
+	 * the result from doInBackground() */
+	protected void onPostExecute(String result) {
+	    if (result!=null) {
+		statusTextView.setText("background reset");
+	    } else {
+		//Toast.makeText(getApplicationContext(), 
+		//	       "Failed to download image", 
+		//	       Toast.LENGTH_SHORT).show();                
+		statusTextView.setText("Failed to reset background");
+	    }
+	}
+    }
+ 
+
+
 
     public class DownLoadSeizureDataTask extends AsyncTask<Object, Void, String> {
 	/** The system calls this to perform work in a worker thread and
 	 * delivers it the parameters given to AsyncTask.execute() */
-	TextView targetTextView;
+	TextView targetTextView, statusTextView;
 	protected String doInBackground(Object... params) {
 	    targetTextView = (TextView)params[1];
+	    statusTextView = (TextView)params[2];
 	    return loadSeizureDataFromNetwork((String)params[0]);
 	}
     
@@ -303,31 +390,40 @@ public class MainActivity extends Activity {
 		    switch(sdStatus) {
 		    case 0:   // ok
 			bgColour = 0xff0000ff;
+			setBeeps(0);
 			break;
-		    case 1:
+		    case 1:  // warning
 			bgColour = 0xffaaaa00;
+			setBeeps(1);
 			break;
-		    case 2:
+		    case 2:  // alarm
 			bgColour = 0xffff0000;
+			setBeeps(2);
 			break;
-		    case 3:
+		    case 3:  // not found
 			bgColour = 0xffaaaaaa;
+			setBeeps(3);
 			break;
 		    default:
 			bgColour = 0xff000000;
 		    }
 		    targetTextView.setBackgroundColor(bgColour);
-
+		    Calendar c = Calendar.getInstance();
+		    SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
+		    String formattedDate = df.format(c.getTime());
+		    statusTextView.setText("Updated at "+formattedDate);
 		}
 		catch(JSONException ex) {
 		    ex.printStackTrace();
 		    targetTextView.setText("Failed to Parse Seizure Data");
+		    statusTextView.setText("Failed to Parse Seizure Data");
 		}
-
 	    } else {
-		Toast.makeText(getApplicationContext(), 
-			       "Failed to download seizure data", 
-			       Toast.LENGTH_SHORT).show();                
+		//Toast.makeText(getApplicationContext(), 
+		//	       "Failed to download seizure data", 
+		//	       Toast.LENGTH_SHORT).show();                
+		targetTextView.setText("Failed to download seizure data");
+		statusTextView.setText("Failed to download seizure data");
 	    }
 	}
     }
@@ -357,8 +453,10 @@ public class MainActivity extends Activity {
 	/** The system calls this to perform work in a worker thread and
 	 * delivers it the parameters given to AsyncTask.execute() */
 	ImageView targetImgView;
+	TextView statusTextView;
 	protected Bitmap doInBackground(Object... params) {
 	    targetImgView = (ImageView)params[1];
+	    statusTextView = (TextView)params[2];
 	    return loadImageFromNetwork((String)params[0]);
 	}
     
@@ -370,10 +468,12 @@ public class MainActivity extends Activity {
 		//Toast.makeText(getApplicationContext(), 
 		//	       "Setting Bitmap", 
 		//	       Toast.LENGTH_SHORT).show();                
+		statusTextView.setText("");
 	    } else {
-		Toast.makeText(getApplicationContext(), 
-			       "Failed to download image", 
-			       Toast.LENGTH_SHORT).show();                
+		//Toast.makeText(getApplicationContext(), 
+		//	       "Failed to download image", 
+		//	       Toast.LENGTH_SHORT).show();                
+		statusTextView.setText("Failed to download image");
 	    }
 	}
     }
