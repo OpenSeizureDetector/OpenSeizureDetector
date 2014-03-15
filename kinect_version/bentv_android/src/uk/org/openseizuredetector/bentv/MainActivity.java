@@ -134,13 +134,13 @@ public class MainActivity extends Activity {
     final OnClickListener mGlobal_OnClickListener = new OnClickListener() {
         public void onClick(final View v) {
             switch(v.getId()) {
-                case R.id.rawImgView:
+                //case R.id.rawImgView:
                     //Inform the user the button2 has been clicked
-                    Toast.makeText(getApplicationContext(), 
-				   "rawImgView clicked.", 
-				   Toast.LENGTH_SHORT).show();                
-		    setModeSingleView();
-                break;
+                //    Toast.makeText(getApplicationContext(), 
+		//		   "rawImgView clicked.", 
+		//		   Toast.LENGTH_SHORT).show();                
+		//  setModeSingleView();
+                //break;
                 case R.id.maskedImgView:
                     //Inform the user the button2 has been clicked
                     Toast.makeText(getApplicationContext(), 
@@ -291,7 +291,7 @@ public class MainActivity extends Activity {
 		@Override
 		public void onTick(long millisUntilFinished) {
 		    Log.v("onTick","onTick - period = "+mUpdatePeriod+" ms");
-		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDRawImgFname,findViewById(R.id.rawImgView),findViewById(R.id.statusTextView));
+		    // new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDRawImgFname,findViewById(R.id.rawImgView),findViewById(R.id.statusTextView));
 		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDMaskedImgFname,findViewById(R.id.maskedImgView),findViewById(R.id.statusTextView));
 		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDChartImgFname,findViewById(R.id.chartImgView),findViewById(R.id.statusTextView));
 		    //new DownLoadImageTask().execute("http://192.168.1.24/tmpfs/auto.jpg",findViewById(R.id.webCamView),findViewById(R.id.statusTextView));

@@ -12,12 +12,13 @@
 	      android:layout_column="0" />
 	</TableRow>
 	<TableRow>
-	  <ImageView
+<!--	  <ImageView
               android:id="@+id/rawImgView"
 	      android:layout_weight="1"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
               android:src="@drawable/raw_img" />
+-->
 	  <ImageView
               android:id="@+id/maskedImgView"
 	      android:layout_weight="1"
