@@ -24,7 +24,7 @@
         android:key="SDDataFname"
         android:title="Filename of Seizure Detector JSON Data File."
         android:summary=""
-        android:defaultValue="JSONdata" />
+        android:defaultValue="jsonData" />
     <EditTextPreference
         android:key="SDRawImgFname"
         android:title="Filename of the raw image File."

@@ -3,6 +3,7 @@ package uk.org.openseizuredetector.bentv;
 import android.app.Activity;
 import android.app.ActionBar;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -43,8 +44,17 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 public class MainActivity extends Activity {
-    SettingsData mPref;
     CountDownTimer mTimer;
+
+    public boolean mAudibleAlarm = false;
+    public boolean mPreventSleep = true;
+    public int mUpdatePeriod = 500;
+    public String mSDBaseURL = "http://192.168.1.14:8080";
+    public String mSDDataFname = "jsonData";
+    public String mSDRawImgFname = "rawImg";
+    public String mSDMaskedImgFname = "maskedImg";
+    public String mSDChartImgFname = "chartImg";
+
     // Image update period (in ms)
     private static final int UPDATE_DELAY = 5000;
 
@@ -55,9 +65,9 @@ public class MainActivity extends Activity {
 	PreferenceManager.setDefaultValues(this, 
 					   R.xml.prefs, 
 					   false);
-	mPref = new SettingsData(this.getApplicationContext());
+	initFromSettings();
 	Toast.makeText(getApplicationContext(), 
-		       "Period="+mPref.mUpdatePeriod, 
+		       "Period="+mUpdatePeriod, 
 		       Toast.LENGTH_SHORT).show();            
 
 
@@ -101,7 +111,7 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
 	Log.v("MainActivity.onStart","Starting Timer");
-        //timer.start();
+	initFromSettings();
 	startTimer();
     }
 
@@ -170,27 +180,13 @@ public class MainActivity extends Activity {
     }
 
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-	super.onActivityResult(requestCode,resultCode,data);
-	Log.v("onActivityResult","requestCode="+requestCode+" resultCode="+resultCode);
-	HashMap<String,Object> map = (HashMap<String,Object>)getIntent().getSerializableExtra("Prefs");
-	mPref.setMap(map);
-	mPref.savePrefs();
-	Toast.makeText(getApplicationContext(), 
-		       "onActivityResult - period="+mPref.mUpdatePeriod, 
-		       Toast.LENGTH_SHORT).show();                }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle presses on the action bar items
 	switch (item.getItemId()) {
         case R.id.action_settings:
-	    //Intent intent = new Intent(this, SettingsActivity.class);         
-	    //intent.putExtra("Prefs",mPref.getMap());
-	    //startActivityForResult(intent,1);
 	    Intent intent = new Intent(this, PrefActivity.class);         
-	    //intent.putExtra("Prefs",mPref.getMap());
 	    startActivity(intent);
             return true;
         case R.id.movecamera_1:
@@ -227,6 +223,26 @@ public class MainActivity extends Activity {
     }
 
 
+    private void initFromSettings() {
+	/** Initialise member variables from Android Preferences */
+	Toast.makeText(getApplicationContext(), 
+		       "initFromSettings()", 
+		       Toast.LENGTH_SHORT).show();
+	Log.v("openseizuredetector","initFromSettings()");
+	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);	
+    	mAudibleAlarm = settings.getBoolean("AudibleAlarm", false);
+    	mPreventSleep = settings.getBoolean("PreventSleep", true);
+
+	String periodStr = settings.getString("UpdatePeriod","1000");
+    	mUpdatePeriod = Integer.parseInt(periodStr);
+	mSDBaseURL = settings.getString("SDBaseURL","http://192.168.1.14:8080/");
+	mSDDataFname = settings.getString("SDDataFname","JSONData");
+	mSDRawImgFname = settings.getString("SDRawImgFname","rawImg");
+	mSDMaskedImgFname = settings.getString("SDMaskedImgFname","maskedImg");
+	mSDChartImgFname = settings.getString("SDChartImgFname","chartImg");
+    }
+
+
     private void stopTimer() {
 	if (mTimer!=null) mTimer.cancel();
     }
@@ -237,17 +253,19 @@ public class MainActivity extends Activity {
 * The timer to update the images regularly  *
 *********************************************/
 	Toast.makeText(getApplicationContext(), 
-		       "Setting timer to "+mPref.mUpdatePeriod, 
+		       "Setting timer to "+mUpdatePeriod, 
 		       Toast.LENGTH_SHORT).show();                
 	if (mTimer!=null) mTimer.cancel();
-	final CountDownTimer mTimer = new CountDownTimer(Long.MAX_VALUE, mPref.mUpdatePeriod) {
+	Log.v("startTimer","Setting Timer to "+mUpdatePeriod+" ms");
+	final CountDownTimer mTimer = new CountDownTimer(Long.MAX_VALUE, 1000) {
 		@Override
 		public void onTick(long millisUntilFinished) {
-		    new DownLoadImageTask().execute("http://192.168.1.14:8080/rawImg",findViewById(R.id.rawImgView));
-		    new DownLoadImageTask().execute("http://192.168.1.14:8080/maskedImg",findViewById(R.id.maskedImgView));
-		    new DownLoadImageTask().execute("http://192.168.1.14:8080/chartImg",findViewById(R.id.chartImgView));
+		    Log.v("onTick","onTick - period = "+mUpdatePeriod+" ms");
+		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDRawImgFname,findViewById(R.id.rawImgView));
+		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDMaskedImgFname,findViewById(R.id.maskedImgView));
+		    new DownLoadImageTask().execute(mSDBaseURL+"/"+mSDChartImgFname,findViewById(R.id.chartImgView));
 		    //new DownLoadImageTask().execute("http://192.168.1.24/tmpfs/auto.jpg",findViewById(R.id.webCamView));
-		    new DownLoadSeizureDataTask().execute("http://192.168.1.14:8080/jsonData",findViewById(R.id.sdOutput));
+		    new DownLoadSeizureDataTask().execute(mSDBaseURL+"/"+mSDDataFname,findViewById(R.id.sdOutput));
 		}
 	    
 		@Override
@@ -255,6 +273,8 @@ public class MainActivity extends Activity {
 		    // don't care timer should never "finish" since Long.MAXVALUE is 200 years in the future
 		}
 	    };
+	Log.v("startTime","mTimer = "+mTimer);
+	mTimer.start();
     }
 
 
@@ -325,6 +345,7 @@ public class MainActivity extends Activity {
 	    return response;
 	} catch (Exception e) {
 	    e.printStackTrace();
+	    Log.v("loadSeizureDataFromNetwork","ERROR");
 	    return null;
 	}
     }   
