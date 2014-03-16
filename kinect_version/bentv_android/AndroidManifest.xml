@@ -31,6 +31,12 @@
 	    android:parentActivityName="uk.org.openseizuredetector.bentv.MainActivity"
 	    >
 	</activity>
+	<activity
+	    android:name="uk.org.openseizuredetector.bentv.WebCamActivity"
+	    android:label="WebCam Activity"
+	    android:parentActivityName="uk.org.openseizuredetector.bentv.MainActivity"
+	    >
+	</activity>
     </application>
 
 </manifest>

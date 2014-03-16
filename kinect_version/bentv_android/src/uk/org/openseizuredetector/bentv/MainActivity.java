@@ -216,12 +216,17 @@ public class MainActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle presses on the action bar items
+	Intent intent;
 	switch (item.getItemId()) {
         case R.id.action_background:
 	    resetBackground();
             return true;
+        case R.id.action_webcam:
+	    intent = new Intent(this, WebCamActivity.class);         
+	    startActivity(intent);
+            return true;
         case R.id.action_settings:
-	    Intent intent = new Intent(this, PrefActivity.class);         
+	    intent = new Intent(this, PrefActivity.class);         
 	    startActivity(intent);
             return true;
         case R.id.movecamera_1:
