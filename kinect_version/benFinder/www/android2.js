@@ -26,11 +26,19 @@ BF.images = {0:["raw","/rawImg","#rawImg"],
 	     3:["webcam","http://guest:guest@192.168.1.24/tmpfs/auto.jpg","#webCamImg"]
 	     };
 
+BF.statusStrs=['OK','Warning','ALARM!!!!','Not Found']
+
+
 BF.timerPeriod = 2000;  // ms
 BF.timerID = -1;
 
+BF.audibleAlarm = true;
+
 
 $(document).ready(function() {
+    w = window.open(BF.images[3][1],null);
+
+
     BF.mode = 0;  // Application mode.
     BF.imgNo = 0; // Image to display (in single image mode)
     BF.setMode(0,0);  // Set to multi-image mode first.
@@ -82,7 +90,10 @@ BF.setMode = function(mode,imgNo) {
 
 
 BF.updateImages = function() {
-    // Update the images by reloading them from the network.
+    // Update the images and seizure detector output by reloading them 
+    // from the network.
+
+    BF.getSeizureData();
     // Which images to update depends on the application mode.
     if (BF.mode == 0) {
 	//alert("mode 0");
@@ -95,6 +106,47 @@ BF.updateImages = function() {
 	//alert("mode 1 - BF.imgNo="+BF.imgNo);
 	BF.updateImage(BF.imgNo,"#imgDiv");	
     }
+};
+
+BF.getSeizureData = function() {
+    $.ajax({url:"/jsonData"}).done(function(dataStr) {
+	data = JSON.parse(dataStr);
+	$("#summaryData").html(
+		"Rate="+data['rate']+" bpm"
+	    + " - " + BF.statusStrs[data['status']]+".");
+	$("#summaryData").css("font-size","xx-large");
+	$("#summaryData").css("font-weight","bold");
+
+	switch (data['status']) {
+	case 0:  // ok
+	    $("#summaryData").css("background-color","blue");
+	    $("#summaryData").css("color","white");
+	    break;
+	case 1:  // warning
+	    $("#summaryData").css("background-color","orange");
+	    $("#summaryData").css("color","black");
+	    break;
+	case 2: // alarm
+	    $("#summaryData").css("background-color","red");	    
+	    $("#summaryData").css("color","white");
+	    if (BF.audibleAlarm) jBeep();
+	    break;
+	case 3: // not found
+	    $("#summaryData").css("background-color","gray");	    	    
+	    $("#summaryData").css("color","black");
+	    break;
+	    
+	default:
+	}
+
+	
+    });
+    //            "Summary Data <br>"
+    //		+"Status="+data['status']+" - "+
+    //		BF.statusStrs[data['status']]+"<br>"
+    //		+"Rate="+data['rate']+" bpm <br>"
+    //		+"Brightness="+data['bri']+"<br>"
+    //		+"Area="+data['area']);
 };
 
 BF.updateImage = function(imgNo,imgID) {
