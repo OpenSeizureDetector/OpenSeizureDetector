@@ -27,13 +27,17 @@
       <div id="summaryData">Summary Data </div>
       <div class="newline">
 	<div class="imcap">
-	  <a href="#singleImg" data-transition="slide">
+	  <a class="rawImgLink"
+	     href="#singleImg" 
+	     data-transition="slide">
 	    <b>Raw Image</b><br>
 	    <img id="rawImg" src="/img/raw_img.png" alt="raw image" width="320" height="240">
 	  </a>
 	</div>
 	<div class="imcap">
-	  <a href="#singleImg?img=masked" data-transition="slide">
+	  <a class="maskedImgLink"
+	     href="#singleImg?img=masked" 
+	     data-transition="slide">
 	    <b>Processed Image</b><br>
 	    <img id="maskedImg" src="/img/masked_img.png" alt="masked image" width="320" height="240">
 	  </a>
@@ -41,13 +45,17 @@
       </div>
       <div class="newline">
 	<div class="imcap">
-	  <a href="#singleImg?img=chart" data-transition="slide">
+	  <a class="chartImgLink"
+	     href="#singleImg?img=chart" 
+	     data-transition="slide">
 	    <b>Brightness Time Series</b><br>
 	    <img id="chartImg" src="/img/chart_img.png" alt="chart image" width="300" height="240">
 	  </a>
 	</div>
 	<div class="imcap">
-	  <a href="#singleImg?img=webcam" data-transition="slide">
+	  <a class="webCamLink" 
+	     href="#singleImg?img=webcam" 
+	     data-transition="slide">
 	    <b>WebCam</b><br>
 	    <img id="webCamImg" src="http://guest:guest@192.168.1.24/tmpfs/auto.jpg" alt="webcam image" width="300" height="240">
 	  </a>
@@ -67,9 +75,9 @@
     
     <div data-role=content>
       <p> Single Image </p>
-      <a href="#home" data-transition="slide">Home</a>
+      <a class="homeLink" href="#home" data-transition="slide">Home</a>
 	<div class="imcap">
-	  <img id="imgDiv" src="/img/chart_img.png" alt="chart image" width="300" height="240">
+	  <img id="imgDiv" src="/img/chart_img.png" alt="chart image">
 	</div>
     </div>
   </div>
@@ -83,10 +91,10 @@
     <div data-role=content>
       <ul data-role=listview>
 	<li data-role=list-divider>Select Image to View</li>
-	<li><a href="#singleImg?raw" data-transition="slide">Raw</a></li>
-	<li><a href="#singleImg?masked" data-transition="slide">Masked</a></li>
-	<li><a href="#singleImg?chart" data-transition="slide">Chart</a></li>
-	<li><a href="#singleImg?webcam" data-transition="slide">WebCam</a></li>
+	<li><a class="rawImgLink" href="#singleImg?raw" data-transition="slide">Raw</a></li>
+	<li><a class="maskedImgLink" href="#singleImg?masked" data-transition="slide">Masked</a></li>
+	<li><a class="chartImgLink" href="#singleImg?chart" data-transition="slide">Chart</a></li>
+	<li><a class="webCamLink" href="#singleImg?webcam" data-transition="slide">WebCam</a></li>
 	<li data-role=list-divider>Utilities</li>
 	<li><a href="" data-transition="slide">Reset Background Image</a></li>
 	<li><a href="" data-transition="slide">Reboot WebCam</a></li>
