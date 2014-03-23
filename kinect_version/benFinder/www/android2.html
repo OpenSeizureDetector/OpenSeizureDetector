@@ -1,0 +1,100 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JQueryMobile version</title>
+<link rel="shortcut icon" href="lib/demos/favicon.ico">
+<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
+<script src="js/jquery.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+
+<link rel="stylesheet" href="android.css">
+<script src="android2.js"></script>
+
+
+</head>
+
+<body>
+  <!--****************************************************-->
+  <div data-role=page id="home">
+    <div data-role=header data-add-back-btn="true">
+      <h1>benFinder Home</h1>
+      <a href="#imageChooser" data-role="button" data-icon="gear"
+         data-transition="slide"
+         data-iconpos="notext"  class="ui-btn-right">home</a>
+    </div>
+    
+    <div data-role=content>
+      <div id="summaryData">Summary Data </div>
+      <div class="newline">
+	<div class="imcap">
+	  <a href="#singleImg" data-transition="slide">
+	    <b>Raw Image</b><br>
+	    <img id="rawImg" src="/img/raw_img.png" alt="raw image" width="320" height="240">
+	  </a>
+	</div>
+	<div class="imcap">
+	  <a href="#singleImg?img=masked" data-transition="slide">
+	    <b>Processed Image</b><br>
+	    <img id="maskedImg" src="/img/masked_img.png" alt="masked image" width="320" height="240">
+	  </a>
+	</div>
+      </div>
+      <div class="newline">
+	<div class="imcap">
+	  <a href="#singleImg?img=chart" data-transition="slide">
+	    <b>Brightness Time Series</b><br>
+	    <img id="chartImg" src="/img/chart_img.png" alt="chart image" width="300" height="240">
+	  </a>
+	</div>
+	<div class="imcap">
+	  <a href="#singleImg?img=webcam" data-transition="slide">
+	    <b>WebCam</b><br>
+	    <img id="webCamImg" src="http://guest:guest@192.168.1.24/tmpfs/auto.jpg" alt="webcam image" width="300" height="240">
+	  </a>
+	</div>
+	<div class="newline">
+	  <a href="/saveBgImg"> Save Background Image Now</a>
+	</div>	
+      </div>
+    </div>
+  </div>
+
+  <!--****************************************************-->
+  <div data-role=page id="singleImg">
+    <div data-role=header data-add-back-btn="true">
+      <h1>Single Image View</h1>
+    </div>
+    
+    <div data-role=content>
+      <p> Single Image </p>
+      <a href="#home" data-transition="slide">Home</a>
+	<div class="imcap">
+	  <img id="imgDiv" src="/img/chart_img.png" alt="chart image" width="300" height="240">
+	</div>
+    </div>
+  </div>
+
+  <!--****************************************************-->
+  <div data-role=page id="imageChooser">
+    <div data-role=header data-add-back-btn="true">
+      <h1>Image Chooser</h1>
+    </div>
+    
+    <div data-role=content>
+      <ul data-role=listview>
+	<li data-role=list-divider>Select Image to View</li>
+	<li><a href="#singleImg?raw" data-transition="slide">Raw</a></li>
+	<li><a href="#singleImg?masked" data-transition="slide">Masked</a></li>
+	<li><a href="#singleImg?chart" data-transition="slide">Chart</a></li>
+	<li><a href="#singleImg?webcam" data-transition="slide">WebCam</a></li>
+	<li data-role=list-divider>Utilities</li>
+	<li><a href="" data-transition="slide">Reset Background Image</a></li>
+	<li><a href="" data-transition="slide">Reboot WebCam</a></li>
+      </ul>
+    </div>
+  </div>
+
+
+
+</body>
+</html>
