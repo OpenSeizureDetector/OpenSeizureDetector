@@ -1,4 +1,7 @@
 [benFinder]
+detection_mode=1   ; mode 1 is ROI mode (0=background subtraction).
+roi_nx=4           ; number of regions of interest in 'x' direction.
+roi_ny=4           ; number of regions of interest in 'y' direction.
 debug=True
 working_directory=/home/graham/benFinder
 output_directory=/home/disk2/www/benFinder  ; directory for output videos & time series.

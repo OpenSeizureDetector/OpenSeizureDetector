@@ -41,7 +41,7 @@
  
 __appname__ = "benFinder"
 __author__  = "Graham Jones"
-__version__ = "0.1"
+__version__ = "0.2"
 __license__ = "GNU GPL 3.0 or later"
 import os, time
 import cv2
@@ -65,6 +65,13 @@ class BenFinder(object):
     ALARM_STATUS_NOT_FOUND = 3 # Benjamin not found in image 
                                # (area below config area_threshold parameter)
 
+    DETECTION_MODE_BACKSUB = 0 # The original detection mode - background 
+                               # subtraction and pick largest area in resulting
+                               # image.
+    DETECTION_MODE_ROI = 1 # New mode that divides the image into several 
+                           # regions of interest and analyses each ROI to 
+                           # look for movement.
+
     def __init__(self,save=False, inFile = None):
         print "benFinder.__init__()"
         print os.path.realpath(__file__)
@@ -75,6 +82,13 @@ class BenFinder(object):
 
         self.debug = self.cfg.getConfigBool("debug")
         if (self.debug): print "Debug Mode"
+
+        self.detMode = self.cfg.getConfigInt("detection_mode");
+        self.roi_nx = self.cfg.getConfigInt("roi_nx");
+        self.roi_ny = self.cfg.getConfigInt("roi_ny");
+        self.nRoi = self.roi_nx * self.roi_ny
+        if (self.debug): print "Detection Mode = %d.  roi_nx=%d, roi_ny=%d\n" \
+           % (self.detMode,self.roi_nx,self.roi_ny)
 
         self._wkdir = self.cfg.getConfigStr("working_directory")
         if (self.debug): print "working_directory=%s\n" % self._wkdir
@@ -93,7 +107,7 @@ class BenFinder(object):
             device, None, True, inFile=inFile)
         self._captureManager.channel = depth.CV_CAP_OPENNI_DEPTH_MAP
 
-        # If we are runnign from a file, use the first frame as the
+        # If we are running from a file, use the first frame as the
         # background image.
         if (inFile):
             self.saveBgImg()
@@ -106,7 +120,10 @@ class BenFinder(object):
             self.loadBgImg()
             self.autoBackgroundImg = None
             self._status = self.ALARM_STATUS_OK
-            self._ts = TimeSeries(tslen=self.cfg.getConfigInt("timeseries_length"))
+            # Make an array of timeseries - one for each region of interest.
+            self._tsArr = []
+            for n in range(0,self.nRoi):
+                self._tsArr.append(TimeSeries(tslen=self.cfg.getConfigInt("timeseries_length")))
             self._frameCount = 0
             self._outputFrameCount = 0
             self._nPeaks = 0
@@ -138,6 +155,7 @@ class BenFinder(object):
                 if (self.autoBackgroundImg == None):
                     self.autoBackgroundImg = numpy.float32(frame)
                 rawFrame = frame.copy()
+
                 # First work out the region of interest by 
                 #    subtracting the fixed background image 
                 #    to create a mask.
@@ -155,21 +173,25 @@ class BenFinder(object):
                                          alpha=1.0)
                 # Subtract the background from the frame image
                 cv2.absdiff(frame,bg,frame)
-                # Scale the difference image to make it more sensitive
-                # to changes.
-                cv2.convertScaleAbs(frame,frame,alpha=100)
-                # Apply the mask so we only see the test subject.
-                frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
 
-                if (maskArea <= self.cfg.getConfigInt('area_threshold')):
-                    bri=(0,0,0)
-                else:
-                    # Calculate the brightness of the test subject.
-                    bri = filters.getMean(frame,benMask)
+                if (self.detMode == DETECTION_MODE_BACKSUB):
+                    # Scale the difference image to make it more sensitive
+                    # to changes.
+                    cv2.convertScaleAbs(frame,frame,alpha=100)
+                    # Apply the mask so we only see the test subject.
+                    frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
 
-                # Add the brightness to the time series ready for analysis.
-                self._ts.addSamp(bri[0])
-                self._ts.addImg(rawFrame)
+                    if (maskArea <= self.cfg.getConfigInt('area_threshold')):
+                        bri=(0,0,0)
+                    else:
+                        # Calculate the brightness of the test subject.
+                        bri = filters.getMean(frame,benMask)
+
+                    # Add the brightness to the time series ready for analysis.
+                    self._tsArr[0].addSamp(bri[0])
+                    self._tsArr[0].addImg(rawFrame)
+                elif (self.detMode == DETECTION_MODE_ROI):
+
 
                 # Write timeseries to a file every 'output_framecount' frames.
                 if (self._outputFrameCount >= self.cfg.getConfigInt('output_framecount')):
