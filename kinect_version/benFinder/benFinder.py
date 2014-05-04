@@ -162,8 +162,8 @@ class BenFinder(object):
                 #print frame
                 #print self._background_depth_img
                 absDiff = cv2.absdiff(frame,self._background_depth_img)
-                benMask,maskArea = filters.getBenMask(absDiff,8)
 
+                # Calculate the weighted average of all the images.
                 cv2.accumulateWeighted(frame,
                                        self.autoBackgroundImg,0.05)
                 # Convert the background image into the same format
@@ -173,11 +173,13 @@ class BenFinder(object):
                                          alpha=1.0)
                 # Subtract the background from the frame image
                 cv2.absdiff(frame,bg,frame)
+                # Scale the difference image to make it more sensitive
+                # to changes.
+                cv2.convertScaleAbs(frame,frame,alpha=100)
 
-                if (self.detMode == DETECTION_MODE_BACKSUB):
-                    # Scale the difference image to make it more sensitive
-                    # to changes.
-                    cv2.convertScaleAbs(frame,frame,alpha=100)
+                if (self.detMode == self.DETECTION_MODE_BACKSUB):
+                    # Get a mask for the region of interest to use
+                    benMask,maskArea = filters.getBenMask(absDiff,8)
                     # Apply the mask so we only see the test subject.
                     frame = cv2.multiply(frame,benMask,dst=frame,dtype=-1)
 
@@ -190,16 +192,34 @@ class BenFinder(object):
                     # Add the brightness to the time series ready for analysis.
                     self._tsArr[0].addSamp(bri[0])
                     self._tsArr[0].addImg(rawFrame)
-                elif (self.detMode == DETECTION_MODE_ROI):
+                elif (self.detMode == self.DETECTION_MODE_ROI):
+                    # calculate dimensinos of the ROIs.
+                    h,w = frame.shape
+                    maskArea = h*w
+                    dh = h/self.roi_ny
+                    dw = w/self.roi_nx
+                    # Loop through each region of interest.
+                    for y in range(0,self.roi_ny):
+                        for x in range(0,self.roi_nx):
+                            roiNo = y*self.roi_nx+x
+                            print "x=%d,y=%d,w=%d,h=%d\n" % (x,y,w,h)
+                            #img = img[c1:c1+25,r1:r1+25]
+                            roiImg = frame[x*dw:x*dw+dw,y*dh:y*dh+dh]
+                            bri = cv2.mean(roiImg)
+                            print "x=%d,y=%d,w=%d,h=%d, bri=%d\n" % (x,y,w,h,bri[0])
+                            # Add the brightness to the time series ready for analysis.
+                            self._tsArr[roiNo].addSamp(bri[0])
+                            self._tsArr[roiNo].addImg(roiImg)
 
 
                 # Write timeseries to a file every 'output_framecount' frames.
                 if (self._outputFrameCount >= self.cfg.getConfigInt('output_framecount')):
+                    if (self.detMode == self.DETECTION_MODE_BACKSUB):
                     # Write timeseries to file
-                    self._ts.writeToFile("%s/%s" % \
-                        ( self.cfg.getConfigStr('output_directory'),
-                          self.cfg.getConfigStr('ts_fname')
-                      ))
+                        self._tsArr[0].writeToFile("%s/%s" % \
+                            ( self.cfg.getConfigStr('output_directory'),
+                              self.cfg.getConfigStr('ts_fname')
+                                           ))
                     self._outputFrameCount = 0
                 else:
                     self._outputFrameCount = self._outputFrameCount + 1
@@ -211,42 +231,43 @@ class BenFinder(object):
                 if (self._frameCount < self.cfg.getConfigInt('analysis_framecount')):
                     self._frameCount = self._frameCount +1
                 else:
-                    # Look for peaks in the brightness (=movement).
-                    self._nPeaks,self._ts_time,self._rate = self._ts.findPeaks()
-                    #print "%d peaks in %3.2f sec = %3.1f bpm" % \
-                    #    (nPeaks,ts_time,rate)
+                    if (self.detMode == self.DETECTION_MODE_BACKSUB):
+                        # Look for peaks in the brightness (=movement).
+                        self._nPeaks,self._ts_time,self._rate = self._tsArr[0].findPeaks()
+                        #print "%d peaks in %3.2f sec = %3.1f bpm" % \
+                            #    (nPeaks,ts_time,rate)
 
-                    oldStatus = self._status
-                    if (maskArea > self.cfg.getConfigInt('area_threshold')):
-                        # Check for alarm levels
-                        if (self._rate > self.cfg.getConfigInt(
-                                "rate_warn")):
-                            self._status= self.ALARM_STATUS_OK
-                        elif (self._rate > self.cfg.getConfigInt(
-                                "rate_alarm")):
-                            self._status= self.ALARM_STATUS_WARN
+                        oldStatus = self._status
+                        if (maskArea > self.cfg.getConfigInt('area_threshold')):
+                            # Check for alarm levels
+                            if (self._rate > self.cfg.getConfigInt(
+                                    "rate_warn")):
+                                self._status= self.ALARM_STATUS_OK
+                            elif (self._rate > self.cfg.getConfigInt(
+                                    "rate_alarm")):
+                                self._status= self.ALARM_STATUS_WARN
+                            else:
+                                self._status= self.ALARM_STATUS_FULL
                         else:
-                            self._status= self.ALARM_STATUS_FULL
-                    else:
-                        self._status = self.ALARM_STATUS_NOT_FOUND
+                            self._status = self.ALARM_STATUS_NOT_FOUND
 
-
-                    if (oldStatus == self.ALARM_STATUS_OK and
-                        self._status == self.ALARM_STATUS_WARN) or \
-                        (oldStatus == self.ALARM_STATUS_WARN and 
-                         self._status == self.ALARM_STATUS_FULL):
-                                # Write timeseries to file
-                                self._ts.writeToFile("%s/%s" % \
-                                    ( self.cfg.getConfigStr('output_directory'),
-                                      self.cfg.getConfigStr('alarm_ts_fname')
-                                  ),bgImg=self._background_depth_img)
+                        if (oldStatus == self.ALARM_STATUS_OK and
+                            self._status == self.ALARM_STATUS_WARN) or \
+                            (oldStatus == self.ALARM_STATUS_WARN and 
+                             self._status == self.ALARM_STATUS_FULL):
+                                    # Write timeseries to file
+                                    self._tsArr[0].writeToFile("%s/%s" % \
+                                        ( self.cfg.getConfigStr('output_directory'),
+                                          self.cfg.getConfigStr('alarm_ts_fname')
+                                      ),bgImg=self._background_depth_img)
                         
 
                     # Collect the analysis results together and send them
                     # to the web server.
                     resultsDict = {}
                     resultsDict['fps'] = "%3.0f" % self.fps
-                    resultsDict['bri'] = "%4.0f" % self._ts.mean
+                    #FIXME - needs modifying for ROI mode.
+                    resultsDict['bri'] = "%4.0f" % self._tsArr[0].mean
                     resultsDict['area'] = "%6.0f" % maskArea
                     resultsDict['nPeaks'] = "%d" % self._nPeaks
                     resultsDict['ts_time'] = self._ts_time
@@ -264,7 +285,7 @@ class BenFinder(object):
                                      "benFinder_alarms.log"))
                     # Plot the graph of brightness, and save the images
                     # to disk.
-                    self._ts.plotRawData(
+                    self._tsArr[0].plotRawData(
                         file=True,
                         fname="%s/%s" % \
                         (self._tmpdir,self.cfg.getConfigStr("chart_fname")))
