@@ -4,10 +4,21 @@
 <style>
 .imcap {float:left}
 .newline {clear:both}
+ul {list-style-type:none;}
+li {display:inline;}
 </style>
 </head>
 <body>
   <h1> BenFinder - Breathing Detection using Kinect</h1>
+  <div class="newline">
+    <ul>
+      <li><a href="/saveBgImg"> Save Background Image Now</a></li>
+      <li><a href="/moveCamera?pos=1">Camera Position 1</a></li>
+      <li><a href="/moveCamera?pos=2">Camera Position 2</a></li>
+      <li><a href="/moveCamera?pos=3">Camera Position 3</a></li>
+      <li><a href="/moveCamera?pos=4">Camera Position 4</a></li>
+    </ul>
+  </div>
   <div class="newline">
     <div class="imcap">
       <a href="/rawImg">
@@ -30,9 +41,6 @@
       </a>
     </div>
     <div style="font-size:250%;" id="summaryData">Summary Data </div>
-  </div>
-  <div class="newline">
-    <a href="/saveBgImg"> Save Background Image Now</a>
   </div>
 
 <!-- ---------------------------------------------- -->

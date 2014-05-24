@@ -34,6 +34,8 @@ import json
 import bottle
 #from bottle import route
 from threading import Thread
+import httplib2                     # Needed to communicate with camera
+
 
 # This trick is taken from http://stackoverflow.com/questions/8725605/
 #               bottle-framework-and-oop-using-method-instead-of-function
@@ -113,6 +115,24 @@ class benWebServer():
         fname = self._backgroundImgFname
         return bottle.static_file(fname,root='/')
 
+    def moveCamera(self):
+        retStr="moveCamera:"
+        pos=int(bottle.request.query.pos)
+        h = httplib2.Http(".cache")
+        retStr = "%s, uname=%s, passwd=%s" % (retStr,
+                                              self._bf.cfg.getConfigStr('camuname'), 
+                                              self._bf.cfg.getConfigStr('campasswd'))
+        h.add_credentials(self._bf.cfg.getConfigStr('camuname'), 
+                          self._bf.cfg.getConfigStr('campasswd'))
+        resp, content = h.request("%s/%s%d" % (self._bf.cfg.getConfigStr('camaddr'),
+                                               self._bf.cfg.getConfigStr('cammoveurl'),
+                                               pos),"GET")
+        retStr = "%s \nMoved to Preset %d,\nContent=%s" % (retStr,pos,content)
+        bottle.redirect("/")
+        return retStr
+
+
+
     def staticFiles(self,filepath):
         """ Used to serve the static files from the /static path"""
         print filepath
@@ -141,3 +161,4 @@ def setRoutes(app):
     bottle.route("/maskedImg")(app.getMaskedImg)
     bottle.route("/saveBgImg")(app.saveBgImg)
     bottle.route("/chartImg")(app.getChartImg)
+    bottle.route("/moveCamera")(app.moveCamera)

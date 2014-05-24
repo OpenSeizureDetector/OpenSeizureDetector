@@ -16,3 +16,9 @@ analysis_framecount=15 ; number of frames between carrying out full analysis.
 output_framecount = 54000 ; number of frames between writing timeseries to disk.
 ts_fname=routine_output
 alarm_ts_fname=alarm_output
+camUname:operator  ; camera operator user name for position control
+camPasswd:operator ; camera operator password
+camAddr=http://192.168.1.24  ; the address of the camera
+camMoveURL=preset.cgi?-act=goto&-status=1&-number=  ; the URL to move the camera 
+;						    ; to a preset - preset number 
+;						    ; appended to this URL.
