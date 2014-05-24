@@ -6,6 +6,28 @@
 .newline {clear:both}
 ul {list-style-type:none;}
 li {display:inline;}
+
+.camButton {
+display: block inline;
+height: 50px;
+width: 100px;
+background: #34595f;
+border: 2px solid rgba(33,68,72,0.59);
+color:rgba(200,200,200,0.55);
+text-align: center;
+
+    background: linear-gradient(top, #34696f, #2f5f63);
+    border-radius: 50px;
+    box-shadow: 0 8px 0 #1b383b;
+    text-shadow: 0 2px 2px rgba(255, 255, 255, 0.2);
+     
+}
+
+a.camButton:hover {
+    background: #3d7a80;
+    background: linear-gradient(top, #3d7a80, #2f5f63);
+color:rgba(255,255,255,0.55);
+}
 </style>
 </head>
 <body>
@@ -13,10 +35,10 @@ li {display:inline;}
   <div class="newline">
     <ul>
       <li><a href="/saveBgImg"> Save Background Image Now</a></li>
-      <li><a href="/moveCamera?pos=1">Camera Position 1</a></li>
-      <li><a href="/moveCamera?pos=2">Camera Position 2</a></li>
-      <li><a href="/moveCamera?pos=3">Camera Position 3</a></li>
-      <li><a href="/moveCamera?pos=4">Camera Position 4</a></li>
+      <li><a class="camButton" href="/moveCamera?pos=1">Camera Position 1</a></li>
+      <li><a class="camButton" href="/moveCamera?pos=2">Camera Position 2</a></li>
+      <li><a class="camButton" href="/moveCamera?pos=3">Camera Position 3</a></li>
+      <li><a class="camButton" href="/moveCamera?pos=4">Camera Position 4</a></li>
     </ul>
   </div>
   <div class="newline">

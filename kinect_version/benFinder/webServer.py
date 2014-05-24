@@ -131,6 +131,21 @@ class benWebServer():
         bottle.redirect("/")
         return retStr
 
+    def getCamImg(self):
+        retStr="getCamImg:"
+        h = httplib2.Http(".cache")
+        retStr = "%s, uname=%s, passwd=%s" % (retStr,
+                                              self._bf.cfg.getConfigStr('camuname'), 
+                                              self._bf.cfg.getConfigStr('campasswd'))
+        h.add_credentials(self._bf.cfg.getConfigStr('camuname'), 
+                          self._bf.cfg.getConfigStr('campasswd'))
+        resp, content = h.request("%s/%s" % (self._bf.cfg.getConfigStr('camaddr'),
+                                               self._bf.cfg.getConfigStr('camimgurl')
+                                               ),"GET")
+        bottle.response.content_type = 'image/jpeg'
+        return content
+
+
 
 
     def staticFiles(self,filepath):
@@ -162,3 +177,4 @@ def setRoutes(app):
     bottle.route("/saveBgImg")(app.saveBgImg)
     bottle.route("/chartImg")(app.getChartImg)
     bottle.route("/moveCamera")(app.moveCamera)
+    bottle.route("/getCamImg")(app.getCamImg)
