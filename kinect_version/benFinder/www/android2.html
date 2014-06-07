@@ -57,11 +57,15 @@
 	     href="#singleImg?img=webcam" 
 	     data-transition="slide">
 	    <b>WebCam</b><br>
-	    <img id="webCamImg" src="http://guest:guest@192.168.1.24/tmpfs/auto.jpg" alt="webcam image" width="300" height="240">
+	    <img id="webCamImg" src="" alt="webcam image" width="300" height="240">
 	  </a>
 	</div>
-	<div class="newline">
-	  <a href="/saveBgImg"> Save Background Image Now</a>
+	<div class="vertbar">
+	  <li><a  data-role="button" href="/saveBgImg"> Save Background Image Now</a></li>
+	<li><a class="moveCamLink" value="1" href=""  data-role="button" data-transition="slide">1 - Behind Door</a></li>
+	<li><a class="moveCamLink" value="2" href="" data-role="button" data-transition="slide">2 - Corner</a></li>
+	<li><a class="moveCamLink" value="3" href="" data-role="button" data-transition="slide">3 - Chair</a></li>
+	<li><a class="moveCamLink" value="4" href="" data-role="button" data-transition="slide">4 - Bed</a></li>
 	</div>	
       </div>
     </div>
@@ -79,6 +83,11 @@
 	<div class="imcap">
 	  <img id="imgDiv" src="" alt="chart image">
 	</div>
+	<li>Move Camera</li>
+	<li><a class="moveCamLink" value="1" href="" data-transition="slide">1 - Behind Door</a></li>
+	<li><a class="moveCamLink" value="2" href="" data-transition="slide">2 - Corner</a></li>
+	<li><a class="moveCamLink" value="3" href="" data-transition="slide">3 - Chair</a></li>
+	<li><a class="moveCamLink" value="4" href="" data-transition="slide">4 - Bed</a></li>
     </div>
   </div>
 
@@ -95,6 +104,11 @@
 	<li><a class="maskedImgLink" href="#singleImg?masked" data-transition="slide">Masked</a></li>
 	<li><a class="chartImgLink" href="#singleImg?chart" data-transition="slide">Chart</a></li>
 	<li><a class="webCamLink" href="#singleImg?webcam" data-transition="slide">WebCam</a></li>
+	<li data-role=list-divider>Move Camera</li>
+	<li><a class="moveCamLink" value="1" href="" data-transition="slide">1 - Behind Door</a></li>
+	<li><a class="moveCamLink" value="2" href="" data-transition="slide">2 - Corner</a></li>
+	<li><a class="moveCamLink" value="3" href="" data-transition="slide">3 - Chair</a></li>
+	<li><a class="moveCamLink" value="4" href="" data-transition="slide">4 - Bed</a></li>
 	<li data-role=list-divider>Utilities</li>
 	<li><a href="" data-transition="slide">Reset Background Image</a></li>
 	<li><a href="" data-transition="slide">Reboot WebCam</a></li>

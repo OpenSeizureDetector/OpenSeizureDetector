@@ -23,7 +23,7 @@ BF.modes = {0:"Multi Image",
 BF.images = {0:["raw","/rawImg","#rawImg"],
 	     1:["masked","/maskedImg","#maskedImg"],
 	     2:["chart","/chartImg","#chartImg"],
-	     3:["webcam","http://guest:guest@192.168.1.24/tmpfs/auto.jpg","#webCamImg"]
+	     3:["webcam","/getCamImg","#webCamImg"]
 	     };
 
 BF.statusStrs=['OK','Warning','ALARM!!!!','Not Found']
@@ -36,7 +36,7 @@ BF.audibleAlarm = true;
 
 
 $(document).ready(function() {
-    w = window.open(BF.images[3][1],null);
+    //w = window.open(BF.images[3][1],null);
 
 
     BF.mode = 0;  // Application mode.
@@ -45,6 +45,7 @@ $(document).ready(function() {
     BF.updateImages();
     //alert("BF.mode="+BF.mode+" = "+BF.modes[BF.mode]);
     BF.startTimer(BF.timerPeriod);
+    $(".moveCamLink").click(BF.moveCam);
     $(".rawImgLink").click(function() {BF.setMode(1,0);});
     $(".maskedImgLink").click(function() {BF.setMode(1,1);});
     $(".chartImgLink").click(function() {BF.setMode(1,2);});
@@ -156,4 +157,15 @@ BF.updateImage = function(imgNo,imgID) {
     //imgID = BF.images[imgNo][2];
     //alert("url="+url+" id="+imgID);
     $(imgID).attr("src",url);
+};
+
+BF.moveCam = function(e) {
+    // move the video camera to the position number given in the 'value'
+    // attribute of the clicked link.
+    pos =$(e.target).attr("value");
+    urlStr = "/moveCamera?pos="+pos;
+    //alert(urlStr);
+    $.ajax({url:urlStr}).done(function(dataStr) {
+	//alert(dataStr);
+    });
 };
