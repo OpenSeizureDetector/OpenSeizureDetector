@@ -46,6 +46,8 @@ $(document).ready(function() {
     //alert("BF.mode="+BF.mode+" = "+BF.modes[BF.mode]);
     BF.startTimer(BF.timerPeriod);
     $(".moveCamLink").click(BF.moveCam);
+    $(".saveBgImgLink").buttonMarkup({ inline: true, mini:true });;
+    $(".moveCamLink").buttonMarkup({ inline: true, mini:true });;
     $(".rawImgLink").click(function() {BF.setMode(1,0);});
     $(".maskedImgLink").click(function() {BF.setMode(1,1);});
     $(".chartImgLink").click(function() {BF.setMode(1,2);});

@@ -7,8 +7,8 @@
 <script src="js/jquery.js"></script>
 <script src="js/jquery.mobile-1.4.2.min.js"></script>
 <script src="js/jBeep.js"></script>
-<link rel="stylesheet" href="android.css">
-<script src="android2.js"></script>
+<link rel="stylesheet" href="css/android.css">
+<script src="js/android2.js"></script>
 
 
 </head>
@@ -31,7 +31,7 @@
 	     href="#singleImg" 
 	     data-transition="slide">
 	    <b>Raw Image</b><br>
-	    <img id="rawImg" src="" alt="raw image" width="320" height="240">
+	    <img class="multiimg" id="rawImg" src="" alt="raw image">
 	  </a>
 	</div>
 	<div class="imcap">
@@ -39,7 +39,7 @@
 	     href="#singleImg?img=masked" 
 	     data-transition="slide">
 	    <b>Processed Image</b><br>
-	    <img id="maskedImg" src="" alt="masked image" width="320" height="240">
+	    <img class="multiimg" id="maskedImg" src="" alt="masked image">
 	  </a>
 	</div>
       </div>
@@ -49,7 +49,7 @@
 	     href="#singleImg?img=chart" 
 	     data-transition="slide">
 	    <b>Brightness Time Series</b><br>
-	    <img id="chartImg" src="" alt="chart image" width="300" height="240">
+	    <img class="multiimg" id="chartImg" src="" alt="chart image">
 	  </a>
 	</div>
 	<div class="imcap">
@@ -57,11 +57,11 @@
 	     href="#singleImg?img=webcam" 
 	     data-transition="slide">
 	    <b>WebCam</b><br>
-	    <img id="webCamImg" src="" alt="webcam image" width="300" height="240">
+	    <img class="multiimg" id="webCamImg" src="" alt="webcam image">
 	  </a>
 	</div>
 	<div class="vertbar">
-	  <li><a  data-role="button" href="/saveBgImg"> Save Background Image Now</a></li>
+	  <li><a  class="saveBgImgLink" data-role="button" href="/saveBgImg"> Save Background Image Now</a></li>
 	<li><a class="moveCamLink" value="1" href=""  data-role="button" data-transition="slide">1 - Behind Door</a></li>
 	<li><a class="moveCamLink" value="2" href="" data-role="button" data-transition="slide">2 - Corner</a></li>
 	<li><a class="moveCamLink" value="3" href="" data-role="button" data-transition="slide">3 - Chair</a></li>
