@@ -1,0 +1,122 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JQueryMobile version</title>
+<link rel="shortcut icon" href="lib/demos/favicon.ico">
+<link rel="stylesheet" href="css/jquery.mobile-1.4.2.min.css">
+<script src="js/jquery.js"></script>
+<script src="js/jquery.mobile-1.4.2.min.js"></script>
+<script src="js/jBeep.js"></script>
+<link rel="stylesheet" href="css/android.css">
+<script src="js/android2.js"></script>
+
+
+</head>
+
+<body>
+  <!--****************************************************-->
+  <div data-role=page id="home">
+    <div data-role=header data-add-back-btn="true">
+      <h1>benFinder Home</h1>
+      <a href="#imageChooser" data-role="button" data-icon="gear"
+         data-transition="slide"
+         data-iconpos="notext"  class="ui-btn-right">home</a>
+    </div>
+    
+    <div data-role=content>
+      <div id="summaryData">Summary Data </div>
+      <div class="newline">
+	<div class="imcap">
+	  <a class="rawImgLink"
+	     href="#singleImg" 
+	     data-transition="slide">
+	    <b>Raw Image</b><br>
+	    <img class="multiimg" id="rawImg" src="" alt="raw image">
+	  </a>
+	</div>
+	<div class="imcap">
+	  <a class="maskedImgLink"
+	     href="#singleImg?img=masked" 
+	     data-transition="slide">
+	    <b>Processed Image</b><br>
+	    <img class="multiimg" id="maskedImg" src="" alt="masked image">
+	  </a>
+	</div>
+      </div>
+      <div class="newline">
+	<div class="imcap">
+	  <a class="chartImgLink"
+	     href="#singleImg?img=chart" 
+	     data-transition="slide">
+	    <b>Brightness Time Series</b><br>
+	    <img class="multiimg" id="chartImg" src="" alt="chart image">
+	  </a>
+	</div>
+	<div class="imcap">
+	  <a class="webCamLink" 
+	     href="#singleImg?img=webcam" 
+	     data-transition="slide">
+	    <b>WebCam</b><br>
+	    <img class="multiimg" id="webCamImg" src="" alt="webcam image">
+	  </a>
+	</div>
+	<div class="vertbar">
+	  <li><a  class="saveBgImgLink" data-role="button" href="/saveBgImg"> Save Background Image Now</a></li>
+	<li><a class="moveCamLink" value="1" href=""  data-role="button" data-transition="slide">1 - Behind Door</a></li>
+	<li><a class="moveCamLink" value="2" href="" data-role="button" data-transition="slide">2 - Corner</a></li>
+	<li><a class="moveCamLink" value="3" href="" data-role="button" data-transition="slide">3 - Chair</a></li>
+	<li><a class="moveCamLink" value="4" href="" data-role="button" data-transition="slide">4 - Bed</a></li>
+	</div>	
+      </div>
+    </div>
+  </div>
+
+  <!--****************************************************-->
+  <div data-role=page id="singleImg">
+    <div data-role=header data-add-back-btn="true">
+      <h1>Single Image View</h1>
+    </div>
+    
+    <div data-role=content>
+      <p> Single Image </p>
+      <a class="homeLink" href="#home" data-transition="slide">Home</a>
+	<div class="imcap">
+	  <img id="imgDiv" src="" alt="chart image">
+	</div>
+	<li>Move Camera</li>
+	<li><a class="moveCamLink" value="1" href="" data-transition="slide">1 - Behind Door</a></li>
+	<li><a class="moveCamLink" value="2" href="" data-transition="slide">2 - Corner</a></li>
+	<li><a class="moveCamLink" value="3" href="" data-transition="slide">3 - Chair</a></li>
+	<li><a class="moveCamLink" value="4" href="" data-transition="slide">4 - Bed</a></li>
+    </div>
+  </div>
+
+  <!--****************************************************-->
+  <div data-role=page id="imageChooser">
+    <div data-role=header data-add-back-btn="true">
+      <h1>Image Chooser</h1>
+    </div>
+    
+    <div data-role=content>
+      <ul data-role=listview>
+	<li data-role=list-divider>Select Image to View</li>
+	<li><a class="rawImgLink" href="#singleImg?raw" data-transition="slide">Raw</a></li>
+	<li><a class="maskedImgLink" href="#singleImg?masked" data-transition="slide">Masked</a></li>
+	<li><a class="chartImgLink" href="#singleImg?chart" data-transition="slide">Chart</a></li>
+	<li><a class="webCamLink" href="#singleImg?webcam" data-transition="slide">WebCam</a></li>
+	<li data-role=list-divider>Move Camera</li>
+	<li><a class="moveCamLink" value="1" href="" data-transition="slide">1 - Behind Door</a></li>
+	<li><a class="moveCamLink" value="2" href="" data-transition="slide">2 - Corner</a></li>
+	<li><a class="moveCamLink" value="3" href="" data-transition="slide">3 - Chair</a></li>
+	<li><a class="moveCamLink" value="4" href="" data-transition="slide">4 - Bed</a></li>
+	<li data-role=list-divider>Utilities</li>
+	<li><a href="" data-transition="slide">Reset Background Image</a></li>
+	<li><a href="" data-transition="slide">Reboot WebCam</a></li>
+      </ul>
+    </div>
+  </div>
+
+
+
+</body>
+</html>
