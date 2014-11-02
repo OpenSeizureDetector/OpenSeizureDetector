@@ -14,15 +14,15 @@ It looks for peaks within the history of background intensity, which it attribut
 That is, the current version is really an apnoea (apnea) detector rather than a seizure detector.
 
 The structure of the software is such that a single programme does all of the following:
-* Collect frames from the kinect.
-* Process the frames to produce a time series of image intensity.
-* Analyse the time series to find peaks and determine breathing rate.
-* Produce images of graphs of the time series.
-* Determine the alarm state based on the calculated breathing rate.
-* Provide a simple web interface to communicate with clients to provide alarm functionality.
+1. Collect frames from the kinect.
+1. Process the frames to produce a time series of image intensity.
+1. Analyse the time series to find peaks and determine breathing rate.
+1. Produce images of graphs of the time series.
+1. Determine the alarm state based on the calculated breathing rate.
+1. Provide a simple web interface to communicate with clients to provide alarm functionality.
 
 # Structure of Version 2
 Separate the program into three separate modules:
-* Data logger - collects frames and produces a time series of frames.
-* Data analyser - analyse the time series to assess movement rate.
-* User Interface - web application that serves the assessed movement rate and alarm state to clients.
+2. Data logger - collects frames and produces a time series of frames.
+2. Data analyser - analyse the time series to assess movement rate.
+2. User Interface - web application that serves the assessed movement rate and alarm state to clients.
