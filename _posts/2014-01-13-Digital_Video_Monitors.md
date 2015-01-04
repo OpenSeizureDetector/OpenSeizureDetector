@@ -22,13 +22,17 @@ me to display the image and play sound from the ip camera.
 
 <a href="{{site.baseurl}}/resources/img/bentv_screenshot_ok.jpg"><img class="img_med" style="float:right;width:300px;" src="{{site.baseurl}}/resources/img/bentv_screenshot_ok.jpg"></a>
 
-I discovered that if I scale the omxplayer screen a bit, I can free up a 
-bit of screen to use for somethign else.   In this case I wrote a simple
-python script that uses the pygame library to write to the spare bit of
-screen.   This displays a clock so I can tell it is still working, and talks 
-to the seizure detector program that is running on a more powerful computer
-via a web interface.
 
+I discovered that if I scale the omxplayer screen a bit, I can free up a 
+bit of screen to use for something else.   
+In this case I wrote a simple
+python script that uses the pygame library to write to the spare bit of
+screen.   The python script talks 
+to the seizure detector program that is running on a more powerful computer
+via a web interface and displays the seizure detector results.  The colour of
+the screen background is changed to signify 'OK', 'Warning' or 'Alarm' states
+from the seizure detector.   
+When the seizure detector is reliable enough it will produce an audible alarm too.
 
 I also connected a small microswitch to the Raspberry Pi's which is also 
 monitored by the program.  Each time the switch is pressed, the ip camera is
@@ -36,7 +40,7 @@ instructed to move to a different preset position, allowing us to look around
 the room.
 
 The source code that runs on the Raspberry Pi's is available in a separate
-'bentv' <a href="https://github.com/jones139/bentv">github repository</a>.
+as part of the OpenSeizureDetector <a href="https://github.com/jones139/OpenSeizureDetector/tree/master/kinect_version/bentv">github repository</a>.
 
 <a href="{{site.baseurl}}/resources/img/Network_Configuration.png"><img class="img_med" style="float:right;width:300px;" src="{{site.baseurl}}/resources/img/Network_Configuration.png"></a>
 In the above picture you can see the cone of light on the right hand side of 
