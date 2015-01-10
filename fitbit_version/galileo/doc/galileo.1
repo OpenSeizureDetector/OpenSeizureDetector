@@ -1,0 +1,205 @@
+.\" galileo python command-line utility manual page.
+.\"
+.\" View this file before installing it with:
+.\"   groff -man -Tascii galileo.1
+.\" or
+.\"   man ./galileo.1
+.TH galileo  1  "June 2014" 0.5dev "User Commands"
+.SH NAME
+galileo \- synchronize Fitbit devices
+
+.SH SYNOPSIS
+.B galileo
+.RB [ "\-h" ]
+.RB [ "\-c \fIFILENAME\fR" ]
+.RB [ "\-\-dump\-dir \fIDIR\fR" ]
+.RB [ "\-\-daemon\-period \fIPERIOD\fR" ]
+.RB [ "\-I \fIID\fR" "[ \fIID \.\.\.\fR ] ]"
+.RB [ "\-X \fIID\fR" "[ \fIID \.\.\.\fR ] ]"
+.RB [ "\-v" | "\-d" | "\-q" ]
+.RB [ "\-\-force" | "\-\-no\-force" ]
+.RB [ "\-\-dump" | "\-\-no\-dump" ]
+.RB [ "\-\-upload" | "\-\-no\-upload" ]
+.RB [ "\-\-https\-only" | "\-\-no\-https\-only" ]
+.RB [ "\-\-log\-size \fISIZE\fR" ]
+.RB [ "\-\-syslog" | "\-\-no\-syslog" ]
+.RB [ "sync" | "daemon" | "version" ]
+
+.SH DESCRIPTION
+Synchronize Fitbit wearable fitness tracker devices with the Fitbit web service.
+Visit <
+.B https://www.fitbit.com
+>, or use a Fitbit-compatible app in order
+to browse your data.
+
+.SH MODES
+.TP
+.B sync
+Perform the synchronization of all found trackers, then exit. This is
+the default mode if none is specified.
+.TP
+.B daemon
+Periodically perform synchronization of all found trackers.
+.B galileo
+will periodically perform synchronization until the daemon is killed. The
+period can be controlled via the
+.B \-\-daemon\-period
+option.
+.TP
+.B version
+Display the
+.B galileo
+version and exit.
+.TP
+.B interactive
+This spawn an interactive shell to allow sending arbitrary commands to
+the dongle and the tracker. This is meant to allow experimenting with
+new commands, or different command orders. To be used by experts
+only.
+.TP
+.B pair
+This mode, in an experimental state, allow you to link your tracker with your
+Fitbit online account. This is needed before being able to use any new tracker.
+In order to use this mode, you need an account in the Fitbit online platform,
+and a tracker. The parameters for this mode are taken from the
+.B hardcoded-ui
+section of the
+.BR galileorc (5)
+file.
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+show command-line usage and exit.
+.TP
+.BR "\-c \fIRCCONFIGNAME\fR" ", " "\-\-config \fIRCCONFIGNAME\fR"
+use \fIRCCONFIGNAME\fR as extra configuration file in order to allow overriding
+of settings.
+
+.P
+The remaining options are first read from configuration file, and can be
+overridden by using command line switches. For this reason, positive and
+negative versions are available (\fB\-\-foo\fR and \fB\-\-no\-foo\fR). Please
+see
+.BR galileorc (5)
+for more information about the configuration files.
+
+.SS Logging options:
+.TP
+.BR \-v ", " \-\-verbose
+display general information on progress during synchronization.
+.TP
+.BR \-d ", " \-\-debug
+as \fB\-\-verbose\fR, but also shows internal activity useful for
+diagnosing problems.
+.TP
+.BR \-q ", " \-\-quiet
+show no output except for errors and a summary. This is the default
+if no other logging options are specified.
+.TP
+.BR \-\-syslog
+send logging output to the syslog facility.
+Due to the rate-limiting of some syslog servers, this option might not work in
+combination with the debug log level.
+.TP
+.BR \-\-no\-syslog
+send logging output to stderr.
+.SS Synchronization control options:
+.TP
+\fB\-I\fR \fIID\fR [\fIID\fR ...], \
+\fB\-\-include\fR \fIID\fR [\fIID\fR ...]
+list of tracker IDs to synchronize (if not set, all found trackers are
+synchronized).
+.TP
+\fB\-X\fR \fIID\fR [\fIID\fR ...], \
+\fB\-\-exclude\fR \fIID\fR [\fIID\fR ...]
+list of tracker IDs to avoid synchronizing (no trackers are excluded
+by default).
+.TP
+.B \-\-force
+a tracker will not be synchronized with the Fitbit web service if it reports
+that it was recently synchronized. This option overrides that behavior.
+.TP
+.B \-\-no\-force
+if the configuration file includes the \fBforce\-sync\fR option to
+always force synchronization, this option will restore the default
+behaviour.
+.TP
+.BI \-\-daemon\-period " PERIOD"
+set the time to wait between synchronizations when running in
+\fBdaemon\fR mode. The period is specified in milliseconds and
+defaults to 15000 (15 seconds).
+.SS Tracker data saving options:
+.TP
+.B \-\-dump
+save a copy of the tracker data. Tracker data is stored under a
+tracker-specific subdirectory of a directory that is set using the
+\fB\-\-dump\-dir\fR option. This is the default behavior.
+.TP
+.B \-\-no\-dump
+disables the saving of tracker data.
+.TP
+.BI \-\-dump\-dir " DIR"
+the directory used to store the tracker dumps (defaults to
+\fB~/.galileo\fR).
+.SS Data transfer options:
+.TP
+.B \-\-upload
+synchronize tracker data with the Fitbit web service. This is the
+default.
+.TP
+.B \-\-no\-upload
+prevent the uploading of tracker data to the Fitbit web service. Data
+is not deleted from trackers until it is acknowledged by the fitbit server
+so this will not result in data loss.
+.TP
+.B \-\-https\-only
+data sent to the Fitbit web service will be transferred via a secure connection
+using HTTPS. This is the default.
+.TP
+.B \-\-no\-https\-only
+if HTTPS connection is not possible, this will allow the fallback to HTTP.
+This should only be required if problems with encryption libraries prevent
+data transfer without this option.
+.TP
+.BI \-\-log\-size " SIZE"
+indicate the amount of communication that should be displayed in case of
+errors. Galileo will keep in memory the last \fISIZE\fR communications to help
+debugging if an error happen. This is particularly useful in case of
+hard-to-reproduce issues, where it is too late to collect debug information.
+Default to 10. Set to 0 to disable this functionality.
+
+.SH REQUIREMENTS
+An original Fitbit Bluetooth-LE USB synchronization dongle is
+required.
+.PP
+The Fitbit tracker must already be registered to your Fitbit account
+(see the BUGS section).
+.SH FILES
+.TP
+.IR /etc/galileo/config ", " $XDG_CONFIG_HOME/galileo/config ", " ~/.galileorc
+The configuration files used for default settings. See
+.BR galileorc (5)
+for further details about those files
+
+.SH SEE ALSO
+.TP
+<\fBhttp://www.fitbit.com\fR>
+The Fitbit web service where synchronized tracker data may be viewed.
+.TP
+<\fBhttps://bitbucket.org/benallard/galileo\fR>
+The \fBgalileo\fR homepage where additional information is available.
+.TP
+.BR galileorc (5)
+The format of the configuration file providing default settings.
+
+.SH AUTHOR
+Written and maintained by Benoît Allard, with contributions from other
+authors.
+
+.SH BUGS
+There are no current facilities to make use of the data stored with
+the \fB\-\-dump\fR command.
+.PP
+Please report additional bugs to
+<\fBhttps://bitbucket.org/benallard/galileo/issues\fR>

@@ -1,0 +1,9 @@
+description "Galileo to sync fitbit devices"
+
+start on started dbus
+stop on desktop-end
+
+respawn
+respawn limit unlimited
+
+exec /usr/bin/galileo daemon

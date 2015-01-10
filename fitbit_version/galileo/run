@@ -1,0 +1,5 @@
+#!/usr/bin/env python
+
+from galileo.main import main
+
+main()

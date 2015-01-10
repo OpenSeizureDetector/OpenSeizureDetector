@@ -1,0 +1,175 @@
+galileo 0.5 (????-??-??)
+------------------------
+
+This is the next feature release of galileo, a free utility to securely
+synchronize fitbit bluetooth trackers with the fitbit web-service.
+
+This release ...
+
+Contributor to this release: Dean Giberson, Richard Weait, Chris Wayne,
+David Vasak, and Mike Frysinger.
+
+Main changes since 0.4.2:
+- Add a pair mode (issue#33)
+- Removal of the Timeout class (issue#43)
+- Get a UI abstraction layer (issue#31)
+- Keep a rolling log of the last communication to help debugging (issue#67)
+- Support sending logging output to the syslog (issue#134)
+
+
+galileo 0.4.4 (????-??-??)
+--------------------------
+
+This release adds support for older python version (2.6).
+
+Contributor to this release: Slobodan Miskovic.
+
+Main changes since 0.4.3:
+- Add support for python 2.6
+- Fix handling of BackOffException (issue#140)
+
+
+galileo 0.4.3 (2014-11-27)
+--------------------------
+
+This is the third patch release of galileo 0.4, a free utility to securely
+synchronize fitbit bluetooth trackers with the fitbit web service.
+
+This release adds support for the new Charge tracker.
+
+Main changes since 0.4.2:
+- Increase a timeout to support the Charge tracker (issue#123)
+- Exclude the `tests` packages when installing.
+
+
+galileo 0.4.2 (2014-10-15)
+--------------------------
+
+This is the second patch release of galileo 0.4, a free utility to securely
+synchronize fitbit bluetooth trackers with the fitbit web service.
+
+This release fixes a couple of API changes in the dependent libraries since
+the release of the previous version.
+
+Main changes since 0.4.1:
+- Correctly recognize TimeoutError from libusb0 (issue#82)
+- Fix TypeError with newer version of PyUSB (issue#36, issue#77, and a few
+  more ...)
+- Fix error when displaying the reason for a Connection Error (issue#118).
+
+
+galileo 0.4.1 (2014-06-22)
+--------------------------
+
+This is the first patch release of galileo 0.4, a free utility to securely
+synchronize fitbit bluetooth trackers with the fitbit web-service.
+
+This release fixes a number of issues reported with the release of galileo 0.4.
+All users of galileo 0.4 are encouraged to upgrade.
+
+Main changes since 0.4:
+- Fix a traceback in debug message (part of issue#51)
+- Fix issue when the dongle doesn't reports its version (issue#53)
+- Fix issue when ConnectionError happens during sync (issue#54)
+- Try again a write operation in case of IOError (issue#61)
+- Be more strict during discovery (issue#66)
+- Handle issue when USB backend does not implement non-mandatory methods
+  (issue#75)
+- Recognize one more kind of TimeoutError (issue#82)
+
+
+galileo 0.4 (2014-03-31)
+------------------------
+
+This is the next feature release of galileo, a free utility to securely
+synchronize fitbit bluetooth trackers with the fitbit web-service.
+
+This release introduce a `daemon` mode that synchronize periodically the
+available trackers, making it easier for integration as a service. As well as
+enhance the configurability by introducing more options, and also allowing
+them to be read from configuration files. Man pages have also been added.
+
+Contributors to this release: Stuart Hickinbottom, and Alexander Voronin.
+
+Main changes since 0.3.1:
+- Manual pages added for galileo(1) and galileorc(5) (issue#38, PR #12)
+- Add compatibility with dongles 1.6 (issue#45)
+- Add a lots of tests (issue#32)
+- Add a `daemon` mode (issue#30)
+- Detect when Fitbit server is in 'maintenance mode' (issue#29)
+- Read the configuration from files (issue#18, PR #5)
+- Validation of the CRC value of the dumps (issue#15)
+- Add --include and --exclude to control which trackers to synchronize (PR #4)
+- Add a --no-upload command line parameter to prevent the uploading of the
+  dump to the server
+- Major code reorganisation.
+
+
+galileo 0.3.1 (2014-02-01)
+--------------------------
+
+This is the first patch release of galileo 0.3, a free utility to securely
+synchronize fitbit bluetooth trackers with the fitbit web-service.
+
+This release change the communication protocol used to communicate between
+galileo and the fitbit web-service from a plain-text one (HTTP) to one that
+uses state-of-the-art encryption methods (HTTPS), preventing the data extracted
+from the tracker of being intercepted and read on its way to the fitbit servers.
+
+Main changes since 0.3:
+- Switch the communication protocol from HTTP to HTTPS
+
+
+galileo 0.3 (2014-01-27)
+------------------------
+
+This is the third version of galileo, a free utility to synchronise fitbit
+bluetooth trackers with the fitbit service.
+
+This release greatly enhance the user friendliness by adding support for
+command line switches to control the various aspects of the synchronisation.
+As well as improves the code quality.
+
+New contributors to this release: Stuart Hickinbottom.
+
+Main changes since 0.2:
+- Improve error reporting when insufficient permissions are set on the usb
+  device (PR #3, issue#10)
+- Add --no-dump to prevent writing a backup of the dump to disc (issue#19).
+- Only sync the trackers that have not been sync'd for some time. Use --force
+  to always sync all the discovered trackers (PR #2, issue#13).
+- Warn when the signal from the tracker is too weak (issue#12).
+- Add command-line switches to control verbosity (PR #1, issue#9).
+- Register package to PyPi, and allow installation via pip.
+- Improve detection of the end of the dump (issue#2).
+- Unify the timeout values.
+- Code cleanup.
+
+
+galileo 0.2 (2013-12-30)
+------------------------
+
+This was the second version of galileo, a free utility to synchronise fitbit
+trackers with the fitbit server.
+
+This version fixes an issue when the dump from the tracker was not being
+accepted by the server.
+
+Main changes since 0.1:
+- Unescape some bits before transmitting to the server, this solves an issue
+  with the fitbit data not being accepted by the server (issue#1).
+- Add a udev rules files to allow the utility to run as a non-privileged user.
+- Add a diff.py script to analyse difference in dumps.
+- Also dump the response from the server in the dump file.
+- Code cleanup
+
+
+galileo 0.1 (2013-11-24)
+------------------------
+
+This was the first release of galileo, a free utility to synchronise fitbit
+trackers with the fitbit servers.
+
+Main features:
+- synchronization of any bluetooth based fitbit tracker with the fitbit server.
+- backup of dumps on disc in the ~/.galileo/<TRACKERID>/ directory.

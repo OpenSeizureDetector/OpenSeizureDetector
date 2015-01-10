@@ -1,0 +1,162 @@
+.\" galileorc galileo configuration file manual page.
+.\"
+.\" View this file before installing it with:
+.\"   groff -man -Tascii galileorc.5
+.\" or
+.\"   man ./galileorc.5
+.TH galileorc 5 "June 2014" 0.5dev "File Formats Manual"
+
+.SH NAME
+galileorc \- configuration files for the galileo Fitbit synchronization
+utility
+
+.SH DESCRIPTION
+The
+.B galileorc
+file is used to provide default settings to the
+.BR galileo (1)
+utility. Any settings that would normally be passed as
+command\-line arguments to galileo can, instead, be present in this
+configuration file to prevent having to repeat them again and again.
+.PP
+Settings provided in the configuration files can be overridden by
+run\-time command\-line switches. See
+.BR galileo (1)
+.
+
+.SH FILES
+The following files will be read if present. Later one override
+previous settings and settings provided on the command-line override
+settings defined in configuration files.
+.IP \(bu
+.I /etc/galileo/config
+.IP \(bu
+.I $XDG_CONFIG_HOME/galileo/config
+(The \fBXDG_CONFIG_HOME\fR environment variable default to
+\fI~/.config\fR if not defined)
+.IP \(bu
+.I ~/.galileorc
+.IP \(bu
+any file specified with the \fB-c\fR command\-line switch
+
+.SH SYNTAX
+The settings file is defined in \fIYAML\fR format. Blank lines and
+comments (from the first hash character \(aq#\(aq to the end of the
+line) are ignored.
+.PP
+The configuration file is parsed as a dictionnary of settings, which
+means that each setting is defined using a keyword followed by a colon
+character. For single\-value settings (the majority), the value follows
+the colon, for example:
+.PP
+.nf
+do-upload: true
+.fi
+.PP
+For settings of type \fIlist\fR (such as the tracker ID inclusion and
+exclusion lists), the values appear with an indentation on subsequent
+lines and prefixed with a dash, for example:
+.PP
+.nf
+include:
+  - '123456789ABC'
+  - '9876543210AB'
+.fi
+
+.SH SETTINGS
+The following settings can be added to the configuration
+files \- not all options have to be specified; any that are not
+mentioned will leave the defaults in effect. See
+.BR galileo (1)
+for details about the default values.
+.TP
+.B logging
+controls the amount of progress output. Can be \fBverbose\fR to
+display progress during synchronization, \fBdebug\fR for more
+detailed information useful for diagnosing problems, or \fBquiet\fR to
+display only a warning and error messages.
+.TP
+.B syslog
+setting this to \fBtrue\fR will send all logging output to the syslog
+facility. Due to the rate-limiting of some syslog servers, this option might
+not work in combination with the debug log level.
+.TP
+.B include
+the list of tracker IDs to synchronize. If this is specified then only
+trackers from this list will be synchronised.
+.TP
+.B exclude
+the list of tracker IDs not to synchronize.
+.TP
+.B force-sync
+setting this to \fBtrue\fR causes trackers to be synchronized even if
+they report that they already have been synchronized recently.
+.TP
+.B daemon-period
+this defines, in milliseconds, the period at which a synchronisation
+attempt will be performed when galileo is run in \fBdaemon\fR mode.
+.TP
+.B keep-dumps
+setting this to \fBtrue\fR causes galileo to save the data retrieved
+from trackers to the directory specified in \fBdump-dir\fR.
+.TP
+.B dump-dir
+the directory used for saving tracker data if the \fBkeep-dumps\fR
+option is set.
+.TP
+.B do-upload
+setting this to \fBfalse\fR will prevent galileo from sending tracker
+data to the Fitbit web service.
+.TP
+.B https-only
+setting this to \fBfalse\fR will allow galileo to fallback to
+unencrypted HTTP if HTTPS fails for sending tracker data to the Fitbit
+web service.
+.TP
+.B hardcoded-ui
+This is a structured section that includes the answers needed during the
+pairing/firmware update process.
+
+.SH EXAMPLE
+The following is an example configuration file:
+.PP
+.nf
+daemon-period: 60000
+keep-dumps: false
+do-upload: true
+dump-dir: ~/.galileo-tracker-data
+logging: verbose
+force-sync: false
+https-only: false
+include:
+  - '123456789ABC'
+  - '9876543210AB'
+exclude:
+  - 'AABBCCDDEEFF'
+  - '881144BB1234'
+.fi
+
+.SH SEE ALSO
+.TP
+<\fBhttp://www.yaml.org\fR>
+The official YAML homepage, with more background information on the
+YAML file format.
+.TP
+.BR galileo (1)
+The \fBgalileo\fR utility which uses these configuration files for
+default settings.
+.TP
+<\fBhttps://bitbucket.org/benallard/galileo\fR>
+The \fBgalileo\fR homepage where additional information is available.
+
+.SH AUTHOR
+Written and maintained by Benoît Allard, with contributions from other
+authors.
+
+.SH BUGS
+Tracker IDs which consist of only numbers must be surrounded with
+single quotes (as in the \fIEXAMPLE\fR section above). It's probably a
+good idea to always quote tracker IDs to avoid possible confusion.
+.PP
+Please report additional bugs to
+<\fBhttps://bitbucket.org/benallard/galileo/issues\fR>.
