@@ -1,0 +1,2 @@
+# udev rules.d entry for running as a daemon under the "galileo" account.
+SUBSYSTEM=="usb", ATTR{idVendor}=="2687", ATTR{idProduct}=="fb01", SYMLINK+="fitbit", MODE="0660", OWNER="galileo", GROUP="galileo"
