@@ -143,7 +143,7 @@ class TimeSeries:
         if (file):
             self._fig.savefig(fname,bbox_inches='tight')
         else:
-            self._fig.canvas.draw()
+            plt.draw()
         return True
 
     def findPeaks(self):

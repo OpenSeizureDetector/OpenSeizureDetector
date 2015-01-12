@@ -20,13 +20,16 @@ Main changes since 0.4.2:
 galileo 0.4.4 (????-??-??)
 --------------------------
 
-This release adds support for older python version (2.6).
+This release adds support for older python version (2.6), fixes an issue with
+the BackOffException and properly cleans up the USB connection when done.
 
-Contributor to this release: Slobodan Miskovic.
+Contributor to this release: Slobodan Miskovic, and Noel Jackson.
 
 Main changes since 0.4.3:
 - Add support for python 2.6
 - Fix handling of BackOffException (issue#140)
+- Reset the USB device when we're done with it in order to prevent a "Device
+  Busy" on subsequent tries (issue#142 and a few more ...)
 
 
 galileo 0.4.3 (2014-11-27)

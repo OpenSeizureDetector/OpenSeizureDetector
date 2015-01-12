@@ -88,7 +88,8 @@ class USBDevice(object):
         return self._dev
 
     def __del__(self):
-        pass
+        if self._dev is not None:
+            self._dev.reset()
 
 
 class CtrlMessage(object):
