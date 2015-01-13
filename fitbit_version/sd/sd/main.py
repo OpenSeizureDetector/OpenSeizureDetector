@@ -141,8 +141,7 @@ def main():
     """ This is the entry point """
 
     # Set the null handler to avoid complaining about no handler presents
-    import galileo
-    logging.getLogger(galileo.__name__).addHandler(logging.NullHandler())
+    logging.getLogger("sd").addHandler(logging.NullHandler())
 
     try:
         config = Config()
@@ -166,14 +165,14 @@ def main():
     # know which logLevel we should use.
     if config.syslog:
         # Syslog messages must have the time/name first.
-        format = ('%(asctime)s ' + galileo.__name__ + ': '
+        format = ('%(asctime)s ' + 'sd' + ': '
                   '%(levelname)s: %(module)s: %(message)s')
         # TODO: Make address into a config option.
         handler = logging.handlers.SysLogHandler(
             address='/dev/log',
             facility=logging.handlers.SysLogHandler.LOG_DAEMON)
         handler.setFormatter(logging.Formatter(fmt=format))
-        core_logger = logging.getLogger(galileo.__name__)
+        core_logger = logging.getLogger('sd')
         core_logger.handlers = []
         core_logger.addHandler(handler)
         core_logger.setLevel(config.logLevel)
