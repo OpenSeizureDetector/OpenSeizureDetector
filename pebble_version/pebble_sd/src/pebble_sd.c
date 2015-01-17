@@ -1,8 +1,48 @@
+/*
+  Pebble_sd - a simple accelerometer based seizure detector that runs on a
+  Pebble smart watch (http://getpebble.com).
+
+  See http://openseizuredetector.org for more information.
+
+  Copyright Graham Jones, 2015.
+
+  This file is part of pebble_sd.
+
+  Pebble_sd is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  Pebble_sd is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with pebble_sd.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
 #include <pebble.h>
 
 static Window *window;
 static TextLayer *text_layer;
+uint32_t num_samples = 25;
 
+static void accel_handler(AccelData *data, uint32_t num_samples) {
+  static char s_buffer[120];
+  snprintf(s_buffer,sizeof(s_buffer),
+	   "%d,%d,%d\n%d\n",
+	   data[0].x, data[0].y, data[0].z,
+	   (int)num_samples);
+  text_layer_set_text(text_layer, s_buffer);
+
+}
+
+
+/***********************************************************************
+  Button event handlers
+*/
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   text_layer_set_text(text_layer, "Select");
 }
@@ -25,9 +65,15 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  text_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
+  text_layer = text_layer_create(
+				 (GRect) { 
+				   .origin = { 0, 0 }, 
+				   .size = { bounds.size.w, bounds.size.h } 
+				 });
   text_layer_set_text(text_layer, "Press a button");
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
+  text_layer_set_font(text_layer, 
+		      fonts_get_system_font(FONT_KEY_GOTHIC_24));
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 }
 
@@ -44,6 +90,9 @@ static void init(void) {
   });
   const bool animated = true;
   window_stack_push(window, animated);
+
+  /* Subscribe to acceleration data service */
+  accel_data_service_subscribe(num_samples,accel_handler);
 }
 
 static void deinit(void) {
