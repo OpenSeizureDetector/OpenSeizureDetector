@@ -1,0 +1,18 @@
+# project  configured on Sat Jan 17 21:11:31 2015 by
+# waf 1.7.11 (abi 98, python 20706f0 on linux2)
+# using /usr/local/pebble-dev/PebbleSDK-2.8.1/Pebble/waf configure build
+#
+----------------------------------------
+Setting top to
+/home/graham/OpenSeizureDetector/pebble_version/pebble_sd
+----------------------------------------
+Setting out to
+/home/graham/OpenSeizureDetector/pebble_version/pebble_sd/build
+----------------------------------------
+Checking for program gcc,cc
+arm-none-eabi-gcc
+find program=['gcc', 'cc'] paths='' var='CC' -> 'arm-none-eabi-gcc'
+----------------------------------------
+Checking for program ar
+arm-none-eabi-ar
+find program=['ar'] paths='' var='AR' -> 'arm-none-eabi-ar'
