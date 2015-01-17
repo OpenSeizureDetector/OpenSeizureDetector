@@ -25,16 +25,28 @@
 
 #include <pebble.h>
 
+#define NSAMP 25
 static Window *window;
 static TextLayer *text_layer;
-uint32_t num_samples = 25;
+uint32_t num_samples = NSAMP;
+int accData[NSAMP];
+
 
 static void accel_handler(AccelData *data, uint32_t num_samples) {
   static char s_buffer[120];
+  int i;
+
+  for (i=0;i<NSAMP;i++) {
+    accData[i] = data[0].x + data[0].y + data[0].z;
+  }
+
+  BatteryChargeState charge_state = battery_state_service_peek();
   snprintf(s_buffer,sizeof(s_buffer),
-	   "%d,%d,%d\n%d\n",
+	   "%d,%d,%d\n%d\n%d\n%d%%\n",
 	   data[0].x, data[0].y, data[0].z,
-	   (int)num_samples);
+	   (int)num_samples,
+	   accData[0],
+	   charge_state.charge_percent);
   text_layer_set_text(text_layer, s_buffer);
 
 }
