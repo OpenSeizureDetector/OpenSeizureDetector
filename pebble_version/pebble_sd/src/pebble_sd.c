@@ -60,7 +60,11 @@ static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
+/**********************************************************************/
 
+/**
+ * window_load(): Initialise main window.
+ */
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
@@ -77,10 +81,17 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 }
 
+/**
+ * window_unload():  destroy window contents
+ */
 static void window_unload(Window *window) {
   text_layer_destroy(text_layer);
 }
 
+/**
+ * init():  Initialise application - create window for display and register
+ * for accelerometer data readings.
+ */
 static void init(void) {
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
@@ -93,17 +104,22 @@ static void init(void) {
 
   /* Subscribe to acceleration data service */
   accel_data_service_subscribe(num_samples,accel_handler);
-}
+  // Choose update rate
+  accel_service_set_sampling_rate(ACCEL_SAMPLING_25HZ);}
 
+/**
+ * deinit(): destroy window before app exits.
+ */
 static void deinit(void) {
   window_destroy(window);
 }
 
+/**
+ * main():  Main programme entry point.
+ */
 int main(void) {
   init();
-
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
-
   app_event_loop();
   deinit();
 }
