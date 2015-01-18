@@ -24,20 +24,77 @@
 */
 
 #include <pebble.h>
+#include "integer_fft.c"
 
-#define NSAMP 25       // number of samples of accelerometer data to collect.
+
+#define SAMP_FREQ 100    // Sample Frequency in Hz
+#define SAMP_FREQ_STR ACCEL_SAMPLING_100HZ  // String to pass to sampling system.
+#define NSAMP 1000       // number of samples of accelerometer data to collect.
 #define CLOCK_SIZE 30  // pixels.
 static Window *window;
 static TextLayer *text_layer;
 static TextLayer *clock_layer;
 uint32_t num_samples = NSAMP;
 int accData[NSAMP];
+int accDataPos = 0;   // Position in accData of last point in time series.
+int accDataFull = 0;  // Flag so we know when we have a complete buffer full
+                      // of data.
+AccelData latestAccelData;
+int kissfftOK = 0;
+
+/**
+ * accel_handler():  Called whenever accelerometer data is available.
+ * Add data to circular buffer accData[] and increments accDataPos to show
+ * the position of the latest data in the buffer.
+ */
+static void accel_handler(AccelData *data, uint32_t num_samples) {
+  int i;
+
+  // Add the new data to the accData buffer
+  for (i=0;i<(int)num_samples;i++) {
+    // Wrap around the buffer if necessary
+    if (accDataPos>=NSAMP) { 
+      accDataPos = 0;
+      accDataFull = 1;
+    }
+    accData[accDataPos] = data[i].x + data[i].y + data[i].z;
+    accDataPos++;
+  }
+  latestAccelData = data[num_samples-1];
+
+}
+
+/* Carry out analysis of acceleration time series.
+ * Called from clock_tick_handler().
+ */
+static void do_analysis() {
+  static short fftr[NSAMP];
+  fix_fft(fftr,(short*)
+accData,NSAMP,0);
+}
 
 
-/* Updates the text layer clock_layer to show current time.
+/* clock_tick_handler() - Analyse data and update display.
+ * Updates the text layer clock_layer to show current time.
  * This function is the handler for tick events.*/
-static void clock_display_handler(struct tm *tick_time, TimeUnits units_changed) {
+static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   static char s_time_buffer[16];
+  static char s_buffer[120];
+
+  // Do FFT analysis
+  do_analysis();
+
+  // Update display.
+  BatteryChargeState charge_state = battery_state_service_peek();
+  snprintf(s_buffer,sizeof(s_buffer),
+	   "%d,%d,%d\n%d\n%d\n%d%%\n",
+	   latestAccelData.x, latestAccelData.y, latestAccelData.z,
+	   accDataPos,
+	   accData[accDataPos-1],
+	   charge_state.charge_percent);
+  text_layer_set_text(text_layer, s_buffer);
+
+  // and update clock display.
   if (clock_is_24h_style()) {
     strftime(s_time_buffer, sizeof(s_time_buffer), "%H:%M:%S", tick_time);
   } else {
@@ -46,24 +103,6 @@ static void clock_display_handler(struct tm *tick_time, TimeUnits units_changed)
   text_layer_set_text(clock_layer, s_time_buffer);
 }
 
-static void accel_handler(AccelData *data, uint32_t num_samples) {
-  static char s_buffer[120];
-  int i;
-
-  for (i=0;i<NSAMP;i++) {
-    accData[i] = data[0].x + data[0].y + data[0].z;
-  }
-
-  BatteryChargeState charge_state = battery_state_service_peek();
-  snprintf(s_buffer,sizeof(s_buffer),
-	   "%d,%d,%d\n%d\n%d\n%d%%\n",
-	   data[0].x, data[0].y, data[0].z,
-	   (int)num_samples,
-	   accData[0],
-	   charge_state.charge_percent);
-  text_layer_set_text(text_layer, s_buffer);
-
-}
 
 
 /***********************************************************************
@@ -144,10 +183,10 @@ static void init(void) {
   /* Subscribe to acceleration data service */
   accel_data_service_subscribe(num_samples,accel_handler);
   // Choose update rate
-  accel_service_set_sampling_rate(ACCEL_SAMPLING_25HZ);
+  accel_service_set_sampling_rate(SAMP_FREQ_STR);
 
   /* Subscribe to TickTimerService */
-  tick_timer_service_subscribe(SECOND_UNIT, clock_display_handler);
+  tick_timer_service_subscribe(SECOND_UNIT, clock_tick_handler);
 }
 
 /**
