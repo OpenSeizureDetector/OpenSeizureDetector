@@ -24,8 +24,10 @@
 */
 
 #include <pebble.h>
-#include "integer_fft.c"
-
+/* These undefines prevent SYLT-FFT using assembler code */
+#undef __ARMCC_VERSION
+#undef __arm__
+#include "SYLT-FFT/fft.h"
 
 #define SAMP_FREQ 100    // Sample Frequency in Hz
 #define SAMP_FREQ_STR ACCEL_SAMPLING_100HZ  // String to pass to sampling system.
@@ -35,12 +37,14 @@ static Window *window;
 static TextLayer *text_layer;
 static TextLayer *clock_layer;
 uint32_t num_samples = NSAMP;
-int accData[NSAMP];
+short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
 int accDataPos = 0;   // Position in accData of last point in time series.
 int accDataFull = 0;  // Flag so we know when we have a complete buffer full
                       // of data.
 AccelData latestAccelData;
-int kissfftOK = 0;
+int fftOK = 0;
+int maxVal = 0;
+int maxLoc = 0;
 
 /**
  * accel_handler():  Called whenever accelerometer data is available.
@@ -68,9 +72,28 @@ static void accel_handler(AccelData *data, uint32_t num_samples) {
  * Called from clock_tick_handler().
  */
 static void do_analysis() {
-  static short fftr[NSAMP];
-  fix_fft(fftr,(short*)
-accData,NSAMP,0);
+  static fft_complex_t fftdata[NSAMP];
+  unsigned bits;
+  int i;
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
+  for (i=0;i<NSAMP;i++) {
+    // FIXME - this needs to recognise that accData is actually a rolling buffer and re-order it too!
+    fftdata[i].r = accData[i];
+    fftdata[i].i = 0;
+  }
+  bits = 0;
+  fft_forward(fftdata,bits);
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"bits=%d",bits);
+  fftOK = bits;
+  maxVal = fftdata[0].r;
+  maxLoc = 0;
+  for (i=0;i<NSAMP/2;i++) {
+    //APP_LOG(APP_LOG_LEVEL_DEBUG,"i=%d, accData=%ld fftr=%ld",i,fftdata[i].r,fftdata[i].i);
+    if (fftdata[i].r>maxVal) {
+      maxVal = fftdata[i].r;
+      maxLoc = i;
+    }
+  }
 }
 
 
@@ -87,10 +110,11 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // Update display.
   BatteryChargeState charge_state = battery_state_service_peek();
   snprintf(s_buffer,sizeof(s_buffer),
-	   "%d,%d,%d\n%d\n%d\n%d%%\n",
+	   "%d,%d,%d\n%d\n%d\n%d,%d,%d\n%d%%\n",
 	   latestAccelData.x, latestAccelData.y, latestAccelData.z,
 	   accDataPos,
 	   accData[accDataPos-1],
+	   fftOK,maxVal,maxLoc,
 	   charge_state.charge_percent);
   text_layer_set_text(text_layer, s_buffer);
 

@@ -1,81 +1,5 @@
 /*      fix_fft.c - Fixed-point Fast Fourier Transform  */
-/*
-        fix_fft()       perform FFT or inverse FFT
-        window()        applies a Hanning window to the (time) input
-        fix_loud()      calculates the loudness of the signal, for
-                        each freq point. Result is an integer array,
-                        units are dB (values will be negative).
-        iscale()        scale an integer value by (numer/denom).
-        fix_mpy()       perform fixed-point multiplication.
-        Sinewave[1024]  sinewave normalized to 32767 (= 1.0).
-        Loudampl[100]   Amplitudes for lopudnesses from 0 to -99 dB.
-        Low_pass        Low-pass filter, cutoff at sample_freq / 4.
-
-
-        All data are fixed-point short integers, in which
-        -32768 to +32768 represent -1.0 to +1.0. Integer arithmetic
-        is used for speed, instead of the more natural floating-point.
-
-        For the forward FFT (time -> freq), fixed scaling is
-        performed to prevent arithmetic overflow, and to map a 0dB
-        sine/cosine wave (i.e. amplitude = 32767) to two -6dB freq
-        coefficients; the one in the lower half is reported as 0dB
-        by fix_loud(). The return value is always 0.
-
-        For the inverse FFT (freq -> time), fixed scaling cannot be
-        done, as two 0dB coefficients would sum to a peak amplitude of
-        64K, overflowing the 32k range of the fixed-point integers.
-        Thus, the fix_fft() routine performs variable scaling, and
-        returns a value which is the number of bits LEFT by which
-        the output must be shifted to get the actual amplitude
-        (i.e. if fix_fft() returns 3, each value of fr[] and fi[]
-        must be multiplied by 8 (2**3) for proper scaling.
-        Clearly, this cannot be done within the fixed-point short
-        integers. In practice, if the result is to be used as a
-        filter, the scale_shift can usually be ignored, as the
-        result will be approximately correctly normalized as is.
-
-
-        TURBO C, any memory model; uses inline assembly for speed
-        and for carefully-scaled arithmetic.
-
-        Written by:  Tom Roberts  11/8/89
-        Made portable:  Malcolm Slaney 12/15/94 malcolm@interval.com
-
-                Timing on a Macintosh PowerBook 180.... (using Symantec C6.0)
-                        fix_fft (1024 points)             8 ticks
-                        fft (1024 points - Using SANE)  112 Ticks
-                        fft (1024 points - Using FPU)    11
-
-*/
-
-/* FIX_MPY() - fixed-point multiplication macro.
-   This macro is a statement, not an expression (uses asm).
-   BEWARE: make sure _DX is not clobbered by evaluating (A) or DEST.
-   args are all of type fixed.
-   Scaling ensures that 32767*32767 = 32767. */
-#define dosFIX_MPY(DEST,A,B)       {       \
-        _DX = (B);                      \
-        _AX = (A);                      \
-        asm imul dx;                    \
-        asm add ax,ax;                  \
-        asm adc dx,dx;                  \
-        DEST = _DX;             }
-
-#define FIX_MPY(DEST,A,B)       DEST = ((long)(A) * (long)(B))>>15
-
-#define N_WAVE          1024    /* dimension of Sinewave[] */
-#define LOG2_N_WAVE     10      /* log2(N_WAVE) */
-#define N_LOUD          100     /* dimension of Loudampl[] */
-#ifndef fixed
-#define fixed short
-#endif
-
-extern fixed Sinewave[N_WAVE]; /* placed at end of this file for clarity */
-extern fixed Loudampl[N_LOUD];
-int db_from_ampl(fixed re, fixed im);
-fixed fix_mpy(fixed a, fixed b);
-
+#include "integer_fft.h"
 /*
         fix_fft() - perform fast Fourier transform.
 
@@ -89,8 +13,7 @@ int fix_fft(fixed fr[], fixed fi[], int m, int inverse)
         int mr,nn,i,j,l,k,istep, n, scale, shift;
         fixed qr,qi,tr,ti,wr,wi,t;
 
-                n = 1<<m;
-
+	n = 1<<m;
         if(n > N_WAVE)
                 return -1;
 
@@ -159,9 +82,9 @@ int fix_fft(fixed fr[], fixed fi[], int m, int inverse)
                         for(i=m; i<n; i+=istep) {
                                 j = i + l;
                                         tr = fix_mpy(wr,fr[j]) -
-fix_mpy(wi,fi[j]);
+					  fix_mpy(wi,fi[j]);
                                         ti = fix_mpy(wr,fi[j]) +
-fix_mpy(wi,fr[j]);
+					  fix_mpy(wi,fr[j]);
                                 qr = fr[i];
                                 qi = fi[i];
                                 if(shift) {
@@ -182,69 +105,6 @@ fix_mpy(wi,fr[j]);
 }
 
 
-/*      window() - apply a Hanning window       */
-void window(fixed fr[], int n)
-{
-        int i,j,k;
-
-        j = N_WAVE/n;
-        n >>= 1;
-        for(i=0,k=N_WAVE/4; i<n; ++i,k+=j)
-                FIX_MPY(fr[i],fr[i],16384-(Sinewave[k]>>1));
-        n <<= 1;
-        for(k-=j; i<n; ++i,k-=j)
-                FIX_MPY(fr[i],fr[i],16384-(Sinewave[k]>>1));
-}
-
-/*      fix_loud() - compute loudness of freq-spectrum components.
-        n should be ntot/2, where ntot was passed to fix_fft();
-        6 dB is added to account for the omitted alias components.
-        scale_shift should be the result of fix_fft(), if the time-series
-        was obtained from an inverse FFT, 0 otherwise.
-        loud[] is the loudness, in dB wrt 32767; will be +10 to -N_LOUD.
-*/
-void fix_loud(fixed loud[], fixed fr[], fixed fi[], int n, int scale_shift)
-{
-        int i, max;
-
-        max = 0;
-        if(scale_shift > 0)
-                max = 10;
-        scale_shift = (scale_shift+1) * 6;
-
-        for(i=0; i<n; ++i) {
-                loud[i] = db_from_ampl(fr[i],fi[i]) + scale_shift;
-                if(loud[i] > max)
-                        loud[i] = max;
-        }
-}
-
-/*      db_from_ampl() - find loudness (in dB) from
-        the complex amplitude.
-*/
-int db_from_ampl(fixed re, fixed im)
-{
-        static long loud2[N_LOUD] = {0};
-        long v;
-        int i;
-
-        if(loud2[0] == 0) {
-                loud2[0] = (long)Loudampl[0] * (long)Loudampl[0];
-                for(i=1; i<N_LOUD; ++i) {
-                        v = (long)Loudampl[i] * (long)Loudampl[i];
-                        loud2[i] = v;
-                        loud2[i-1] = (loud2[i-1]+v) / 2;
-                }
-        }
-
-        v = (long)re * (long)re + (long)im * (long)im;
-
-        for(i=0; i<N_LOUD; ++i)
-                if(loud2[i] <= v)
-                        break;
-
-        return (-i);
-}
 
 /*
         fix_mpy() - fixed-point multiplication
@@ -255,90 +115,7 @@ fixed fix_mpy(fixed a, fixed b)
         return a;
 }
 
-/*
-        iscale() - scale an integer value by (numer/denom)
-*/
-int iscale(int value, int numer, int denom)
-{
-#ifdef  DOS
-        asm     mov ax,value
-        asm     imul WORD PTR numer
-        asm     idiv WORD PTR denom
-
-        return _AX;
-#else
-                return (long) value * (long)numer/(long)denom;
-#endif
-}
-
-/*
-        fix_dot() - dot product of two fixed arrays
-*/
-fixed fix_dot(fixed *hpa, fixed *pb, int n)
-{
-        fixed *pa;
-        long sum;
-        register fixed a,b;
-        unsigned int seg,off;
-
-/*      seg = FP_SEG(hpa);
-        off = FP_OFF(hpa);
-        seg += off>>4;
-        off &= 0x000F;
-        pa = MK_FP(seg,off);
- */
-        sum = 0L;
-        while(n--) {
-                a = *pa++;
-                b = *pb++;
-                FIX_MPY(a,a,b);
-                sum += a;
-        }
-
-        if(sum > 0x7FFF)
-                sum = 0x7FFF;
-        else if(sum < -0x7FFF)
-                sum = -0x7FFF;
-
-        return (fixed)sum;
-#ifdef  DOS
-        /* ASSUMES hpa is already normalized so FP_OFF(hpa) < 16 */
-        asm     push    ds
-        asm     lds     si,hpa
-        asm     les     di,pb
-        asm     xor     bx,bx
-
-        asm     xor     cx,cx
-
-loop:   /* intermediate values can overflow by a factor of 2 without
-           causing an error; the final value must not overflow! */
-        asm     lodsw
-.
-        asm     imul    word ptr es:[di]
-        asm     add     bx,ax
-        asm     adc     cx,dx
-        asm     jo      overflow
-        asm     add     di,2
-        asm     dec     word ptr n
-        asm     jg      loop
-
-        asm     add     bx,bx
-        asm     adc     cx,cx
-        asm     jo      overflow
-
-        asm     pop     ds
-        return _CX;
-
-overflow:
-        asm     mov     cx,7FFFH
-        asm     adc     cx,0
-
-        asm     pop     ds
-        return _CX;
-#endif
-
-}
-
+/* GJ Removed fix_dot() for Pebble version */
 
 #if N_WAVE != 1024
         ERROR: N_WAVE != 1024
@@ -475,24 +252,6 @@ fixed Sinewave[1024] = {
   -1607,  -1406,  -1206,  -1005,   -804,   -603,   -402,   -201,
 };
 
-#if N_LOUD != 100
-        ERROR: N_LOUD != 100
-#endif
-fixed Loudampl[100] = {
-  32767,  29203,  26027,  23197,  20674,  18426,  16422,  14636,
-  13044,  11626,  10361,   9234,   8230,   7335,   6537,   5826,
-   5193,   4628,   4125,   3676,   3276,   2920,   2602,   2319,
-   2067,   1842,   1642,   1463,   1304,   1162,   1036,    923,
-    823,    733,    653,    582,    519,    462,    412,    367,
-    327,    292,    260,    231,    206,    184,    164,    146,
-    130,    116,    103,     92,     82,     73,     65,     58,
-     51,     46,     41,     36,     32,     29,     26,     23,
-     20,     18,     16,     14,     13,     11,     10,      9,
-      8,      7,      6,      5,      5,      4,      4,      3,
-      3,      2,      2,      2,      2,      1,      1,      1,
-      1,      1,      1,      0,      0,      0,      0,      0,
-      0,      0,      0,      0,
-};
 
 #ifdef  MAIN
 
