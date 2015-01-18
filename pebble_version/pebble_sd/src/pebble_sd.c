@@ -124,6 +124,7 @@ static void window_load(Window *window) {
  */
 static void window_unload(Window *window) {
   text_layer_destroy(text_layer);
+  text_layer_destroy(clock_layer);
 }
 
 /**
