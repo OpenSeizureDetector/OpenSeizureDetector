@@ -34,6 +34,7 @@ Credits
 The following libraries are used:
 * (KissFFT)[http://sourceforge.net/projects/kissfft/] by Mark Borgerding
 * (fix_fft)[http://www.jjj.de%2Fcrs4%2Finteger_fft.c] - there are lots of copies of this about on the internet, and I don't know whose is the original, its licence, or who to credit.
+* (SYLT-FFT)[https://github.com/stg/SYLT-FFT] by D. Taylor.
 
 
 Graham Jones, 15 January 2015.  (grahamjones139+sd@gmail.com)
