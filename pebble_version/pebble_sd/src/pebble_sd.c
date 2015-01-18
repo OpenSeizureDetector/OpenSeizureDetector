@@ -25,12 +25,26 @@
 
 #include <pebble.h>
 
-#define NSAMP 25
+#define NSAMP 25       // number of samples of accelerometer data to collect.
+#define CLOCK_SIZE 30  // pixels.
 static Window *window;
 static TextLayer *text_layer;
+static TextLayer *clock_layer;
 uint32_t num_samples = NSAMP;
 int accData[NSAMP];
 
+
+/* Updates the text layer clock_layer to show current time.
+ * This function is the handler for tick events.*/
+static void clock_display_handler(struct tm *tick_time, TimeUnits units_changed) {
+  static char s_time_buffer[16];
+  if (clock_is_24h_style()) {
+    strftime(s_time_buffer, sizeof(s_time_buffer), "%H:%M:%S", tick_time);
+  } else {
+    strftime(s_time_buffer, sizeof(s_time_buffer), "%I:%M:%S", tick_time);
+  }
+  text_layer_set_text(clock_layer, s_time_buffer);
+}
 
 static void accel_handler(AccelData *data, uint32_t num_samples) {
   static char s_buffer[120];
@@ -84,13 +98,25 @@ static void window_load(Window *window) {
   text_layer = text_layer_create(
 				 (GRect) { 
 				   .origin = { 0, 0 }, 
-				   .size = { bounds.size.w, bounds.size.h } 
+				   .size = { bounds.size.w, bounds.size.h-CLOCK_SIZE } 
 				 });
   text_layer_set_text(text_layer, "Press a button");
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
   text_layer_set_font(text_layer, 
 		      fonts_get_system_font(FONT_KEY_GOTHIC_24));
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
+
+  /* Create text layer for clock display */
+  clock_layer = text_layer_create(
+				 (GRect) { 
+				   .origin = { 0, bounds.size.h - CLOCK_SIZE }, 
+				   .size = { bounds.size.w, CLOCK_SIZE } 
+				 });
+  text_layer_set_text(clock_layer, "CLOCK");
+  text_layer_set_text_alignment(clock_layer, GTextAlignmentCenter);
+  text_layer_set_font(clock_layer, 
+		      fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+  layer_add_child(window_layer, text_layer_get_layer(clock_layer));
 }
 
 /**
@@ -117,7 +143,11 @@ static void init(void) {
   /* Subscribe to acceleration data service */
   accel_data_service_subscribe(num_samples,accel_handler);
   // Choose update rate
-  accel_service_set_sampling_rate(ACCEL_SAMPLING_25HZ);}
+  accel_service_set_sampling_rate(ACCEL_SAMPLING_25HZ);
+
+  /* Subscribe to TickTimerService */
+  tick_timer_service_subscribe(SECOND_UNIT, clock_display_handler);
+}
 
 /**
  * deinit(): destroy window before app exits.
