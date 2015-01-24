@@ -29,13 +29,20 @@
 #undef __arm__
 #include "SYLT-FFT/fft.h"
 
+
+/* CONFIGURATION */
 #define SAMP_FREQ 100    // Sample Frequency in Hz
 #define SAMP_FREQ_STR ACCEL_SAMPLING_100HZ  // String to pass to sampling system.
-#define NSAMP 1000       // number of samples of accelerometer data to collect.
+#define NSAMP 512       // number of samples of accelerometer data to collect.
+#define FFT_BITS 9        // 'bits' parameter to fft_forward.
 #define CLOCK_SIZE 30  // pixels.
+#define SPEC_SIZE 30   // pixels
+
+/* GLOBAL VARIABLES */
 static Window *window;
 static TextLayer *text_layer;
 static TextLayer *clock_layer;
+static TextLayer *spec_layer;
 uint32_t num_samples = NSAMP;
 short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
 int accDataPos = 0;   // Position in accData of last point in time series.
@@ -60,6 +67,7 @@ static void accel_handler(AccelData *data, uint32_t num_samples) {
     if (accDataPos>=NSAMP) { 
       accDataPos = 0;
       accDataFull = 1;
+      break;
     }
     accData[accDataPos] = data[i].x + data[i].y + data[i].z;
     accDataPos++;
@@ -81,10 +89,10 @@ static void do_analysis() {
     fftdata[i].r = accData[i];
     fftdata[i].i = 0;
   }
-  bits = 0;
-  fft_forward(fftdata,bits);
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"bits=%d",bits);
-  fftOK = bits;
+  // Do the FFT conversion from time to frequency domain.
+  fft_fft(fftdata,FFT_BITS);
+  fftOK = 0;
+  // Look for maximm amplitude, and location of maximum.
   maxVal = fftdata[0].r;
   maxLoc = 0;
   for (i=0;i<NSAMP/2;i++) {
@@ -94,6 +102,12 @@ static void do_analysis() {
       maxLoc = i;
     }
   }
+  /* Start collecting new buffer of data */
+  /* FIXME = it would be best to make this a rolling buffer and analyse it
+  * more frequently.
+  */
+  accDataPos = 0;
+  accDataFull = 0;
 }
 
 
@@ -105,17 +119,17 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   static char s_buffer[120];
 
   // Do FFT analysis
-  do_analysis();
+  if (accDataFull) 
+    do_analysis();
 
   // Update display.
   BatteryChargeState charge_state = battery_state_service_peek();
   snprintf(s_buffer,sizeof(s_buffer),
-	   "%d,%d,%d\n%d\n%d\n%d,%d,%d\n%d%%\n",
+	   "%d,%d,%d\n%d\nmax=%d,pos=%d",
 	   latestAccelData.x, latestAccelData.y, latestAccelData.z,
-	   accDataPos,
 	   accData[accDataPos-1],
-	   fftOK,maxVal,maxLoc,
-	   charge_state.charge_percent);
+	   maxVal,maxLoc
+	   );
   text_layer_set_text(text_layer, s_buffer);
 
   // and update clock display.
@@ -124,6 +138,10 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   } else {
     strftime(s_time_buffer, sizeof(s_time_buffer), "%I:%M:%S", tick_time);
   }
+  snprintf(s_time_buffer,sizeof(s_time_buffer),
+	   "%s %d%%", 
+	   s_time_buffer,
+	   charge_state.charge_percent);
   text_layer_set_text(clock_layer, s_time_buffer);
 }
 
@@ -161,13 +179,23 @@ static void window_load(Window *window) {
   text_layer = text_layer_create(
 				 (GRect) { 
 				   .origin = { 0, 0 }, 
-				   .size = { bounds.size.w, bounds.size.h-CLOCK_SIZE } 
+				   .size = { bounds.size.w, 
+					     bounds.size.h-CLOCK_SIZE-SPEC_SIZE } 
 				 });
   text_layer_set_text(text_layer, "Press a button");
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
   text_layer_set_font(text_layer, 
 		      fonts_get_system_font(FONT_KEY_GOTHIC_24));
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
+
+  /* Create text layer for spectrum display */
+  spec_layer = text_layer_create(
+				 (GRect) { 
+				   .origin = { 0, bounds.size.h - CLOCK_SIZE - SPEC_SIZE }, 
+				   .size = { bounds.size.w, SPEC_SIZE } 
+				 });
+  text_layer_set_text(spec_layer, "SPECTRUM");
+  layer_add_child(window_layer, text_layer_get_layer(spec_layer));
 
   /* Create text layer for clock display */
   clock_layer = text_layer_create(
@@ -188,6 +216,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   text_layer_destroy(text_layer);
   text_layer_destroy(clock_layer);
+  text_layer_destroy(spec_layer);
 }
 
 /**
