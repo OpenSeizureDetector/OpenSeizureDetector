@@ -5,6 +5,8 @@ config.ini
 # C extensions
 *.so
 
+fft_test
+
 # Packages
 *.egg
 *.egg-info

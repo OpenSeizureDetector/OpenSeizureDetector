@@ -42,9 +42,11 @@
 static Window *window;
 static TextLayer *text_layer;
 static TextLayer *clock_layer;
-static TextLayer *spec_layer;
+static Layer *spec_layer;
 uint32_t num_samples = NSAMP;
 short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
+fft_complex_t fftdata[NSAMP];
+
 int accDataPos = 0;   // Position in accData of last point in time series.
 int accDataFull = 0;  // Flag so we know when we have a complete buffer full
                       // of data.
@@ -52,6 +54,7 @@ AccelData latestAccelData;
 int fftOK = 0;
 int maxVal = 0;
 int maxLoc = 0;
+int freqRes = 0;  // Actually 1000 x frequency resolution
 
 /**
  * accel_handler():  Called whenever accelerometer data is available.
@@ -69,21 +72,27 @@ static void accel_handler(AccelData *data, uint32_t num_samples) {
       accDataFull = 1;
       break;
     }
-    accData[accDataPos] = data[i].x + data[i].y + data[i].z;
+    accData[accDataPos] = abs(data[i].x) + abs(data[i].y) + abs(data[i].z);
     accDataPos++;
   }
   latestAccelData = data[num_samples-1];
 
 }
 
-/* Carry out analysis of acceleration time series.
+/****************************************************************
+ * Carry out analysis of acceleration time series.
  * Called from clock_tick_handler().
  */
 static void do_analysis() {
-  static fft_complex_t fftdata[NSAMP];
   unsigned bits;
   int i;
+  char buf[256];
   APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
+
+  // Calculate the frequency resolution of the output spectrum.
+  // Stored as an integer which is 1000 x the frequency resolution in Hz.
+  freqRes = (int)(1000*SAMP_FREQ/NSAMP);
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"freqRes=%d",freqRes);
   for (i=0;i<NSAMP;i++) {
     // FIXME - this needs to recognise that accData is actually a rolling buffer and re-order it too!
     fftdata[i].r = accData[i];
@@ -93,15 +102,19 @@ static void do_analysis() {
   fft_fft(fftdata,FFT_BITS);
   fftOK = 0;
   // Look for maximm amplitude, and location of maximum.
-  maxVal = fftdata[0].r;
-  maxLoc = 0;
-  for (i=0;i<NSAMP/2;i++) {
+  // Ignore position zero though (DC component)
+  maxVal = fftdata[1].r;
+  maxLoc = 1;
+  for (i=1;i<NSAMP/2;i++) {
+    // Find absolute value of the imaginary fft output.
+    fftdata[i].r = fftdata[i].r*fftdata[i].r + fftdata[i].i*fftdata[i].i;
     //APP_LOG(APP_LOG_LEVEL_DEBUG,"i=%d, accData=%ld fftr=%ld",i,fftdata[i].r,fftdata[i].i);
     if (fftdata[i].r>maxVal) {
       maxVal = fftdata[i].r;
       maxLoc = i;
     }
   }
+
   /* Start collecting new buffer of data */
   /* FIXME = it would be best to make this a rolling buffer and analyse it
   * more frequently.
@@ -111,7 +124,8 @@ static void do_analysis() {
 }
 
 
-/* clock_tick_handler() - Analyse data and update display.
+/************************************************************************
+ * clock_tick_handler() - Analyse data and update display.
  * Updates the text layer clock_layer to show current time.
  * This function is the handler for tick events.*/
 static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -125,10 +139,9 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   // Update display.
   BatteryChargeState charge_state = battery_state_service_peek();
   snprintf(s_buffer,sizeof(s_buffer),
-	   "%d,%d,%d\n%d\nmax=%d,pos=%d",
+	   "%d,%d,%d\nmax=%d(%d) - %d Hz",
 	   latestAccelData.x, latestAccelData.y, latestAccelData.z,
-	   accData[accDataPos-1],
-	   maxVal,maxLoc
+	   maxVal,maxLoc,(int)(maxLoc*freqRes/1000)
 	   );
   text_layer_set_text(text_layer, s_buffer);
 
@@ -146,6 +159,25 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 }
 
 
+/**************************************************************************
+ * draw_spec() - draw the spectrum to the pebble display
+ */
+void draw_spec(Layer *sl, GContext *ctx) {
+  GRect bounds = layer_get_bounds(sl);
+  GPoint p0;
+  GPoint p1;
+  int i,h;
+
+  /* Now draw the spectrum */
+  for (i=0;i<bounds.size.w-1;i++) {
+    p0 = GPoint(i,bounds.size.h-1);
+    //h = bounds.size.h*accData[i]/2000;
+    h = bounds.size.h*fftdata[i].r/1000.;
+    p1 = GPoint(i,bounds.size.h - h);
+    graphics_draw_line(ctx,p0,p1);
+  }
+
+}
 
 /***********************************************************************
   Button event handlers
@@ -189,13 +221,13 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 
   /* Create text layer for spectrum display */
-  spec_layer = text_layer_create(
+  spec_layer = layer_create(
 				 (GRect) { 
 				   .origin = { 0, bounds.size.h - CLOCK_SIZE - SPEC_SIZE }, 
 				   .size = { bounds.size.w, SPEC_SIZE } 
 				 });
-  text_layer_set_text(spec_layer, "SPECTRUM");
-  layer_add_child(window_layer, text_layer_get_layer(spec_layer));
+  layer_set_update_proc(spec_layer,draw_spec);
+  layer_add_child(window_layer, spec_layer);
 
   /* Create text layer for clock display */
   clock_layer = text_layer_create(
@@ -216,7 +248,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
   text_layer_destroy(text_layer);
   text_layer_destroy(clock_layer);
-  text_layer_destroy(spec_layer);
+  layer_destroy(spec_layer);
 }
 
 /**
