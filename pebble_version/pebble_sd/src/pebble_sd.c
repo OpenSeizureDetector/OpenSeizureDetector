@@ -30,31 +30,95 @@
 #include "SYLT-FFT/fft.h"
 
 
-/* CONFIGURATION */
+/* ANALYSIS CONFIGURATION */
 #define SAMP_FREQ 100    // Sample Frequency in Hz
 #define SAMP_FREQ_STR ACCEL_SAMPLING_100HZ  // String to pass to sampling system.
 #define NSAMP 512       // number of samples of accelerometer data to collect.
 #define FFT_BITS 9        // 'bits' parameter to fft_forward.
+
+#define ALARM_FREQ_MIN 5  // Hz
+#define ALARM_FREQ_MAX 10 // Hz
+#define WARN_TIME      10 // sec
+#define ALARM_TIME     20 // sec
+#define ALARM_THRESH   200 // Power of spectrum between ALARM_FREQ_MIN and
+                           // ALARM_FREQ_MAX that will indicate an alarm
+                           // state.
+
+/* Display Configuration */
 #define CLOCK_SIZE 30  // pixels.
+#define ALARM_SIZE 30  // pixels.
 #define SPEC_SIZE 30   // pixels
 
 /* GLOBAL VARIABLES */
 static Window *window;
 static TextLayer *text_layer;
+static TextLayer *alarm_layer;
 static TextLayer *clock_layer;
 static Layer *spec_layer;
 uint32_t num_samples = NSAMP;
 short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
-fft_complex_t fftdata[NSAMP];
+fft_complex_t fftdata[NSAMP];   // spectrum calculated by FFT
 
 int accDataPos = 0;   // Position in accData of last point in time series.
 int accDataFull = 0;  // Flag so we know when we have a complete buffer full
                       // of data.
-AccelData latestAccelData;
-int fftOK = 0;
-int maxVal = 0;
-int maxLoc = 0;
-int freqRes = 0;  // Actually 1000 x frequency resolution
+AccelData latestAccelData;  // Latest accelerometer readings received.
+int maxVal = 0;       // Peak amplitude in spectrum.
+int maxLoc = 0;       // Location in output array of peak.
+int maxFreq = 0;      // Frequency corresponding to peak location.
+long specPower = 0;   // Average power of whole spectrum.
+int freqRes = 0;      // Actually 1000 x frequency resolution
+
+int alarmState = 0;    // 0 = OK, 1 = WARNING, 2 = ALARM
+int alarmCount = 0;    // number of seconds that we have been in an alarm state.
+
+/*********************************************
+ * Returns the magnitude of a complex number
+ * (well, actually magnitude^2 to save having to do
+ * a square root.
+ */
+int getMagnitude(fft_complex_t c) {
+  int mag;
+  mag = c.r*c.r + c.i*c.i;
+  return mag;
+}
+
+
+/***********************************************
+ * Analyse spectrum and set alarm condition if
+ * appropriate.
+ * This routine assumes it is called every second to check the 
+ * spectrum for an alarm state.
+ */
+int alarm_check() {
+  int nMin = 1000*ALARM_FREQ_MIN/freqRes;
+  int nMax = 1000*ALARM_FREQ_MAX/freqRes;
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Alarm Check nMin=%d, nMax=%d",nMin,nMax);
+  int fPow = 0;
+
+  for (int i=nMin;i<nMax;i++) {
+    fPow = fPow + fftdata[i].r;
+  }
+  fPow = fPow/(nMax-nMin);
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"fPow=%d",fPow);
+
+  if (fPow>ALARM_THRESH) {
+    alarmCount++;
+    if (alarmCount>ALARM_TIME) {
+      alarmState = 2;
+    } else if (alarmCount>WARN_TIME) {
+      alarmState = 1;
+    }
+  } else {
+    alarmState = 0;
+    alarmCount = 0;
+  }
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"alarmState = %d, alarmCount=%d",alarmState,alarmCount);
+
+  return(alarmState);
+}
+
 
 /**
  * accel_handler():  Called whenever accelerometer data is available.
@@ -72,8 +136,14 @@ static void accel_handler(AccelData *data, uint32_t num_samples) {
       accDataFull = 1;
       break;
     }
-    accData[accDataPos] = abs(data[i].x) + abs(data[i].y) + abs(data[i].z);
-    accDataPos++;
+    // Ignore any data when the vibrator motor was running.
+    // FIXME - this doesn't seem to work - alarm latches on if the 
+    //         vibrator operates.
+    if (!data[i].did_vibrate) {
+      // add good data to the accData array
+      accData[accDataPos] = abs(data[i].x) + abs(data[i].y) + abs(data[i].z);
+      accDataPos++;
+    }
   }
   latestAccelData = data[num_samples-1];
 
@@ -84,9 +154,7 @@ static void accel_handler(AccelData *data, uint32_t num_samples) {
  * Called from clock_tick_handler().
  */
 static void do_analysis() {
-  unsigned bits;
   int i;
-  char buf[256];
   APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
 
   // Calculate the frequency resolution of the output spectrum.
@@ -100,21 +168,23 @@ static void do_analysis() {
   }
   // Do the FFT conversion from time to frequency domain.
   fft_fft(fftdata,FFT_BITS);
-  fftOK = 0;
   // Look for maximm amplitude, and location of maximum.
   // Ignore position zero though (DC component)
-  maxVal = fftdata[1].r;
+  maxVal = getMagnitude(fftdata[1]);
   maxLoc = 1;
+  specPower = 0;
   for (i=1;i<NSAMP/2;i++) {
     // Find absolute value of the imaginary fft output.
-    fftdata[i].r = fftdata[i].r*fftdata[i].r + fftdata[i].i*fftdata[i].i;
-    //APP_LOG(APP_LOG_LEVEL_DEBUG,"i=%d, accData=%ld fftr=%ld",i,fftdata[i].r,fftdata[i].i);
+    fftdata[i].r = getMagnitude(fftdata[i]);
+    specPower = specPower + fftdata[i].r;
     if (fftdata[i].r>maxVal) {
       maxVal = fftdata[i].r;
       maxLoc = i;
     }
   }
-
+  maxFreq = (int)(maxLoc*freqRes/1000);
+  specPower = specPower/(NSAMP/2);
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"specPower=%ld",specPower);
   /* Start collecting new buffer of data */
   /* FIXME = it would be best to make this a rolling buffer and analyse it
   * more frequently.
@@ -130,18 +200,35 @@ static void do_analysis() {
  * This function is the handler for tick events.*/
 static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   static char s_time_buffer[16];
-  static char s_buffer[120];
+  static char s_alarm_buffer[64];
+  static char s_buffer[256];
 
   // Do FFT analysis
   if (accDataFull) 
     do_analysis();
 
-  // Update display.
-  BatteryChargeState charge_state = battery_state_service_peek();
+  // Check the alarm state, and set the global alarmState variable.
+  alarm_check();
+
+  // Do something with the alarm - vibrate the pebble watch 
+  //  and display message on screen.
+  if (alarmState == 0) {
+    text_layer_set_text(alarm_layer, "OK");
+  }
+  if (alarmState == 1) {
+    //vibes_short_pulse();
+    text_layer_set_text(alarm_layer, "WARNING");
+  }
+  if (alarmState == 2) {
+    //vibes_long_pulse();
+    text_layer_set_text(alarm_layer, "** ALARM **");
+  }
+
+  // Update data display.
   snprintf(s_buffer,sizeof(s_buffer),
-	   "%d,%d,%d\nmax=%d(%d) - %d Hz",
-	   latestAccelData.x, latestAccelData.y, latestAccelData.z,
-	   maxVal,maxLoc,(int)(maxLoc*freqRes/1000)
+	   "max=%d, P=%ld\n%d Hz",
+	   /*latestAccelData.x, latestAccelData.y, latestAccelData.z,*/
+	   maxVal,specPower,maxFreq
 	   );
   text_layer_set_text(text_layer, s_buffer);
 
@@ -151,6 +238,7 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   } else {
     strftime(s_time_buffer, sizeof(s_time_buffer), "%I:%M:%S", tick_time);
   }
+  BatteryChargeState charge_state = battery_state_service_peek();
   snprintf(s_time_buffer,sizeof(s_time_buffer),
 	   "%s %d%%", 
 	   s_time_buffer,
@@ -212,7 +300,10 @@ static void window_load(Window *window) {
 				 (GRect) { 
 				   .origin = { 0, 0 }, 
 				   .size = { bounds.size.w, 
-					     bounds.size.h-CLOCK_SIZE-SPEC_SIZE } 
+					     bounds.size.h
+					     -CLOCK_SIZE
+					     -ALARM_SIZE
+					     -SPEC_SIZE } 
 				 });
   text_layer_set_text(text_layer, "Press a button");
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
@@ -220,7 +311,24 @@ static void window_load(Window *window) {
 		      fonts_get_system_font(FONT_KEY_GOTHIC_24));
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 
-  /* Create text layer for spectrum display */
+  /* Create text layer for alarm display */
+  alarm_layer = text_layer_create(
+				 (GRect) { 
+				   .origin = { 0, bounds.size.h 
+					       - CLOCK_SIZE
+					       - ALARM_SIZE
+					       - SPEC_SIZE
+				   }, 
+				   .size = { bounds.size.w, ALARM_SIZE } 
+				 });
+  text_layer_set_text(alarm_layer, "ALARM");
+  text_layer_set_text_alignment(alarm_layer, GTextAlignmentCenter);
+  text_layer_set_font(alarm_layer, 
+		      fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+  layer_add_child(window_layer, text_layer_get_layer(alarm_layer));
+
+
+  /* Create layer for spectrum display */
   spec_layer = layer_create(
 				 (GRect) { 
 				   .origin = { 0, bounds.size.h - CLOCK_SIZE - SPEC_SIZE }, 
@@ -247,6 +355,7 @@ static void window_load(Window *window) {
  */
 static void window_unload(Window *window) {
   text_layer_destroy(text_layer);
+  text_layer_destroy(alarm_layer);
   text_layer_destroy(clock_layer);
   layer_destroy(spec_layer);
 }
