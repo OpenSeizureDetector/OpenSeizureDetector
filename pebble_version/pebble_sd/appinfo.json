@@ -2,9 +2,9 @@
   "uuid": "03930f26-377a-4a3d-aa3e-f3b19e421c9d",
   "shortName": "pebble_sd",
   "longName": "pebble_sd",
-  "companyName": "MakeAwesomeHappen",
+  "companyName": "OpenSeizureDetector",
   "versionCode": 1,
-  "versionLabel": "1.0",
+  "versionLabel": "0.1",
   "watchapp": {
     "watchface": false
   },
