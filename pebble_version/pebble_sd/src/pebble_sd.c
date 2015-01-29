@@ -22,13 +22,9 @@
   along with pebble_sd.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-
 #include <pebble.h>
-/* These undefines prevent SYLT-FFT using assembler code */
-#undef __ARMCC_VERSION
-#undef __arm__
-#include "SYLT-FFT/fft.h"
 
+#include "pebble_sd.h"
 
 /* ANALYSIS CONFIGURATION */
 #define SAMP_FREQ 100    // Sample Frequency in Hz
@@ -36,11 +32,19 @@
 #define NSAMP 512       // number of samples of accelerometer data to collect.
 #define FFT_BITS 9        // 'bits' parameter to fft_forward.
 
-#define ALARM_FREQ_MIN 5  // Hz
-#define ALARM_FREQ_MAX 10 // Hz
-#define WARN_TIME      10 // sec
-#define ALARM_TIME     20 // sec
-#define ALARM_THRESH   200 // Power of spectrum between ALARM_FREQ_MIN and
+// Keys to store settings in persistant storage.
+#define KEY_ALARM_FREQ_MIN 1
+#define KEY_ALARM_FREQ_MAX 2
+#define KEY_WARN_TIME 3
+#define KEY_ALARM_TIME 4
+#define KEY_ALARM_THRESH 5
+
+// default values of settings
+#define ALARM_FREQ_MIN_DEFAULT 5  // Hz
+#define ALARM_FREQ_MAX_DEFAULT 10 // Hz
+#define WARN_TIME_DEFAULT      10 // sec
+#define ALARM_TIME_DEFAULT     20 // sec
+#define ALARM_THRESH_DEFAULT   200 // Power of spectrum between ALARM_FREQ_MIN and
                            // ALARM_FREQ_MAX that will indicate an alarm
                            // state.
 
@@ -57,203 +61,31 @@
 #define KEY_SPECPOWER 5
 #define KEY_DATA 5
 
-
 /* GLOBAL VARIABLES */
-static Window *window;
-static TextLayer *text_layer;
-static TextLayer *alarm_layer;
-static TextLayer *clock_layer;
-static Layer *spec_layer;
-uint32_t num_samples = NSAMP;
-short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
-fft_complex_t fftdata[NSAMP];   // spectrum calculated by FFT
+// Settings (obtained from default constants or persistent storage)
+int alarmFreqMin;    // Bin number of lower boundary of region of interest
+int alarmFreqMax;    // Bin number of higher boundary of region of interest
+int warnTime;        // number of seconds above threshold to raise warning
+int alarmTime;       // number of seconds above threshold to raise alarm.
+int alarmThresh;     // Alarm threshold (average power of spectrum within
+                     //       region of interest.
 
-int accDataPos = 0;   // Position in accData of last point in time series.
-int accDataFull = 0;  // Flag so we know when we have a complete buffer full
-                      // of data.
+Window *window;
+TextLayer *text_layer;
+TextLayer *alarm_layer;
+TextLayer *clock_layer;
+Layer *spec_layer;
 AccelData latestAccelData;  // Latest accelerometer readings received.
 int maxVal = 0;       // Peak amplitude in spectrum.
 int maxLoc = 0;       // Location in output array of peak.
 int maxFreq = 0;      // Frequency corresponding to peak location.
 long specPower = 0;   // Average power of whole spectrum.
+long roiPower = 0;    // Average power of spectrum in region of interest
 int freqRes = 0;      // Actually 1000 x frequency resolution
 
 int alarmState = 0;    // 0 = OK, 1 = WARNING, 2 = ALARM
 int alarmCount = 0;    // number of seconds that we have been in an alarm state.
 
-
-/*************************************************************
- * Communications with Phone
- *************************************************************/
-static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
- // Get the first pair
-  Tuple *t = dict_read_first(iterator);
-
-  // Process all pairs present
-  while(t != NULL) {
-    // Process this pair's key
-    switch (t->key) {
-      case KEY_DATA:
-        APP_LOG(APP_LOG_LEVEL_INFO, "KEY_DATA received with value %d", (int)t->value->int32);
-        break;
-    }
-
-    // Get next pair, if any
-    t = dict_read_next(iterator);
-  }}
-
-static void inbox_dropped_callback(AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
-}
-
-static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
-  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
-}
-
-static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
-}
-
-/***************************************************
- * Send some Seizure Detecto Data to the phone app.
- */
-void sendSdData() {
-  DictionaryIterator *iter;
-  app_message_outbox_begin(&iter);
-  dict_write_uint8(iter,KEY_ALARMSTATE,(uint8_t)alarmState);
-  dict_write_uint32(iter,KEY_MAXVAL,(uint8_t)maxVal);
-  dict_write_uint32(iter,KEY_MAXFREQ,(uint8_t)maxFreq);
-  dict_write_uint32(iter,KEY_SPECPOWER,(uint8_t)specPower);
-  dict_write_cstring(iter,10,"a string");
-  app_message_outbox_send();
-
-}
-
-/*************************************************************
- * Data Analysis
- *************************************************************/
-
-/*********************************************
- * Returns the magnitude of a complex number
- * (well, actually magnitude^2 to save having to do
- * a square root.
- */
-int getMagnitude(fft_complex_t c) {
-  int mag;
-  mag = c.r*c.r + c.i*c.i;
-  return mag;
-}
-
-
-/***********************************************
- * Analyse spectrum and set alarm condition if
- * appropriate.
- * This routine assumes it is called every second to check the 
- * spectrum for an alarm state.
- */
-int alarm_check() {
-  int nMin = 1000*ALARM_FREQ_MIN/freqRes;
-  int nMax = 1000*ALARM_FREQ_MAX/freqRes;
-
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"Alarm Check nMin=%d, nMax=%d",nMin,nMax);
-  int fPow = 0;
-
-  for (int i=nMin;i<nMax;i++) {
-    fPow = fPow + fftdata[i].r;
-  }
-  fPow = fPow/(nMax-nMin);
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"fPow=%d",fPow);
-
-  if (fPow>ALARM_THRESH) {
-    alarmCount++;
-    if (alarmCount>ALARM_TIME) {
-      alarmState = 2;
-    } else if (alarmCount>WARN_TIME) {
-      alarmState = 1;
-    }
-  } else {
-    alarmState = 0;
-    alarmCount = 0;
-  }
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"alarmState = %d, alarmCount=%d",alarmState,alarmCount);
-
-  return(alarmState);
-}
-
-
-/**
- * accel_handler():  Called whenever accelerometer data is available.
- * Add data to circular buffer accData[] and increments accDataPos to show
- * the position of the latest data in the buffer.
- */
-static void accel_handler(AccelData *data, uint32_t num_samples) {
-  int i;
-
-  // Add the new data to the accData buffer
-  for (i=0;i<(int)num_samples;i++) {
-    // Wrap around the buffer if necessary
-    if (accDataPos>=NSAMP) { 
-      accDataPos = 0;
-      accDataFull = 1;
-      break;
-    }
-    // Ignore any data when the vibrator motor was running.
-    // FIXME - this doesn't seem to work - alarm latches on if the 
-    //         vibrator operates.
-    if (!data[i].did_vibrate) {
-      // add good data to the accData array
-      accData[accDataPos] = abs(data[i].x) + abs(data[i].y) + abs(data[i].z);
-      accDataPos++;
-    }
-  }
-  latestAccelData = data[num_samples-1];
-
-}
-
-/****************************************************************
- * Carry out analysis of acceleration time series.
- * Called from clock_tick_handler().
- */
-static void do_analysis() {
-  int i;
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
-
-  // Calculate the frequency resolution of the output spectrum.
-  // Stored as an integer which is 1000 x the frequency resolution in Hz.
-  freqRes = (int)(1000*SAMP_FREQ/NSAMP);
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"freqRes=%d",freqRes);
-  for (i=0;i<NSAMP;i++) {
-    // FIXME - this needs to recognise that accData is actually a rolling buffer and re-order it too!
-    fftdata[i].r = accData[i];
-    fftdata[i].i = 0;
-  }
-  // Do the FFT conversion from time to frequency domain.
-  fft_fft(fftdata,FFT_BITS);
-  // Look for maximm amplitude, and location of maximum.
-  // Ignore position zero though (DC component)
-  maxVal = getMagnitude(fftdata[1]);
-  maxLoc = 1;
-  specPower = 0;
-  for (i=1;i<NSAMP/2;i++) {
-    // Find absolute value of the imaginary fft output.
-    fftdata[i].r = getMagnitude(fftdata[i]);
-    specPower = specPower + fftdata[i].r;
-    if (fftdata[i].r>maxVal) {
-      maxVal = fftdata[i].r;
-      maxLoc = i;
-    }
-  }
-  maxFreq = (int)(maxLoc*freqRes/1000);
-  specPower = specPower/(NSAMP/2);
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"specPower=%ld",specPower);
-  /* Start collecting new buffer of data */
-  /* FIXME = it would be best to make this a rolling buffer and analyse it
-  * more frequently.
-  */
-  accDataPos = 0;
-  accDataFull = 0;
-}
 
 
 /***************************************************************************
@@ -330,7 +162,7 @@ void draw_spec(Layer *sl, GContext *ctx) {
   for (i=0;i<bounds.size.w-1;i++) {
     p0 = GPoint(i,bounds.size.h-1);
     //h = bounds.size.h*accData[i]/2000;
-    h = bounds.size.h*fftdata[i].r/1000.;
+    h = bounds.size.h*getAmpl(i)/1000.;
     p1 = GPoint(i,bounds.size.h - h);
     graphics_draw_line(ctx,p0,p1);
   }
@@ -435,6 +267,24 @@ static void window_unload(Window *window) {
  * for accelerometer data readings.
  */
 static void init(void) {
+  // Load data from persistent storage into global variables.
+  alarmFreqMin = ALARM_FREQ_MIN_DEFAULT;
+  if (persist_exists(KEY_ALARM_FREQ_MIN))
+    alarmFreqMin = persist_read_int(KEY_ALARM_FREQ_MIN);
+  alarmFreqMax = ALARM_FREQ_MAX_DEFAULT;
+  if (persist_exists(KEY_ALARM_FREQ_MAX))
+    alarmFreqMax = persist_read_int(KEY_ALARM_FREQ_MAX);
+  warnTime = WARN_TIME_DEFAULT;
+  if (persist_exists(KEY_WARN_TIME))
+    warnTime = persist_read_int(KEY_WARN_TIME);
+  alarmTime = ALARM_TIME_DEFAULT;
+  if (persist_exists(KEY_ALARM_TIME))
+    alarmTime = persist_read_int(KEY_ALARM_TIME);
+  alarmThresh = ALARM_THRESH_DEFAULT;
+  if (persist_exists(KEY_ALARM_THRESH))
+    alarmThresh = persist_read_int(KEY_ALARM_THRESH);
+
+  // Create Window for display.
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
@@ -445,7 +295,7 @@ static void init(void) {
   window_stack_push(window, animated);
 
   /* Subscribe to acceleration data service */
-  accel_data_service_subscribe(num_samples,accel_handler);
+  accel_data_service_subscribe(NSAMP,accel_handler);
   // Choose update rate
   accel_service_set_sampling_rate(SAMP_FREQ_STR);
 
@@ -466,6 +316,14 @@ static void init(void) {
  * deinit(): destroy window before app exits.
  */
 static void deinit(void) {
+  // Save settings to persistent storage
+  persist_write_int(KEY_ALARM_FREQ_MIN,alarmFreqMin);
+  persist_write_int(KEY_ALARM_FREQ_MAX,alarmFreqMax);
+  persist_write_int(KEY_WARN_TIME,warnTime);
+  persist_write_int(KEY_ALARM_TIME,alarmTime);
+  persist_write_int(KEY_ALARM_THRESH,alarmThresh);
+
+  // destroy the window
   window_destroy(window);
 }
 
