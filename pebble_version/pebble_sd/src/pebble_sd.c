@@ -26,41 +26,6 @@
 
 #include "pebble_sd.h"
 
-/* ANALYSIS CONFIGURATION */
-#define SAMP_FREQ 100    // Sample Frequency in Hz
-#define SAMP_FREQ_STR ACCEL_SAMPLING_100HZ  // String to pass to sampling system.
-#define NSAMP 512       // number of samples of accelerometer data to collect.
-#define FFT_BITS 9        // 'bits' parameter to fft_forward.
-
-// Keys to store settings in persistant storage.
-#define KEY_ALARM_FREQ_MIN 1
-#define KEY_ALARM_FREQ_MAX 2
-#define KEY_WARN_TIME 3
-#define KEY_ALARM_TIME 4
-#define KEY_ALARM_THRESH 5
-
-// default values of settings
-#define ALARM_FREQ_MIN_DEFAULT 5  // Hz
-#define ALARM_FREQ_MAX_DEFAULT 10 // Hz
-#define WARN_TIME_DEFAULT      10 // sec
-#define ALARM_TIME_DEFAULT     20 // sec
-#define ALARM_THRESH_DEFAULT   200 // Power of spectrum between ALARM_FREQ_MIN and
-                           // ALARM_FREQ_MAX that will indicate an alarm
-                           // state.
-
-/* Display Configuration */
-#define CLOCK_SIZE 30  // pixels.
-#define ALARM_SIZE 30  // pixels.
-#define SPEC_SIZE 30   // pixels
-
-
-/* Phone Communications */
-#define KEY_ALARMSTATE 2
-#define KEY_MAXVAL 3
-#define KEY_MAXFREQ 4
-#define KEY_SPECPOWER 5
-#define KEY_DATA 5
-
 /* GLOBAL VARIABLES */
 // Settings (obtained from default constants or persistent storage)
 int alarmFreqMin;    // Bin number of lower boundary of region of interest

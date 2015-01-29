@@ -32,12 +32,6 @@
 #define NSAMP 512       // number of samples of accelerometer data to collect.
 #define FFT_BITS 9        // 'bits' parameter to fft_forward.
 
-// Keys to store settings in persistant storage.
-#define KEY_ALARM_FREQ_MIN 1
-#define KEY_ALARM_FREQ_MAX 2
-#define KEY_WARN_TIME 3
-#define KEY_ALARM_TIME 4
-#define KEY_ALARM_THRESH 5
 
 // default values of settings
 #define ALARM_FREQ_MIN_DEFAULT 5  // Hz
@@ -55,11 +49,19 @@
 
 
 /* Phone Communications */
+// Analysis Results
 #define KEY_ALARMSTATE 2
 #define KEY_MAXVAL 3
 #define KEY_MAXFREQ 4
 #define KEY_SPECPOWER 5
-#define KEY_DATA 5
+// Settings
+#define KEY_SETTINGS 6    // Phone is requesting watch to send current settings.
+#define KEY_ALARM_FREQ_MIN 7
+#define KEY_ALARM_FREQ_MAX 8
+#define KEY_WARN_TIME 9
+#define KEY_ALARM_TIME 10
+#define KEY_ALARM_THRESH 11
+
 
 
 /* GLOBAL VARIABLES */
