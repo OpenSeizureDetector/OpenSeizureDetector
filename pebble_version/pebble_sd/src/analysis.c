@@ -172,4 +172,10 @@ void do_analysis() {
   accDataFull = 0;
 }
 
+void analysis_init() {
+  /* Subscribe to acceleration data service */
+  accel_data_service_subscribe(NSAMP,accel_handler);
+  // Choose update rate
+  accel_service_set_sampling_rate(SAMP_FREQ_STR);
+}
 

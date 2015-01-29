@@ -93,9 +93,11 @@ void inbox_dropped_callback(AppMessageResult reason, void *context);
 void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context);
 void outbox_sent_callback(DictionaryIterator *iterator, void *context);
 void sendSdData();
+void comms_init();
 
 
 // from analysis.c
+void analysis_init();
 int alarm_check();
 void accel_handler(AccelData *data, uint32_t num_samples);
 void do_analysis();

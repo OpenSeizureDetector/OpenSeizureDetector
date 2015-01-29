@@ -169,26 +169,6 @@ void draw_spec(Layer *sl, GContext *ctx) {
 
 }
 
-/***********************************************************************
-  Button event handlers
-*/
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Select");
-}
-
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Up");
-}
-
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Down");
-}
-
-static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
-}
 /**********************************************************************/
 
 /**
@@ -286,7 +266,6 @@ static void init(void) {
 
   // Create Window for display.
   window = window_create();
-  window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,
@@ -294,22 +273,15 @@ static void init(void) {
   const bool animated = true;
   window_stack_push(window, animated);
 
-  /* Subscribe to acceleration data service */
-  accel_data_service_subscribe(NSAMP,accel_handler);
-  // Choose update rate
-  accel_service_set_sampling_rate(SAMP_FREQ_STR);
+  // Initialise analysis of accelerometer data.
+  analysis_init();
+
+  // Register comms callbacks
+  comms_init();
 
   /* Subscribe to TickTimerService */
   tick_timer_service_subscribe(SECOND_UNIT, clock_tick_handler);
 
-  // Register callbacks
-  app_message_register_inbox_received(inbox_received_callback);
-  app_message_register_inbox_dropped(inbox_dropped_callback);
-  app_message_register_outbox_failed(outbox_failed_callback);
-  app_message_register_outbox_sent(outbox_sent_callback);
-  // Open AppMessage
-  app_message_open(app_message_inbox_size_maximum(), 
-		   app_message_outbox_size_maximum());
 }
 
 /**
