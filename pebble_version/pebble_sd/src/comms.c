@@ -23,6 +23,7 @@
 
 */
 #include "pebble_sd.h"
+void sendSettings();
 
 /*************************************************************
  * Communications with Phone
@@ -35,10 +36,16 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Process all pairs present
   while(t != NULL) {
     // Process this pair's key
+    APP_LOG(APP_LOG_LEVEL_INFO,"Key=%d",(int) t->key);
     switch (t->key) {
       case KEY_SETTINGS:
-        APP_LOG(APP_LOG_LEVEL_INFO, "KEY_DATA received with value %d", (int)t->value->int32);
+        APP_LOG(APP_LOG_LEVEL_INFO, "Phone Requesting Settings");
+	sendSettings();
         break;
+    case KEY_ALARM_FREQ_MIN:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_FREQ_MIN to %d",
+	      alarmFreqMin = (int)t->value);
+      
     }
 
     // Get next pair, if any
@@ -63,14 +70,35 @@ void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 void sendSdData() {
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
+  dict_write_uint8(iter,KEY_DATA_TYPE,(uint8_t)1);
   dict_write_uint8(iter,KEY_ALARMSTATE,(uint8_t)alarmState);
-  dict_write_uint32(iter,KEY_MAXVAL,(uint8_t)maxVal);
-  dict_write_uint32(iter,KEY_MAXFREQ,(uint8_t)maxFreq);
-  dict_write_uint32(iter,KEY_SPECPOWER,(uint8_t)specPower);
+  dict_write_uint32(iter,KEY_MAXVAL,(uint32_t)maxVal);
+  dict_write_uint32(iter,KEY_MAXFREQ,(uint32_t)maxFreq);
+  dict_write_uint32(iter,KEY_SPECPOWER,(uint32_t)specPower);
   dict_write_cstring(iter,10,"a string");
   app_message_outbox_send();
 
 }
+
+/***************************************************
+ * Send Seizure Detector Settings to the Phone
+ */
+void sendSettings() {
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
+  // Tell the phone this is settings data
+  dict_write_uint8(iter,KEY_DATA_TYPE,(uint8_t)2);
+  dict_write_uint8(iter,KEY_SETTINGS,(uint8_t)1);
+  // then the actual settings
+  dict_write_uint32(iter,KEY_ALARM_FREQ_MIN,(uint32_t)alarmFreqMin);
+  dict_write_uint32(iter,KEY_ALARM_FREQ_MAX,(uint32_t)alarmFreqMax);
+  dict_write_uint32(iter,KEY_WARN_TIME,(uint32_t)warnTime);
+  dict_write_uint32(iter,KEY_ALARM_TIME,(uint32_t)alarmTime);
+  dict_write_uint32(iter,KEY_ALARM_THRESH,(uint32_t)alarmThresh);
+  app_message_outbox_send();
+
+}
+
 
 void comms_init() {
   // Register comms callbacks

@@ -8,7 +8,13 @@
     android:id="@+id/textView1"
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="Hello World, MainActivity"
+    android:text="textView1"
+    />
+<TextView  
+    android:id="@+id/textView2"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="textView2"
     />
 <Button  
     android:id="@+id/button1"

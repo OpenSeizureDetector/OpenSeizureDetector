@@ -50,6 +50,7 @@
 
 /* Phone Communications */
 // Analysis Results
+#define KEY_DATA_TYPE 1
 #define KEY_ALARMSTATE 2
 #define KEY_MAXVAL 3
 #define KEY_MAXFREQ 4
