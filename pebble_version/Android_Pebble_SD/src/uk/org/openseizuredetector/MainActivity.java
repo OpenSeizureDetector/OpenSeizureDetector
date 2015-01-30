@@ -28,7 +28,18 @@ public class MainActivity extends Activity
     private int KEY_WARN_TIME = 9;
     private int KEY_ALARM_TIME = 10;
     private int KEY_ALARM_THRESH = 11;
+    private int KEY_POS_MIN = 12;       // position of first data point in array
+    private int KEY_POS_MAX = 13;       // position of last data point in array.
+    private int KEY_SPEC_DATA = 14;     // Spectrum data
 
+
+    // Values of the KEY_DATA_TYPE entry in a message
+    private int DATA_TYPE_RESULTS = 1;   // Analysis Results
+    private int DATA_TYPE_SETTINGS = 2;  // Settings
+    private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
+
+
+    private byte[] specByteArr;
 
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
     /** Called when the activity is first created. */
@@ -71,8 +82,16 @@ public class MainActivity extends Activity
 		public void receiveData(final Context context,
 					final int transactionId,
 					final PebbleDictionary data) {
-		    // Do something with data
 		    PebbleKit.sendAckToPebble(context,transactionId);
+		    // Do something with data
+		    // If we have a spectrum data packet, add it to the 
+		    // spectrum arry.
+		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
+			== DATA_TYPE_SPEC) {
+			int posMin = data.getUnsignedIntegerAsLong(KEY_POS_MIN).intValue();
+			int posMax = data.getUnsignedIntegerAsLong(KEY_POS_MAX).intValue();
+			byte[] byteArr = data.getBytes(KEY_SPEC_DATA);
+		    }
 		    handler.post(new Runnable() {
 			    @Override
 			    public void run() {
@@ -92,7 +111,7 @@ public class MainActivity extends Activity
 	long maxVal = 0;
 	long maxFreq = 0;
 	long specPower = 0;
-	if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)==1) {
+	if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)==DATA_TYPE_RESULTS) {
 	    alarmState = data.getUnsignedIntegerAsLong(KEY_ALARMSTATE);
 	    maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
 	    maxFreq = data.getUnsignedIntegerAsLong(KEY_MAXFREQ);
@@ -111,9 +130,14 @@ public class MainActivity extends Activity
 	    TextView statusText = (TextView) findViewById(R.id.textView1);
 	    statusText.setText(viewText);
 	}
-	if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)==2) {
+	if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)==DATA_TYPE_SETTINGS) {
 	    viewText = "Settings:\n"+data.toJsonString();
 	    TextView settingsText = (TextView) findViewById(R.id.textView2);
+	    settingsText.setText(viewText);
+	}
+	if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)==DATA_TYPE_SPEC) {
+	    viewText = "Spec:\n"+data.toJsonString();
+	    TextView settingsText = (TextView) findViewById(R.id.textView3);
 	    settingsText.setText(viewText);
 	}
 	    

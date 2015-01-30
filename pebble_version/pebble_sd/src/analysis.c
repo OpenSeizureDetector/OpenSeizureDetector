@@ -32,11 +32,12 @@
 
 
 /* GLOBAL VARIABLES */
-// Settings (obtained from default constants or persistent storage)
 
 uint32_t num_samples = NSAMP;
 short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
 fft_complex_t fftdata[NSAMP];   // spectrum calculated by FFT
+short fftResults[NSAMP/2];  // FFT results
+
 
 int accDataPos = 0;   // Position in accData of last point in time series.
 int accDataFull = 0;  // Flag so we know when we have a complete buffer full
@@ -155,6 +156,7 @@ void do_analysis() {
   for (i=1;i<NSAMP/2;i++) {
     // Find absolute value of the imaginary fft output.
     fftdata[i].r = getMagnitude(fftdata[i]);
+    fftResults[i] = getMagnitude(fftdata[i]);   // Set Global variable.
     specPower = specPower + fftdata[i].r;
     if (fftdata[i].r>maxVal) {
       maxVal = fftdata[i].r;

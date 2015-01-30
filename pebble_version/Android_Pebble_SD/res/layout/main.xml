@@ -16,6 +16,12 @@
     android:layout_height="wrap_content" 
     android:text="textView2"
     />
+<TextView  
+    android:id="@+id/textView3"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="textView3"
+    />
 <Button  
     android:id="@+id/button1"
     android:layout_width="fill_parent" 

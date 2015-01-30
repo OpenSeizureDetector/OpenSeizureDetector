@@ -62,8 +62,15 @@
 #define KEY_WARN_TIME 9
 #define KEY_ALARM_TIME 10
 #define KEY_ALARM_THRESH 11
+#define KEY_POS_MIN 12       // position of first data point in array
+#define KEY_POS_MAX 13       // position of last data point in array.
+#define KEY_SPEC_DATA 14     // Spectrum data
 
 
+// Values of the KEY_DATA_TYPE entry in a message
+#define DATA_TYPE_RESULTS 1   // Analysis Results
+#define DATA_TYPE_SETTINGS 2  // Settings
+#define DATA_TYPE_SPEC 3      // FFT Spectrum (or part of a spectrum)
 
 /* GLOBAL VARIABLES */
 // Settings (obtained from default constants or persistent storage)
@@ -77,6 +84,7 @@ extern int alarmThresh;     // Alarm threshold (average power of spectrum within
 extern int accDataPos;   // Position in accData of last point in time series.
 extern int accDataFull;  // Flag so we know when we have a complete buffer full
                       // of data.
+extern short fftResults[NSAMP/2];  // FFT results
 extern AccelData latestAccelData;  // Latest accelerometer readings received.
 extern int maxVal;       // Peak amplitude in spectrum.
 extern int maxLoc;       // Location in output array of peak.
