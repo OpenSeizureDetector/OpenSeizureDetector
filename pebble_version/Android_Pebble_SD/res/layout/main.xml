@@ -28,5 +28,11 @@
     android:layout_height="wrap_content" 
     android:text="Press Me"
     />
+<Button  
+    android:id="@+id/button2"
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:text="Start Web Server"
+    />
 </LinearLayout>
 
