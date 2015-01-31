@@ -4,6 +4,8 @@ import java.util.Map;
 import fi.iki.elonen.NanoHTTPD;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Intent;
 import android.app.IntentService;
 import android.os.Bundle;
@@ -19,12 +21,13 @@ import java.util.*;
 public class SdServer extends IntentService
 {
     private WebServer server;
-    private final String TAG = "SdServer";
+    private final static String TAG = "SdServer";
 
     public SdServer() {
 	super("SdServer Constructor");
 	Log.v(TAG,"SdServer Created");
     }
+
 
     protected void onHandleIntent(Intent workIntent) {
 	String dataString = workIntent.getDataString();
