@@ -114,7 +114,7 @@ public class MainActivity extends Activity
 	for (RunningServiceInfo service : 
 		 manager.getRunningServices(Integer.MAX_VALUE)) {
 	    Log.v(TAG,"Service: "+service.service.getClassName());
-	    if ("uk.org.openseizuredetector.SdService"
+	    if ("uk.org.openseizuredetector.SdServer"
 		.equals(service.service.getClassName())) {
             return true;
         }

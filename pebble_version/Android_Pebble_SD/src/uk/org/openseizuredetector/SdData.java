@@ -1,3 +1,4 @@
+package uk.org.openseizuredetector;
 
 
 import android.os.Parcelable;
