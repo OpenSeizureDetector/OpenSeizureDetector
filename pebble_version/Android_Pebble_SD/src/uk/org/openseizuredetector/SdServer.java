@@ -338,17 +338,35 @@ public class SdServer extends Service
                               Map<String, String> header,
                               Map<String, String> parameters,
                               Map<String, String> files) {
-	    String connStatus = "**** Pebble NOT Connected ****";
-	    if (mPebbleConnected)
-		connStatus = "Pebble Connected";
-	    String appStatus = " **** Pebble App NOT Running ***";
-	    if (mPebbleAppRunning)
-		appStatus = "Pebble SD App Running";
-            String answer = "SdServer Response\n"
-		+alarmPhrase+"\n"
-		+"maxFreq = "+maxFreq
-	        +"<br/>"+connStatus
-	        +"<br/>"+appStatus;
+	    Log.v(TAG,"WebServer.serve() - uri="+uri.toString()+" Method="+method.toString());
+	    String answer = "Error - you should not see this message! - Something wrong in WebServer.serve()";
+	    switch(uri.toString()) {
+	    case "/":
+		Log.v(TAG,"WebServer.serve() - Returning main page");
+		String connStatus = "**** Pebble NOT Connected ****";
+		if (mPebbleConnected)
+		    connStatus = "Pebble Connected";
+		String appStatus = " **** Pebble App NOT Running ***";
+		if (mPebbleAppRunning)
+		    appStatus = "Pebble SD App Running";
+		answer = "SdServer Response\n"
+		    +alarmPhrase+"\n"
+		    +"maxFreq = "+maxFreq
+		    +"<br/>"+connStatus
+		    +"<br/>"+appStatus;
+		break;
+
+	    case "/data":
+		Log.v(TAG,"WebServer.serve() - Returning data");
+		break;
+
+	    default:
+		Log.v(TAG,"WebServer.serve() - Unknown uri -"+uri.toString());
+		answer = "Unknown URI: "+uri.toString();
+
+
+	    }
+
             return new NanoHTTPD.Response(answer);
         }
     }
