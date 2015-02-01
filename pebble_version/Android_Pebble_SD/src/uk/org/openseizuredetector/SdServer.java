@@ -34,6 +34,8 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
+import android.content.res.AssetFileDescriptor;
 import android.app.Service;
 import android.os.Bundle;
 import android.os.Environment;
@@ -49,6 +51,8 @@ import java.util.TimerTask;
 import java.io.*;
 import java.util.*;
 import java.util.UUID;
+import java.net.URL;
+import android.net.Uri;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.nio.ByteOrder;
@@ -338,9 +342,17 @@ public class SdServer extends Service
                               Map<String, String> header,
                               Map<String, String> parameters,
                               Map<String, String> files) {
-	    Log.v(TAG,"WebServer.serve() - uri="+uri.toString()+" Method="+method.toString());
+	    Log.v(TAG,"WebServer.serve() - uri="+uri+" Method="+method.toString());
 	    String answer = "Error - you should not see this message! - Something wrong in WebServer.serve()";
-	    switch(uri.toString()) {
+
+	    Iterator it = parameters.keySet().iterator();
+	    while (it.hasNext()) {
+		Object key = it.next();
+		Object value = parameters.get(key);
+		Log.v(TAG,"Request parameters - key="+key+" value="+value);
+	    }
+
+	    switch(uri) {
 	    case "/":
 		Log.v(TAG,"WebServer.serve() - Returning main page");
 		String connStatus = "**** Pebble NOT Connected ****";
@@ -358,17 +370,66 @@ public class SdServer extends Service
 
 	    case "/data":
 		Log.v(TAG,"WebServer.serve() - Returning data");
+		answer = "FIXME - should return a JSON string of data";
 		break;
 
 	    default:
-		Log.v(TAG,"WebServer.serve() - Unknown uri -"+uri.toString());
-		answer = "Unknown URI: "+uri.toString();
-
-
+		if (uri.startsWith("/index.html") ||
+		    uri.startsWith("/js/") ||
+		    uri.startsWith("/css/") ||
+		    uri.startsWith("/img/")) {
+		    Log.v(TAG,"Serving File");
+		    return serveFile(uri);
+		} 
+		else {
+		    Log.v(TAG,"WebServer.serve() - Unknown uri -"+
+			  uri);
+		    answer = "Unknown URI: ";
+		}
 	    }
 
             return new NanoHTTPD.Response(answer);
         }
     }
 
+    
+    void listFiles(String uri) {
+	try {
+	    Log.v(TAG,"listFiles("+uri+")");
+	    AssetManager assetManager = this.getAssets();
+	    String[] fileList = assetManager.list(uri);
+	    Log.v(TAG,"listFiles("+uri+") - "+fileList.length+" files found");
+	    for (int i=0;i<fileList.length;i++) {
+		Log.v(TAG,"File "+i+" = "+fileList[i]);
+	    }
+	} catch (Exception ioe) {
+	    Log.v(TAG,"Error Listing Files - Error = "+ioe.toString());
+	}
+    }
+
+    /**
+     * Return a file from the apps /assets folder
+     */
+    NanoHTTPD.Response serveFile(String uri) {
+	NanoHTTPD.Response res;
+	InputStream ip = null;
+	try {
+	    if (ip!=null) ip.close();
+	    String assetPath = "www";
+	    listFiles(assetPath);
+	    String fname = assetPath+uri;
+	    Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
+	    AssetManager assetManager = getResources().getAssets();
+	    ip = assetManager.open(fname);
+	    String mimeStr = "text/html";
+	    res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
+					 mimeStr,ip);
+	    res.addHeader("Content-Length", "" + ip.available());
+	} catch (IOException ex) {
+	    Log.v(TAG,"Error Opening File - "+ex.toString());
+	    res = new NanoHTTPD.Response("Error Opening file "+uri);
+	} 
+	return(res);
+    }
+    
 }

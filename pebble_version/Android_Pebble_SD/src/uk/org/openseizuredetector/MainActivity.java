@@ -60,6 +60,7 @@ public class MainActivity extends Activity
 		@Override
 		public void run() {updateServerStatus();}
 	    }, 0, 1000);	
+
 	onResume();
     }
 
@@ -122,6 +123,7 @@ public class MainActivity extends Activity
 	String alarmPhrase;
 	String viewText = "Unknown";
     }
+
 
 
 }
