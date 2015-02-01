@@ -24,7 +24,10 @@ device.
 After a couple of weeks work on it we have a working prototype ready for
 development.   A simple video demonstration can be seen [here](https://plus.google.com/106497137253664241170/posts/P9mWstgqP8N).
 
-![Video](https://plus.google.com/106497137253664241170/posts/P9mWstgqP8N)
+<!-- Place this tag in your head or just before your close body tag. -->
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+<!-- Place this tag where you want the widget to render. -->
+<div class="g-post" data-href="https://plus.google.com/106497137253664241170/posts/P9mWstgqP8N"></div>
 
 # System Configuration
 The configuration of the prototype seizure detector and alarm system is shown below:
