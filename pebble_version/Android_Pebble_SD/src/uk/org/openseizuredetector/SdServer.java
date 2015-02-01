@@ -1,3 +1,29 @@
+/*
+  Pebble_sd - a simple accelerometer based seizure detector that runs on a
+  Pebble smart watch (http://getpebble.com).
+
+  See http://openseizuredetector.org for more information.
+
+  Copyright Graham Jones, 2015.
+
+  This file is part of pebble_sd.
+
+  Pebble_sd is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  Pebble_sd is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with pebble_sd.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+
 package uk.org.openseizuredetector;
 
 import java.util.Map;
@@ -18,12 +44,15 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.util.Log;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.io.*;
 import java.util.*;
 import java.util.UUID;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.nio.ByteOrder;
+import android.text.format.Time;
 
 import com.getpebble.android.kit.Constants;
 import com.getpebble.android.kit.PebbleKit;
@@ -66,6 +95,10 @@ public class SdServer extends Service
     private final static String TAG = "SdServer";
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
+    private boolean mPebbleConnected = false;
+    private boolean mPebbleAppRunning = false;
+    private boolean mPebbleAppRunningCheck = false;
+    private Time mPebbleStatusTime;
     private SdData sdData;
     private short fftResults[];
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
@@ -77,12 +110,19 @@ public class SdServer extends Service
     private String alarmPhrase;
     
 
+    /**
+     * Constructor for SdServer class - does not do much!
+     */
     public SdServer() {
 	super();
 	//sdData = new SdData();
 	Log.v(TAG,"SdServer Created");
     }
 
+    /**
+     * Handles messages sent from other processes.
+     * FIXME - this does not actually do anthing!
+     */
     private final class ServiceHandler extends Handler {
 	public ServiceHandler(Looper looper) {
 	    super(looper);
@@ -95,6 +135,10 @@ public class SdServer extends Service
 	}
     }
 
+    /**
+     * onCreate() - called when services is created.  Starts message
+     * handler process to listen for messages from other processes.
+     */
     @Override
     public void onCreate() {
 	HandlerThread thread = new HandlerThread("ServiceStartArguments",
@@ -102,7 +146,6 @@ public class SdServer extends Service
 	thread.start();
 	mServiceLooper = thread.getLooper();
 	mServiceHandler = new ServiceHandler(mServiceLooper);
-
     }
 
     /**
@@ -112,11 +155,20 @@ public class SdServer extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 	Log.v(TAG,"SdServer service starting");
+	mPebbleStatusTime = new Time(Time.getCurrentTimezone());
 	// Allocate memory for the FFT spectrum results
 	fftResults = new short[NSAMP/2];
 	Message msg = mServiceHandler.obtainMessage();
 	msg.arg1 = startId;
 	mServiceHandler.sendMessage(msg);
+
+	// Start timer to check status of pebble regularly.
+	Timer statusTimer = new Timer();
+	statusTimer.schedule(new TimerTask() {
+		@Override
+		public void run() {getPebbleStatus();}
+	    }, 0, 1000);	
+
 	startPebbleServer();
 	startWebServer();
 	return START_STICKY;
@@ -145,6 +197,8 @@ public class SdServer extends Service
 					final int transactionId,
 					final PebbleDictionary data) {
 		    Log.v(TAG,"Received message from Pebble");
+		    // If we have a message, the app must be running
+		    mPebbleAppRunningCheck = true;  
 		    PebbleKit.sendAckToPebble(context,transactionId);
 		    Log.v(TAG,"Acknowledged Message");
 		    Log.v(TAG,"Message is: "+data.toJsonString());
@@ -191,6 +245,41 @@ public class SdServer extends Service
 	PebbleKit.registerReceivedDataHandler(this,msgDataHandler);
     }
 
+    /** 
+     * Checks the status of the connection to the pebble watch,
+     * and sets class variables for use by other functions.
+     * If the watch app is not running, it attempts to re-start it.
+     */
+    public void getPebbleStatus() {
+	Time tnow = new Time(Time.getCurrentTimezone());
+	tnow.setToNow();
+	// Check we are actually connected to the pebble.
+	mPebbleConnected = PebbleKit.isWatchConnected(this);
+	// And is the pebble_sd app running?
+	// set mPebbleAppRunningCheck has been false for more than 10 seconds
+	// the app is not talking to us
+	// mPebbleAppRunningCheck is set to true in the receiveData handler. 
+	if (!mPebbleAppRunningCheck && 
+	    ((tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)) > 10000)) {
+	    mPebbleAppRunning = false;
+	    Log.v(TAG,"Pebble App Not Running - Attempting to Re-Start");
+	    startWatchApp();
+	} else {
+	    mPebbleAppRunning = true;
+	}
+
+	// if we have confirmation that the app is running, reset the
+	// status time to now and initiate another check.
+	if (mPebbleAppRunningCheck) {
+	    mPebbleAppRunningCheck = false;
+	    mPebbleStatusTime.setToNow();
+	}
+    }
+
+    /**
+     * Request Pebble App to send us its latest settings.
+     * Will be received as a message by the receiveData handler
+     */
     public void getPebbleSdSettings() {
 	PebbleDictionary data = new PebbleDictionary();
 	data.addUint8(KEY_SETTINGS, (byte)1);
@@ -201,19 +290,27 @@ public class SdServer extends Service
 				   data);     
     }
 
+    /**
+     * Attempt to start the pebble_sd watch app on the pebble watch.
+     */
     public void startWatchApp() {
 	PebbleKit.startAppOnPebble(getApplicationContext(),
 				   SD_UUID);
 
     }
 
+    /**
+     * stop the pebble_sd watch app on the pebble watch.
+     */
     public void stopWatchApp() {
 	PebbleKit.closeAppOnPebble(getApplicationContext(),
 				   SD_UUID);
     }
 
 
-
+    /**
+     * Start the web server (on port 8080)
+     */
     protected void startWebServer() {
 	Log.v(TAG,"startWebServer()");
         webServer = new WebServer();
@@ -226,9 +323,14 @@ public class SdServer extends Service
         Log.w(TAG, "Web server initialized.");
     }
 
+    /**
+     * Class describing the seizure detector web server - appears on port
+     * 8080.
+     */
     private class WebServer extends NanoHTTPD {
         public WebServer()
         {
+	    // Set the port to listen on (8080)
             super(8080);
         }
         @Override
@@ -236,9 +338,17 @@ public class SdServer extends Service
                               Map<String, String> header,
                               Map<String, String> parameters,
                               Map<String, String> files) {
+	    String connStatus = "**** Pebble NOT Connected ****";
+	    if (mPebbleConnected)
+		connStatus = "Pebble Connected";
+	    String appStatus = " **** Pebble App NOT Running ***";
+	    if (mPebbleAppRunning)
+		appStatus = "Pebble SD App Running";
             String answer = "SdServer Response\n"
 		+alarmPhrase+"\n"
-		+"maxFreq = "+maxFreq;
+		+"maxFreq = "+maxFreq
+	        +"<br/>"+connStatus
+	        +"<br/>"+appStatus;
             return new NanoHTTPD.Response(answer);
         }
     }
