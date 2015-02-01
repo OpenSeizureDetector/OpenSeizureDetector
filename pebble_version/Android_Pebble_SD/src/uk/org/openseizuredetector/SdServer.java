@@ -373,7 +373,7 @@ public class SdServer extends Service
 		Log.v(TAG,"WebServer.serve() - Returning data");
 		try {
 		    JSONObject jsonObj = new JSONObject();
-		    jsonObj.put("Time",mPebbleStatusTime.format("%H:%M %d-%m-%Y"));
+		    jsonObj.put("Time",mPebbleStatusTime.format("%H:%M:%S"));
 		    jsonObj.put("alarmState",alarmState);
 		    jsonObj.put("alarmPhrase",alarmPhrase);
 		    jsonObj.put("maxVal",maxVal);

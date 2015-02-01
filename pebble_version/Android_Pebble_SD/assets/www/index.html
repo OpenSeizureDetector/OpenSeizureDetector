@@ -2,6 +2,7 @@
 
 <head>
    <title>Ben's Seizure Detector</title>
+   <script src="js/jquery.js"></script>
 </head>
 
 <body>
@@ -10,7 +11,7 @@
 </div>
 <h2>Ben's Status</h2>
 <div id="benStat">
-   <font size="7">OK</font>  
+   OK
 </div>
 <div id="data">
    <h2>Data</h2>
@@ -27,8 +28,11 @@
 <div id="roiPow">
    Region Of Interest Power:
 </div>
-<div id="alStat">
+<div id="alarmState">
    Alarm Status:
+</div>
+<div id="alarmPhrase">
+   Alarm Phrase:
 </div>
 <div id="pebCon">
    Pebble Connection:
@@ -43,56 +47,83 @@
 <div id="pebStat2">
    <font size="7">Pebble App Running</font>
 </div>
+<div id="debugInfo"></div>
 </body>
-</html>
 
 <style>
 #benStat {
    background-color:blue;
    color:white;
    text-align:center;
+   font-size:24pt;
+   font-weight:bold;
    height:55px;
 }
 #pebStat {
    background-color:blue;
    color:white;
    text-align:center;
+   font-size:18pt;
    height:55px;
 }
 #pebStat2 {
    background-color:blue;
    color:white;
    text-align:center;
+   font-size:18pt;
    height:55px;
 }
 </style>
       
 <script>
 
-funtion get_data() {
+function get_data() {
    $.ajax({url:"/data",success:populate_form});
 };
 
 function populate_form(dataStr) {
-   // alert (dataStr);
-   dataArr = dataStr.split(",");
-   // alert (dataArr[0]);
-   maxFreq = dataArr[1];
-   maxVal = dataArr[2];
-   specPow = dataArr[3];
-   alStat = dataArr[4];
-   pebCon = dataArr[5];
-   pebAppRun = dataArr[6];
-   $("#maxFreq").val(maxFreq);
-   $("#maxVal").val(maxVal);
-   $("#specPow").val(specPow);
-   $("#alStat").val(alStat);
-   $("#pebCon").val(pebCon);
-   $("#pebAppRun").val(pebAppRun);
+   var dataObj = JSON.parse(dataStr);
+   //alert (dataStr);
+   var timeStr = dataObj['Time'];
+   var maxFreq = dataObj['maxFreq'];
+   var maxVal = dataObj['maxVal'];
+   var specPow = dataObj['specPow'];
+   var roiPow = dataObj['roiPow'];
+   var alarmState = dataObj['alarmState'];
+   var alarmPhrase = dataObj['alarmPhrase'];
+   var pebCon = dataObj['pebCon'];
+   var pebAppRun = dataObj['pebAppRun'];
+   $("#debugInfo").html(dataStr);
+   $("#maxFreq").html("Max Freq = "+maxFreq);
+   $("#maxVal").html("Max Val = "+maxVal);
+   $("#specPow").html("Spec Pow = "+specPow);
+   $("#roiPow").html("ROI Pow = "+roiPow);
+   $("#alarmState").html("Alarm State = "+alarmState);
+   $("#alarmPhrase").html("Alarm Phrase = "+alarmPhrase);
+   $("#pebCon").html("Pebble Connection = "+pebCon);
+   $("#pebAppRun").html("Pebble App Running = "+pebAppRun);
+   $("#pebStat").html("Pebble Connection = "+pebCon);
+   $("#pebStat2").html("Pebble App Running = "+pebAppRun);
+
+   $("#benStat").html(alarmPhrase+"      -    ("+timeStr+")");
+
+   switch(alarmState) {
+       case 0:
+           $("#benStat").css("background-color","blue");
+           break;
+       case 1: 
+           $("#benStat").css("background-color","orange");
+           break;
+       case 2:
+           $("#benStat").css("background-color","red");
+           break;
+   }
+          
+
 };
 
-$(document).ready(function(){
-   
+$(document).ready(function() {  
    setInterval("get_data();",1000);
-
+});
 </script>
+</html>

@@ -47,10 +47,7 @@ public class MainActivity extends Activity
 	button.setOnClickListener(new View.OnClickListener() {
              public void onClick(View v) {
 		 Log.v(TAG,"Starting Web Server");
-		 sdServerIntent = new Intent(MainActivity.this,SdServer.class);
-		 sdServerIntent.setData(Uri.parse("Start"));
-		 getApplicationContext().startService(sdServerIntent);
-	     
+		 startServer();
              }
 	    });
 	
@@ -61,7 +58,14 @@ public class MainActivity extends Activity
 		public void run() {updateServerStatus();}
 	    }, 0, 1000);	
 
+	startServer();
 	onResume();
+    }
+
+    private void startServer() {
+	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
+	sdServerIntent.setData(Uri.parse("Start"));
+	getApplicationContext().startService(sdServerIntent);
     }
 
     /**
