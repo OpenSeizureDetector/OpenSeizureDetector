@@ -65,9 +65,8 @@ The Android Phone web server provides a simple web interface to the data, which 
 
 The current prototype web interface in both normal and alarm modes is shown below:
 
-
-<img class="img_med" style="width:300px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_SD_Web_Sccreenshot.jpg">
-<img class="img_med" style="width:300px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_SD_Web_Sccreenshot_alarm.jpg">
+<img class="img_med" style="width:300px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_SD_Web_Screenshot.png">
+<img class="img_med" style="width:300px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_SD_Web_Screenshot_alarm.png">
 
 
 # Next Steps for Development
