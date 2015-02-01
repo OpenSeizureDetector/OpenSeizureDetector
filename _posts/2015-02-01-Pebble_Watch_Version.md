@@ -22,7 +22,8 @@ device.
 
 # System Configuration
 The configuration of the prototype seizure detector and alarm system is shown below:
-<img class="img_med" style="float:left;width:400px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Android_Pebble_SD/assets/www/img/diagram.jpg">
+
+<img class="img_med" style="width:600px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Android_Pebble_SD/assets/www/img/diagram.jpg">
 
 The main components of the current prototype are described briefly below.
 
