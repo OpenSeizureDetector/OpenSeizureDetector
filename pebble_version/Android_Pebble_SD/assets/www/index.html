@@ -41,7 +41,7 @@
    Pebble App Running:
 </div>
 <h2>Pebble Status</h2>
-<div id="pebStat">
+<div id="pebStat1">
    <font size="7">Pebble Watch Connected</font>
 </div>
 <div id="pebStat2">
@@ -59,7 +59,7 @@
    font-weight:bold;
    height:55px;
 }
-#pebStat {
+#pebStat1 {
    background-color:blue;
    color:white;
    text-align:center;
@@ -87,8 +87,8 @@ function populate_form(dataStr) {
    var timeStr = dataObj['Time'];
    var maxFreq = dataObj['maxFreq'];
    var maxVal = dataObj['maxVal'];
-   var specPow = dataObj['specPow'];
-   var roiPow = dataObj['roiPow'];
+   var specPow = dataObj['specPower'];
+   var roiPow = dataObj['roiPower'];
    var alarmState = dataObj['alarmState'];
    var alarmPhrase = dataObj['alarmPhrase'];
    var pebCon = dataObj['pebCon'];
@@ -100,10 +100,8 @@ function populate_form(dataStr) {
    $("#roiPow").html("ROI Pow = "+roiPow);
    $("#alarmState").html("Alarm State = "+alarmState);
    $("#alarmPhrase").html("Alarm Phrase = "+alarmPhrase);
-   $("#pebCon").html("Pebble Connection = "+pebCon);
+   $("#pebCon").html("Pebble Connected = "+pebAppRun);
    $("#pebAppRun").html("Pebble App Running = "+pebAppRun);
-   $("#pebStat").html("Pebble Connection = "+pebCon);
-   $("#pebStat2").html("Pebble App Running = "+pebAppRun);
 
    $("#benStat").html(alarmPhrase+"      -    ("+timeStr+")");
 
@@ -117,6 +115,28 @@ function populate_form(dataStr) {
        case 2:
            $("#benStat").css("background-color","red");
            break;
+   }
+
+   switch(pebCon) {
+      case false:
+          $("#pebStat1").html("*** Pebble Watch Not Connected ***")
+                      .css("background-color","red");
+          break;
+      case true:
+          $("#pebStat1").html("Pebble Watch Connected OK")
+                      .css("background-color","blue");
+          break;
+   }
+
+   switch(pebAppRun) {
+      case false:
+          $("#pebStat2").html("*** Pebble Watch App Not Running ***")
+                      .css("background-color","red");
+          break;
+      case true:
+          $("#pebStat2").html("Pebble Watch App Running OK")
+                      .css("background-color","blue");
+          break;
    }
           
 

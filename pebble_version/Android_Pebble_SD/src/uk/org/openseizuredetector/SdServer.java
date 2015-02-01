@@ -379,6 +379,8 @@ public class SdServer extends Service
 		    jsonObj.put("maxVal",maxVal);
 		    jsonObj.put("maxFreq",maxFreq);
 		    jsonObj.put("specPower",specPower);
+		    jsonObj.put("pebCon",mPebbleConnected);
+		    jsonObj.put("pebAppRun",mPebbleAppRunning);
 		    answer = jsonObj.toString();
 		} catch (Exception ex) {
 		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
