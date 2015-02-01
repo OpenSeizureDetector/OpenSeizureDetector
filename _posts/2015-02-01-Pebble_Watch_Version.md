@@ -9,7 +9,10 @@ a Pebble Smart Watch and associated Android mobile phone.
 ---
 
 # Pebble Smart Watch Version
-<img class="img_med" style="float:left;width:100px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_Photo.png">
+<img class="img_med" style="float:right;width:100px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_Photo.png">
+I have been looking at various ways of detecting and warning a carer that 
+someone is having a tonic-clonic epileptic seizure after our son Benjamin had a particularly nasty one a couple of years ago, and we only noticed it because one of us looked up at the video monitor that we have to help us keep an eye on him - see [](http://openseizuredetector.org.uk) for more information.
+
 The [Pebble](http://getpebble.com) smart watch is a very promising candidate 
 to use for an accelerometer based seizure detector.
 It has a built in accelerometer, rechargeable battery, bluetooth radio, 
