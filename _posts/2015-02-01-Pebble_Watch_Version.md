@@ -41,8 +41,10 @@ The programme that runs on the watch does the following:
    or alarm state, depending on how long it has been abvove the threshold.
 6. Periodically (every second) send the latest analysis data to the Android phone for recording and initiation of alarms etc.
 
-The information shown on the watch display is shown below:
-![](https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/screenshot_1.png)
+The information shown on the watch display for both normal and alarm conditions
+ is shown below:
+![](https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/screenshot_1.png)
+![](https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/screenshot_2.png)
 
 ## Android Phone
 The android phone will need to be within a few metres of the Pebble watch so they can communicate using bluetooth.   It does not do any significant analysis, just acts as a bridge between the Pebble Watch and other applications.
