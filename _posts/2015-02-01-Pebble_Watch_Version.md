@@ -9,7 +9,7 @@ a Pebble Smart Watch and associated Android mobile phone.
 ---
 
 # Pebble Smart Watch Version
-<img class="img_med" style="float:left;width:300px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_Photo.png">
+<img class="img_med" style="float:left;width:150px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_Photo.png">
 The [Pebble](http://getpebble.com) smart watch is a very promising candidate 
 to use for an accelerometer based seizure detector.
 It has a built in accelerometer, rechargeable battery, bluetooth radio, 
