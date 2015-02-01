@@ -57,6 +57,7 @@ import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.nio.ByteOrder;
 import android.text.format.Time;
+import org.json.JSONObject;
 
 import com.getpebble.android.kit.Constants;
 import com.getpebble.android.kit.PebbleKit;
@@ -370,7 +371,19 @@ public class SdServer extends Service
 
 	    case "/data":
 		Log.v(TAG,"WebServer.serve() - Returning data");
-		answer = "FIXME - should return a JSON string of data";
+		try {
+		    JSONObject jsonObj = new JSONObject();
+		    jsonObj.put("Time",mPebbleStatusTime.format("%H:%M %d-%m-%Y"));
+		    jsonObj.put("alarmState",alarmState);
+		    jsonObj.put("alarmPhrase",alarmPhrase);
+		    jsonObj.put("maxVal",maxVal);
+		    jsonObj.put("maxFreq",maxFreq);
+		    jsonObj.put("specPower",specPower);
+		    answer = jsonObj.toString();
+		} catch (Exception ex) {
+		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
+		    answer = "Error Creating Data Object";
+		}
 		break;
 
 	    default:
