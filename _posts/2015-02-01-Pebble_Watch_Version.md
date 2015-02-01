@@ -21,6 +21,11 @@ device.   This project is therefore to develop my [arduino proof of concept
 accelerometer based fit detector](http://jones139.github.io/OpenSeizureDetector/meta/2014/02/21/Accelerometer_Version/) to the Pebble to get a working prototype 
 device.
 
+After a couple of weeks work on it we have a working prototype ready for
+development.   A simple video demonstration can be seen [here](https://plus.google.com/106497137253664241170/posts/P9mWstgqP8N).
+
+![Video](https://plus.google.com/106497137253664241170/posts/P9mWstgqP8N)
+
 # System Configuration
 The configuration of the prototype seizure detector and alarm system is shown below:
 
