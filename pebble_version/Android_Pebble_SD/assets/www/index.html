@@ -15,6 +15,27 @@
 <div id="data">
    <h2>Data</h2>
 </div>
+<div id="maxFreq">
+   Maximum Frequency:
+</div>
+<div id="maxVal">
+   Maximum Value:
+</div>
+<div id="specPow">
+   Spectrum Power:
+</div>
+<div id="roiPow">
+   Region Of Interest Power:
+</div>
+<div id="alStat">
+   Alarm Status:
+</div>
+<div id="pebCon">
+   Pebble Connection:
+</div>
+<div id="pebAppRun">
+   Pebble App Running:
+</div>
 <h2>Pebble Status</h2>
 <div id="pebStat">
    <font size="7">Pebble Watch Connected</font>
@@ -47,11 +68,31 @@
 </style>
       
 <script>
-send_url = function(urlStr) {
-$.ajax({url:urlStr,success:function() {get_data();}});
-}
 
-setInterval("refresh();",5000);
-get_data();
+funtion get_data() {
+   $.ajax({url:"/data",success:populate_form});
+};
+
+function populate_form(dataStr) {
+   // alert (dataStr);
+   dataArr = dataStr.split(",");
+   // alert (dataArr[0]);
+   maxFreq = dataArr[1];
+   maxVal = dataArr[2];
+   specPow = dataArr[3];
+   alStat = dataArr[4];
+   pebCon = dataArr[5];
+   pebAppRun = dataArr[6];
+   $("#maxFreq").val(maxFreq);
+   $("#maxVal").val(maxVal);
+   $("#specPow").val(specPow);
+   $("#alStat").val(alStat);
+   $("#pebCon").val(pebCon);
+   $("#pebAppRun").val(pebAppRun);
+};
+
+$(document).ready(function(){
+   
+   setInterval("get_data();",1000);
 
 </script>
