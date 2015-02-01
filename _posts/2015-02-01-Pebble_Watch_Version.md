@@ -9,7 +9,7 @@ a Pebble Smart Watch and associated Android mobile phone.
 ---
 
 # Pebble Smart Watch Version
-<img class="img_med" style="float:left;width:150px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_Photo.png">
+<img class="img_med" style="float:left;width:100px;" src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/Pebble_Photo.png">
 The [Pebble](http://getpebble.com) smart watch is a very promising candidate 
 to use for an accelerometer based seizure detector.
 It has a built in accelerometer, rechargeable battery, bluetooth radio, 
@@ -88,6 +88,8 @@ the android client for the kinect prototype.
     respond to the data.
 8.  A possible future development could be 'push' notifications where the android app sends an SMS message or calls a number in an alarm condition.
 
+# Source Code
+All the source code for the system is available on our [github repository](https://github.com/jones139/OpenSeizureDetector/pebble_version).
 
 
 # Technical Details
