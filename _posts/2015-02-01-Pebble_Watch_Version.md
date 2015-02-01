@@ -31,6 +31,7 @@ The pebble watch will need to be worn on the wrist or ankle to give significant
 movement in the event of a tonic-clonic seizure.
 
 The programme that runs on the watch does the following:
+
 1. Collect accelerometer data at 100 Hz for 10 seconds.
 2. Calculate the fourier transform of the accelerometer data to give a frequency spectrum.
 3. Analyse the spectrum to calculate the spectrum power in a given frequency band, which we will take to be representative of seizure movement.
@@ -46,6 +47,7 @@ The information shown on the watch display is shown below:
 The android phone will need to be within a few metres of the Pebble watch so they can communicate using bluetooth.   It does not do any significant analysis, just acts as a bridge between the Pebble Watch and other applications.
 
 The background service application that runs on the phone does the following:
+
 1.  Monitor the bluetooth connection to the smart watch.
 2.  Check that the seizure detector app is running on the watch, and start it ifit is not.
 3.  Receive messages containing analysis data from the Pebble smart watch.
@@ -65,6 +67,7 @@ The current prototype web interface in both normal and alarm modes is shown belo
 <img class="img_med" style="float:right;width:300px;" src="{{site.baseurl}}/resources/img/Pebble_SD_Web_Sccreenshot_alarm.jpg">
 
 # Next Steps for Development
+
 1.  Provide more diagnostic information to the web interface (e.g. fft spectrum), to help with determining the most suitable frequency region of interest and
 power threshold (the current settings give false alarms for normal walking about).
 2.  Provide some data logging on the phone so we can analyse historical data
@@ -84,6 +87,7 @@ the android client for the kinect prototype.
 # Technical Details
 
 ## Software Development for Pebble
+
 1.  Install the [Pebble SDK](http://developer.getpebble.com/sdk/) (there is a cloud based sdk too, but I am old fashioned and like to run the compiler on my own computer...).
 1.  Install the Pebble App on your Android Phone, and pair it with the Pebble - this is because the installation tool talks to the phone, rather than the pebble directly (I haven't managed to get direct bluetooth comms to the Pebble working).
 1.  Create a new project and skelleton app with 'pebble new-project <project name>' - creates a directory structure for the project, and produces a simple demo skeleton app.
