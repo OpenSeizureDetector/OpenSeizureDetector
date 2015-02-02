@@ -34,6 +34,10 @@ int warnTime;        // number of seconds above threshold to raise warning
 int alarmTime;       // number of seconds above threshold to raise alarm.
 int alarmThresh;     // Alarm threshold (average power of spectrum within
                      //       region of interest.
+int alarmRatioThresh;
+int nMax = 0;
+int nMin = 0;
+
 
 Window *window;
 TextLayer *text_layer;
@@ -66,6 +70,14 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   static char s_time_buffer[16];
   static char s_alarm_buffer[64];
   static char s_buffer[256];
+  static int count=0;
+
+  /* Only process data every ANALYSIS_PERIOD seconds */
+  count++;
+  if (count<ANALYSIS_PERIOD) 
+    return;
+  else
+    count = 0;
 
   // Do FFT analysis
   if (accDataFull) 
@@ -122,6 +134,16 @@ void draw_spec(Layer *sl, GContext *ctx) {
   GPoint p0;
   GPoint p1;
   int i,h;
+
+  /* Draw Tick Marks at ends of region of interest */
+  p0 = GPoint(nMin,0);
+  p1 = GPoint(nMin,20);
+  graphics_draw_line(ctx,p0,p1);
+
+  p0 = GPoint(nMax,0);
+  p1 = GPoint(nMax,20);
+  graphics_draw_line(ctx,p0,p1);
+
 
   /* Now draw the spectrum */
   for (i=0;i<bounds.size.w-1;i++) {
@@ -212,6 +234,7 @@ static void window_unload(Window *window) {
  * for accelerometer data readings.
  */
 static void init(void) {
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"init() - Loading persistent storage variables...");
   // Load data from persistent storage into global variables.
   alarmFreqMin = ALARM_FREQ_MIN_DEFAULT;
   if (persist_exists(KEY_ALARM_FREQ_MIN))
@@ -228,8 +251,12 @@ static void init(void) {
   alarmThresh = ALARM_THRESH_DEFAULT;
   if (persist_exists(KEY_ALARM_THRESH))
     alarmThresh = persist_read_int(KEY_ALARM_THRESH);
+  alarmRatioThresh = ALARM_RATIO_THRESH_DEFAULT;
+  if (persist_exists(KEY_ALARM_RATIO_THRESH))
+    alarmRatioThresh = persist_read_int(KEY_ALARM_RATIO_THRESH);
 
   // Create Window for display.
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Creating Window....");
   window = window_create();
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
@@ -239,12 +266,15 @@ static void init(void) {
   window_stack_push(window, animated);
 
   // Initialise analysis of accelerometer data.
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Initialising Analysis System....");
   analysis_init();
 
   // Register comms callbacks
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Initialising Communications System....");
   comms_init();
 
   /* Subscribe to TickTimerService */
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Intialising Clock Timer....");
   tick_timer_service_subscribe(SECOND_UNIT, clock_tick_handler);
 
 }
@@ -259,6 +289,7 @@ static void deinit(void) {
   persist_write_int(KEY_WARN_TIME,warnTime);
   persist_write_int(KEY_ALARM_TIME,alarmTime);
   persist_write_int(KEY_ALARM_THRESH,alarmThresh);
+  persist_write_int(KEY_ALARM_RATIO_THRESH,alarmRatioThresh);
 
   // destroy the window
   window_destroy(window);

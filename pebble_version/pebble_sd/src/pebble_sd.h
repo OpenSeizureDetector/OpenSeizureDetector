@@ -31,16 +31,19 @@
 #define SAMP_FREQ_STR ACCEL_SAMPLING_100HZ  // String to pass to sampling system.
 #define NSAMP 512       // number of samples of accelerometer data to collect.
 #define FFT_BITS 9        // 'bits' parameter to fft_forward.
-
+#define ANALYSIS_PERIOD 3  // number of seconds between fft analysis and screen updates.
 
 // default values of settings
 #define ALARM_FREQ_MIN_DEFAULT 5  // Hz
 #define ALARM_FREQ_MAX_DEFAULT 10 // Hz
 #define WARN_TIME_DEFAULT      10 // sec
 #define ALARM_TIME_DEFAULT     20 // sec
-#define ALARM_THRESH_DEFAULT   200 // Power of spectrum between ALARM_FREQ_MIN and
+#define ALARM_THRESH_DEFAULT   100 // Power of spectrum between ALARM_FREQ_MIN and
                            // ALARM_FREQ_MAX that will indicate an alarm
                            // state.
+#define ALARM_RATIO_THRESH_DEFAULT 30 // 10 x ROI power must be this value times
+// the overall spectrum power (to filter out general movement from frequency
+// specific movement.
 
 /* Display Configuration */
 #define CLOCK_SIZE 30  // pixels.
@@ -65,7 +68,10 @@
 #define KEY_POS_MIN 12       // position of first data point in array
 #define KEY_POS_MAX 13       // position of last data point in array.
 #define KEY_SPEC_DATA 14     // Spectrum data
-
+#define KEY_ROIPOWER 15
+#define KEY_NMIN 16
+#define KEY_NMAX 17
+#define KEY_ALARM_RATIO_THRESH 18
 
 // Values of the KEY_DATA_TYPE entry in a message
 #define DATA_TYPE_RESULTS 1   // Analysis Results
@@ -74,12 +80,14 @@
 
 /* GLOBAL VARIABLES */
 // Settings (obtained from default constants or persistent storage)
-extern int alarmFreqMin;    // Bin number of lower boundary of region of interest
-extern int alarmFreqMax;    // Bin number of higher boundary of region of interest
+extern int alarmFreqMin;    // Minimum frequency (in Hz) for analysis region of interest.
+extern int alarmFreqMax;    // Maximum frequency (in Hz) for analysis region of interest.
+extern int nMin, nMax;      // Bin number of region of interest boundaries.
 extern int warnTime;        // number of seconds above threshold to raise warning
 extern int alarmTime;       // number of seconds above threshold to raise alarm.
 extern int alarmThresh;     // Alarm threshold (average power of spectrum within
                      //       region of interest.
+extern int alarmRatioThresh; // 10x Ratio of ROI power to Spectrum power to raise alarm.
 
 extern int accDataPos;   // Position in accData of last point in time series.
 extern int accDataFull;  // Flag so we know when we have a complete buffer full

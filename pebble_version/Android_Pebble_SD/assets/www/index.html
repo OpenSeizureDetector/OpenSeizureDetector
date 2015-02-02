@@ -1,55 +1,58 @@
 <html>
-
-<head>
-   <title>Ben's Seizure Detector</title>
-   <script src="js/jquery.js"></script>
-</head>
-
-<body>
-<div id="header">
-   <h1>Ben's Seizure Detector</h1>
-</div>
-<h2>Ben's Status</h2>
-<div id="benStat">
-   OK
-</div>
-<div id="data">
-   <h2>Data</h2>
-</div>
-<div id="maxFreq">
-   Maximum Frequency:
-</div>
-<div id="maxVal">
-   Maximum Value:
-</div>
-<div id="specPow">
-   Spectrum Power:
-</div>
-<div id="roiPow">
-   Region Of Interest Power:
-</div>
-<div id="alarmState">
-   Alarm Status:
-</div>
-<div id="alarmPhrase">
-   Alarm Phrase:
-</div>
-<div id="pebCon">
-   Pebble Connection:
-</div>
-<div id="pebAppRun">
-   Pebble App Running:
-</div>
-<h2>Pebble Status</h2>
-<div id="pebStat1">
-   <font size="7">Pebble Watch Connected</font>
-</div>
-<div id="pebStat2">
-   <font size="7">Pebble App Running</font>
-</div>
-<div id="debugInfo"></div>
-</body>
-
+  
+  <head>
+    <title>Ben's Seizure Detector</title>
+    <script src="js/jquery.js"></script>
+  </head>
+  
+  <body>
+    <div id="header">
+      <h1>Ben's Seizure Detector</h1>
+    </div>
+    <h2>Ben's Status</h2>
+    <div id="benStat">
+      OK
+    </div>
+    <div id="dataDiv">
+      <h2>Data</h2>
+      <div id="maxFreq">
+	Maximum Frequency:
+      </div>
+      <div id="maxVal">
+	Maximum Value:
+      </div>
+      <div id="specPow">
+	Spectrum Power:
+      </div>
+      <div id="roiPow">
+	Region Of Interest Power:
+      </div>
+      <div id="alarmState">
+	Alarm Status:
+      </div>
+      <div id="alarmPhrase">
+	Alarm Phrase:
+      </div>
+    </div>
+    <div id="settingsDiv">
+      <h2>SD Settings</h2>
+      <div id="sdSettings">
+	SD Settings
+      </div>
+    </div>
+    <div style="clear:both">
+      <h2>Pebble Status</h2>
+      <div id="pebStat1">
+	<font size="7">Pebble Watch Connected</font>
+      </div>
+      <div id="pebStat2">
+	<font size="7">Pebble App Running</font>
+      </div>
+      </div>
+    <div id="debugInfo"></div>
+      
+  </body>
+  
 <style>
 #benStat {
    background-color:blue;
@@ -60,6 +63,7 @@
    height:55px;
 }
 #pebStat1 {
+   clear:both;
    background-color:blue;
    color:white;
    text-align:center;
@@ -67,16 +71,62 @@
    height:55px;
 }
 #pebStat2 {
+   clear:both;
    background-color:blue;
    color:white;
    text-align:center;
    font-size:18pt;
    height:55px;
 }
+#dataDiv {
+   float:left;
+   background-color:#f0f0f0;
+   color:black;
+   text-align:left;
+   font-size:12pt;
+   width: 400px;
+}
+#settingsDiv {
+   float:left;
+   background-color:#e0e0e0;
+   color:black;
+   text-align:left;
+   font-size:12pt;
+   width: 400px;
+}
 </style>
       
 <script>
 
+// Request settings from the server.
+function get_settings() {
+   $.ajax({url:"/settings",success:populate_settings});
+};
+
+
+function populate_settings(dataStr) {
+   var dataObj = JSON.parse(dataStr);
+   //alert (dataStr);
+   var alarmFreqMin = dataObj['alarmFreqMin'];
+   var alarmFreqMax = dataObj['alarmFreqMax'];
+   var alarmThresh = dataObj['alarmThresh'];
+   var alarmRatioThresh = dataObj['alarmRatioThresh'];
+   var warnTime = dataObj['warnTime'];
+   var alarmTime = dataObj['alarmTime'];
+   var nMin = dataObj['nMin'];
+   var nMax = dataObj['nMax'];
+
+   var htmlStr = "alarm Freq Min = "+alarmFreqMin+" Hz (bin "+nMin+").<br/>"
+              + "alarm Freq Max = "+alarmFreqMax+" Hz (bin "+nMax+").<br/>"
+              + "alarm Threshold = "+alarmThresh+"<br/>"
+              + "alarm Ratio Threshold = "+alarmRatioThresh+" (/10)<br/>"
+              + "warn Time = "+warnTime+" sec. <br/>"
+              + "alarm Time = "+alarmTime+" sec. <br/>"
++ dataStr;
+   $("#sdSettings").html(htmlStr);
+}
+
+// Request data from the server.
 function get_data() {
    $.ajax({url:"/data",success:populate_form});
 };
@@ -97,11 +147,9 @@ function populate_form(dataStr) {
    $("#maxFreq").html("Max Freq = "+maxFreq);
    $("#maxVal").html("Max Val = "+maxVal);
    $("#specPow").html("Spec Pow = "+specPow);
-   $("#roiPow").html("ROI Pow = "+roiPow);
+   $("#roiPow").html("ROI Pow = "+roiPow+" - 10xRatio="+10*roiPow/specPow);
    $("#alarmState").html("Alarm State = "+alarmState);
    $("#alarmPhrase").html("Alarm Phrase = "+alarmPhrase);
-   $("#pebCon").html("Pebble Connected = "+pebAppRun);
-   $("#pebAppRun").html("Pebble App Running = "+pebAppRun);
 
    $("#benStat").html(alarmPhrase+"      -    ("+timeStr+")");
 
@@ -143,7 +191,8 @@ function populate_form(dataStr) {
 };
 
 $(document).ready(function() {  
-   setInterval("get_data();",1000);
+   get_settings();
+   setInterval("get_data();",2000);
 });
 </script>
 </html>

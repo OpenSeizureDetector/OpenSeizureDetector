@@ -89,7 +89,10 @@ public class SdServer extends Service
     private int KEY_POS_MIN = 12;       // position of first data point in array
     private int KEY_POS_MAX = 13;       // position of last data point in array.
     private int KEY_SPEC_DATA = 14;     // Spectrum data
-
+    private int KEY_ROIPOWER = 15;     
+    private int KEY_NMIN = 16;
+    private int KEY_NMAX = 17;
+    private int KEY_ALARM_RATIO_THRESH = 18;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
@@ -108,12 +111,23 @@ public class SdServer extends Service
     private short fftResults[];
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
+    /* Analysis results */
     private long alarmState;
     private long maxVal;
     private long maxFreq;
     private long specPower;
+    private long roiPower;
     private String alarmPhrase;
-    
+
+    /* Analysis settings */
+    private long alarmFreqMin;
+    private long alarmFreqMax;
+    private long nMin;
+    private long nMax;
+    private long warnTime;
+    private long alarmTime;
+    private long alarmThresh;
+    private long alarmRatioThresh;
 
     /**
      * Constructor for SdServer class - does not do much!
@@ -168,11 +182,20 @@ public class SdServer extends Service
 	mServiceHandler.sendMessage(msg);
 
 	// Start timer to check status of pebble regularly.
+	getPebbleStatus();
 	Timer statusTimer = new Timer();
 	statusTimer.schedule(new TimerTask() {
 		@Override
 		public void run() {getPebbleStatus();}
 	    }, 0, 1000);	
+
+	// Start timer to retrieve pebble settings regularly.
+	getPebbleSdSettings();
+	Timer settingsTimer = new Timer();
+	settingsTimer.schedule(new TimerTask() {
+		@Override
+		public void run() {getPebbleSdSettings();}
+	    }, 0, 1000*600);	
 
 	startPebbleServer();
 	startWebServer();
@@ -216,6 +239,7 @@ public class SdServer extends Service
 			maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
 			maxFreq = data.getUnsignedIntegerAsLong(KEY_MAXFREQ);
 			specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
+			roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
 			alarmPhrase = "Unknown";
 			if (alarmState==0) alarmPhrase="OK";
 			if (alarmState==1) alarmPhrase="WARNING";
@@ -224,7 +248,14 @@ public class SdServer extends Service
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_SETTINGS) {
 			Log.v(TAG,"DATA_TYPE = Settings");
-			Log.v(TAG,"Settings:\n"+data.toJsonString());
+			alarmFreqMin = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MIN);
+			alarmFreqMax = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MAX);
+			nMin = data.getUnsignedIntegerAsLong(KEY_NMIN);
+			nMax = data.getUnsignedIntegerAsLong(KEY_NMAX);
+			warnTime = data.getUnsignedIntegerAsLong(KEY_WARN_TIME);
+			alarmTime = data.getUnsignedIntegerAsLong(KEY_ALARM_TIME);
+			alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
+			alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
 		    }
 
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
@@ -286,9 +317,9 @@ public class SdServer extends Service
      * Will be received as a message by the receiveData handler
      */
     public void getPebbleSdSettings() {
+	Log.v(TAG,"getPebbleSdSettings() - requesting settings from pebble");
 	PebbleDictionary data = new PebbleDictionary();
 	data.addUint8(KEY_SETTINGS, (byte)1);
-	data.addString(1, "A string"); 
 	PebbleKit.sendDataToPebble(
 				   getApplicationContext(), 
 				   SD_UUID, 
@@ -379,8 +410,28 @@ public class SdServer extends Service
 		    jsonObj.put("maxVal",maxVal);
 		    jsonObj.put("maxFreq",maxFreq);
 		    jsonObj.put("specPower",specPower);
+		    jsonObj.put("roiPower",roiPower);
 		    jsonObj.put("pebCon",mPebbleConnected);
 		    jsonObj.put("pebAppRun",mPebbleAppRunning);
+		    answer = jsonObj.toString();
+		} catch (Exception ex) {
+		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
+		    answer = "Error Creating Data Object";
+		}
+		break;
+
+	    case "/settings":
+		Log.v(TAG,"WebServer.serve() - Returning settings");
+		try {
+		    JSONObject jsonObj = new JSONObject();
+		    jsonObj.put("alarmFreqMin",alarmFreqMin);
+		    jsonObj.put("alarmFreqMax",alarmFreqMax);
+		    jsonObj.put("nMin",nMin);
+		    jsonObj.put("nMax",nMax);
+		    jsonObj.put("warnTime",warnTime);
+		    jsonObj.put("alarmTime",alarmTime);
+		    jsonObj.put("alarmThresh",alarmThresh);
+		    jsonObj.put("alarmRatioThresh",alarmRatioThresh);
 		    answer = jsonObj.toString();
 		} catch (Exception ex) {
 		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());

@@ -44,7 +44,6 @@ int accDataFull = 0;  // Flag so we know when we have a complete buffer full
                       // of data.
 
 
-
 /*************************************************************
  * Data Analysis
  *************************************************************/
@@ -72,9 +71,6 @@ int getAmpl(int nBin) {
  * spectrum for an alarm state.
  */
 int alarm_check() {
-  int nMin = 1000*alarmFreqMin/freqRes;
-  int nMax = 1000*alarmFreqMax/freqRes;
-
   APP_LOG(APP_LOG_LEVEL_DEBUG,"Alarm Check nMin=%d, nMax=%d",nMin,nMax);
 
   for (int i=nMin;i<nMax;i++) {
@@ -83,7 +79,9 @@ int alarm_check() {
   roiPower = roiPower/(nMax-nMin);
   APP_LOG(APP_LOG_LEVEL_DEBUG,"roiPower=%ld",roiPower);
 
-  if (roiPower>alarmThresh) {
+  int ratio = 10 * roiPower/specPower;
+
+  if (roiPower>alarmThresh && ratio>alarmRatioThresh) {
     alarmCount++;
     if (alarmCount>alarmTime) {
       alarmState = 2;
@@ -136,6 +134,13 @@ void accel_handler(AccelData *data, uint32_t num_samples) {
 void do_analysis() {
   int i;
   APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
+  /* Set the frequency bounds for the analysis in terms of
+   * fft output bin numbers.
+   */
+  nMin = 1000*alarmFreqMin/freqRes;
+  nMax = 1000*alarmFreqMax/freqRes;
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis():  nMin=%d, nMax=%d",nMin,nMax);
+
 
   // Calculate the frequency resolution of the output spectrum.
   // Stored as an integer which is 1000 x the frequency resolution in Hz.
@@ -176,6 +181,7 @@ void do_analysis() {
 
 void analysis_init() {
   /* Subscribe to acceleration data service */
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"Analysis Init:  Subcribing to acceleration data");
   accel_data_service_subscribe(NSAMP,accel_handler);
   // Choose update rate
   accel_service_set_sampling_rate(SAMP_FREQ_STR);

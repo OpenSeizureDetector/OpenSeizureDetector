@@ -41,7 +41,7 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
     APP_LOG(APP_LOG_LEVEL_INFO,"Key=%d",(int) t->key);
     switch (t->key) {
       case KEY_SETTINGS:
-        APP_LOG(APP_LOG_LEVEL_INFO, "Phone Requesting Settings");
+        APP_LOG(APP_LOG_LEVEL_INFO, "***********Phone Requesting Settings");
 	sendSettings();
         break;
     case KEY_ALARM_FREQ_MIN:
@@ -76,9 +76,9 @@ void sendSdData() {
   dict_write_uint32(iter,KEY_MAXVAL,(uint32_t)maxVal);
   dict_write_uint32(iter,KEY_MAXFREQ,(uint32_t)maxFreq);
   dict_write_uint32(iter,KEY_SPECPOWER,(uint32_t)specPower);
-  dict_write_cstring(iter,10,"a string");
+  dict_write_uint32(iter,KEY_ROIPOWER,(uint32_t)roiPower);
   app_message_outbox_send();
-  sendFftSpec();
+  //sendFftSpec();
 }
 
 /***************************************************
@@ -126,9 +126,12 @@ void sendSettings() {
   // then the actual settings
   dict_write_uint32(iter,KEY_ALARM_FREQ_MIN,(uint32_t)alarmFreqMin);
   dict_write_uint32(iter,KEY_ALARM_FREQ_MAX,(uint32_t)alarmFreqMax);
+  dict_write_uint32(iter,KEY_NMIN,(uint32_t)nMin);
+  dict_write_uint32(iter,KEY_NMAX,(uint32_t)nMax);
   dict_write_uint32(iter,KEY_WARN_TIME,(uint32_t)warnTime);
   dict_write_uint32(iter,KEY_ALARM_TIME,(uint32_t)alarmTime);
   dict_write_uint32(iter,KEY_ALARM_THRESH,(uint32_t)alarmThresh);
+  dict_write_uint32(iter,KEY_ALARM_RATIO_THRESH,(uint32_t)alarmRatioThresh);
   app_message_outbox_send();
 
 }
