@@ -32,9 +32,8 @@ please see Credits below.
 Credits
 =======
 The following libraries are used:
-* (KissFFT)[http://sourceforge.net/projects/kissfft/] by Mark Borgerding
-* (fix_fft)[http://www.jjj.de%2Fcrs4%2Finteger_fft.c] - there are lots of copies of this about on the internet, and I don't know whose is the original, its licence, or who to credit.
 * (SYLT-FFT)[https://github.com/stg/SYLT-FFT] by D. Taylor.
+* (NanoHTTPD)[https://github.com/NanoHttpd/nanohttpd]
 
 Icons based on work by http://icons8.com/.
 
