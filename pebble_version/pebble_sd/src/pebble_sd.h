@@ -72,6 +72,7 @@
 #define KEY_NMIN 16
 #define KEY_NMAX 17
 #define KEY_ALARM_RATIO_THRESH 18
+#define KEY_BATTERY_PC 19
 
 // Values of the KEY_DATA_TYPE entry in a message
 #define DATA_TYPE_RESULTS 1   // Analysis Results

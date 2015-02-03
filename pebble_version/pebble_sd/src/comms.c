@@ -132,6 +132,8 @@ void sendSettings() {
   dict_write_uint32(iter,KEY_ALARM_TIME,(uint32_t)alarmTime);
   dict_write_uint32(iter,KEY_ALARM_THRESH,(uint32_t)alarmThresh);
   dict_write_uint32(iter,KEY_ALARM_RATIO_THRESH,(uint32_t)alarmRatioThresh);
+  BatteryChargeState charge_state = battery_state_service_peek();
+  dict_write_uint8(iter,KEY_BATTERY_PC,(uint8_t)charge_state.charge_percent);
   app_message_outbox_send();
 
 }

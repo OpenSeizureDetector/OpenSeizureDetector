@@ -50,7 +50,10 @@
       <div id="pebStat2">
 	<font size="7">Pebble App Running</font>
       </div>
+      <div id="pebStat3">
+	Pebble Battery
       </div>
+    </div>
     <div id="debugInfo"></div>
       
   </body>
@@ -73,6 +76,14 @@
    height:55px;
 }
 #pebStat2 {
+   clear:both;
+   background-color:blue;
+   color:white;
+   text-align:center;
+   font-size:18pt;
+   height:55px;
+}
+#pebStat3 {
    clear:both;
    background-color:blue;
    color:white;
@@ -117,6 +128,7 @@ function populate_settings(dataStr) {
    var alarmTime = dataObj['alarmTime'];
    var nMin = dataObj['nMin'];
    var nMax = dataObj['nMax'];
+   var batteryPc = dataObj['batteryPc'];
 
    var htmlStr = "alarm Freq Min = "+alarmFreqMin+" Hz (bin "+nMin+").<br/>"
               + "alarm Freq Max = "+alarmFreqMax+" Hz (bin "+nMax+").<br/>"
@@ -124,8 +136,16 @@ function populate_settings(dataStr) {
               + "alarm Ratio Threshold = "+alarmRatioThresh+" (/10)<br/>"
               + "warn Time = "+warnTime+" sec. <br/>"
               + "alarm Time = "+alarmTime+" sec. <br/>"
-+ dataStr;
+              + "Pebble Battery = "+batteryPc+" %. <br/>"
+              ;
    $("#sdSettings").html(htmlStr);
+
+   $("#pebStat3").html("Pebble Battery Charge = "+batteryPc+" %<br/>");
+
+   bgCol = "blue";
+   if (batteryPc<30) bgCol = "orange";
+   if (batteryPc<20) bgCol = "red";
+   $("#pebStat3").css("background-color",bgCol);
 }
 
 // Request data from the server.

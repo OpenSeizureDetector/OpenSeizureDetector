@@ -93,6 +93,7 @@ public class SdServer extends Service
     private int KEY_NMIN = 16;
     private int KEY_NMAX = 17;
     private int KEY_ALARM_RATIO_THRESH = 18;
+    private int KEY_BATTERY_PC = 19;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
@@ -128,6 +129,7 @@ public class SdServer extends Service
     private long alarmTime;
     private long alarmThresh;
     private long alarmRatioThresh;
+    private long batteryPc;
 
     /**
      * Constructor for SdServer class - does not do much!
@@ -256,6 +258,7 @@ public class SdServer extends Service
 			alarmTime = data.getUnsignedIntegerAsLong(KEY_ALARM_TIME);
 			alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
 			alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
+			batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
 		    }
 
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
@@ -418,6 +421,7 @@ public class SdServer extends Service
 		    jsonObj.put("alarmTime",alarmTime);
 		    jsonObj.put("alarmThresh",alarmThresh);
 		    jsonObj.put("alarmRatioThresh",alarmRatioThresh);
+		    jsonObj.put("batteryPc",batteryPc);
 		    answer = jsonObj.toString();
 		} catch (Exception ex) {
 		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
