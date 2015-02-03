@@ -384,22 +384,8 @@ public class SdServer extends Service
 		Log.v(TAG,"Request parameters - key="+key+" value="+value);
 	    }
 
+	    if (uri.equals("/")) uri = "/index.html";
 	    switch(uri) {
-	    case "/":
-		Log.v(TAG,"WebServer.serve() - Returning main page");
-		String connStatus = "**** Pebble NOT Connected ****";
-		if (mPebbleConnected)
-		    connStatus = "Pebble Connected";
-		String appStatus = " **** Pebble App NOT Running ***";
-		if (mPebbleAppRunning)
-		    appStatus = "Pebble SD App Running";
-		answer = "SdServer Response\n"
-		    +alarmPhrase+"\n"
-		    +"maxFreq = "+maxFreq
-		    +"<br/>"+connStatus
-		    +"<br/>"+appStatus;
-		break;
-
 	    case "/data":
 		Log.v(TAG,"WebServer.serve() - Returning data");
 		try {
