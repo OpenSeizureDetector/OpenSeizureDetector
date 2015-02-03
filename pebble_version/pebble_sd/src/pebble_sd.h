@@ -36,8 +36,8 @@
 // default values of settings
 #define ALARM_FREQ_MIN_DEFAULT 5  // Hz
 #define ALARM_FREQ_MAX_DEFAULT 10 // Hz
-#define WARN_TIME_DEFAULT      10 // sec
-#define ALARM_TIME_DEFAULT     20 // sec
+#define WARN_TIME_DEFAULT      5 // sec
+#define ALARM_TIME_DEFAULT     10 // sec
 #define ALARM_THRESH_DEFAULT   100 // Power of spectrum between ALARM_FREQ_MIN and
                            // ALARM_FREQ_MAX that will indicate an alarm
                            // state.
@@ -99,6 +99,7 @@ extern int maxLoc;       // Location in output array of peak.
 extern int maxFreq;      // Frequency corresponding to peak location.
 extern long specPower;   // Average power of whole spectrum.
 extern long roiPower;    // Average power of spectrum in region of interest
+extern int roiRatio;     // ratio of roiPower to specPower (x10)
 extern int freqRes;      // Actually 1000 x frequency resolution
 
 extern int alarmState;    // 0 = OK, 1 = WARNING, 2 = ALARM

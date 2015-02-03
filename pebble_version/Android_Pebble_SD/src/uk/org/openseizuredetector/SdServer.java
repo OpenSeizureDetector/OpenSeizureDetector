@@ -195,7 +195,7 @@ public class SdServer extends Service
 	settingsTimer.schedule(new TimerTask() {
 		@Override
 		public void run() {getPebbleSdSettings();}
-	    }, 0, 1000*600);	
+	    }, 0, 1000*60);	
 
 	startPebbleServer();
 	startWebServer();

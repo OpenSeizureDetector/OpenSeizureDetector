@@ -73,16 +73,8 @@ int getAmpl(int nBin) {
 int alarm_check() {
   APP_LOG(APP_LOG_LEVEL_DEBUG,"Alarm Check nMin=%d, nMax=%d",nMin,nMax);
 
-  for (int i=nMin;i<nMax;i++) {
-    roiPower = roiPower + fftdata[i].r;
-  }
-  roiPower = roiPower/(nMax-nMin);
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"roiPower=%ld",roiPower);
-
-  int ratio = 10 * roiPower/specPower;
-
-  if (roiPower>alarmThresh && ratio>alarmRatioThresh) {
-    alarmCount++;
+  if (roiPower>alarmThresh && roiRatio>alarmRatioThresh) {
+    alarmCount+=ANALYSIS_PERIOD;
     if (alarmCount>alarmTime) {
       alarmState = 2;
     } else if (alarmCount>warnTime) {
@@ -133,26 +125,28 @@ void accel_handler(AccelData *data, uint32_t num_samples) {
  */
 void do_analysis() {
   int i;
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
-  /* Set the frequency bounds for the analysis in terms of
-   * fft output bin numbers.
-   */
-  nMin = 1000*alarmFreqMin/freqRes;
-  nMax = 1000*alarmFreqMax/freqRes;
-  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis():  nMin=%d, nMax=%d",nMin,nMax);
-
 
   // Calculate the frequency resolution of the output spectrum.
   // Stored as an integer which is 1000 x the frequency resolution in Hz.
   freqRes = (int)(1000*SAMP_FREQ/NSAMP);
   APP_LOG(APP_LOG_LEVEL_DEBUG,"freqRes=%d",freqRes);
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis");
+  // Set the frequency bounds for the analysis in fft output bin numbers.
+  nMin = 1000*alarmFreqMin/freqRes;
+  nMax = 1000*alarmFreqMax/freqRes;
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"do_analysis():  nMin=%d, nMax=%d",nMin,nMax);
+
+  // Populate the fft input array with the accelerometer data 
   for (i=0;i<NSAMP;i++) {
     // FIXME - this needs to recognise that accData is actually a rolling buffer and re-order it too!
     fftdata[i].r = accData[i];
     fftdata[i].i = 0;
   }
+
   // Do the FFT conversion from time to frequency domain.
   fft_fft(fftdata,FFT_BITS);
+
   // Look for maximm amplitude, and location of maximum.
   // Ignore position zero though (DC component)
   maxVal = getMagnitude(fftdata[1]);
@@ -171,6 +165,16 @@ void do_analysis() {
   maxFreq = (int)(maxLoc*freqRes/1000);
   specPower = specPower/(NSAMP/2);
   APP_LOG(APP_LOG_LEVEL_DEBUG,"specPower=%ld",specPower);
+
+  // calculate spectrum power in the region of interest
+  for (int i=nMin;i<nMax;i++) {
+    roiPower = roiPower + fftdata[i].r;
+  }
+  roiPower = roiPower/(nMax-nMin);
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"roiPower=%ld",roiPower);
+
+  roiRatio = 10 * roiPower/specPower;
+
   /* Start collecting new buffer of data */
   /* FIXME = it would be best to make this a rolling buffer and analyse it
   * more frequently.

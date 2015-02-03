@@ -50,6 +50,7 @@ int maxLoc = 0;       // Location in output array of peak.
 int maxFreq = 0;      // Frequency corresponding to peak location.
 long specPower = 0;   // Average power of whole spectrum.
 long roiPower = 0;    // Average power of spectrum in region of interest
+int roiRatio = 0;     // 10xroiPower/specPower
 int freqRes = 0;      // Actually 1000 x frequency resolution
 
 int alarmState = 0;    // 0 = OK, 1 = WARNING, 2 = ALARM
@@ -70,38 +71,39 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   static char s_time_buffer[16];
   static char s_alarm_buffer[64];
   static char s_buffer[256];
-  static int count=0;
+  static int analysisCount=0;
 
   /* Only process data every ANALYSIS_PERIOD seconds */
-  count++;
-  if (count<ANALYSIS_PERIOD) 
-    return;
-  else
-    count = 0;
-
-  // Do FFT analysis
-  if (accDataFull) 
-    do_analysis();
-
-  // Check the alarm state, and set the global alarmState variable.
-  alarm_check();
-
-  // Do something with the alarm - vibrate the pebble watch 
-  //  and display message on screen.
-  if (alarmState == 0) {
-    text_layer_set_text(alarm_layer, "OK");
+  analysisCount++;
+  if (analysisCount>=ANALYSIS_PERIOD) {
+    // Do FFT analysis
+    if (accDataFull) {
+      do_analysis();
+      // Check the alarm state, and set the global alarmState variable.
+      alarm_check();
+      //  Display alarm message on screen.
+      if (alarmState == 0) {
+	text_layer_set_text(alarm_layer, "OK");
+      }
+      if (alarmState == 1) {
+	//vibes_short_pulse();
+	text_layer_set_text(alarm_layer, "WARNING");
+      }
+      if (alarmState == 2) {
+	//vibes_long_pulse();
+	text_layer_set_text(alarm_layer, "** ALARM **");
+      }
+      // Send data to phone
+      sendSdData();
+    }
+    // Re-set counter.
+    analysisCount = 0;
   }
-  if (alarmState == 1) {
-    //vibes_short_pulse();
-    text_layer_set_text(alarm_layer, "WARNING");
-  }
-  if (alarmState == 2) {
-    //vibes_long_pulse();
-    text_layer_set_text(alarm_layer, "** ALARM **");
-  }
+ 
 
-  /* Send message to phone */
-  sendSdData();
+
+
+
 
   // Update data display.
   snprintf(s_buffer,sizeof(s_buffer),

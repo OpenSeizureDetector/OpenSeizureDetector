@@ -147,7 +147,7 @@ function populate_form(dataStr) {
    $("#maxFreq").html("Max Freq = "+maxFreq);
    $("#maxVal").html("Max Val = "+maxVal);
    $("#specPow").html("Spec Pow = "+specPow);
-   $("#roiPow").html("ROI Pow = "+roiPow+" - 10xRatio="+10*roiPow/specPow);
+   $("#roiPow").html("ROI Pow = "+roiPow+" - 10xRatio="+Math.round(10*roiPow/specPow));
    $("#alarmState").html("Alarm State = "+alarmState);
    $("#alarmPhrase").html("Alarm Phrase = "+alarmPhrase);
 
