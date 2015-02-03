@@ -34,6 +34,8 @@ Credits
 The following libraries are used:
 * (SYLT-FFT)[https://github.com/stg/SYLT-FFT] by D. Taylor.
 * (NanoHTTPD)[https://github.com/NanoHttpd/nanohttpd]
+* (jQuery)[http://jquery.org]
+* (jBeep)[http://www.ultraduz.com.br]
 
 Icons based on work by http://icons8.com/.
 

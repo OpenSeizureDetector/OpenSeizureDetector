@@ -3,6 +3,7 @@
   <head>
     <title>Ben's Seizure Detector</title>
     <script src="js/jquery.js"></script>
+    <script src="js/jBeep.js"></script>
   </head>
   
   <body>
@@ -36,6 +37,7 @@
     </div>
     <div id="settingsDiv">
       <h2>SD Settings</h2>
+      <button id="muteButton">Mute Alarm</button>
       <div id="sdSettings">
 	SD Settings
       </div>
@@ -128,10 +130,10 @@ function populate_settings(dataStr) {
 
 // Request data from the server.
 function get_data() {
-   $.ajax({url:"/data",success:populate_form});
+   $.ajax({url:"/data",success:process_data});
 };
 
-function populate_form(dataStr) {
+function process_data(dataStr) {
    var dataObj = JSON.parse(dataStr);
    //alert (dataStr);
    var timeStr = dataObj['Time'];
@@ -159,9 +161,11 @@ function populate_form(dataStr) {
            break;
        case 1: 
            $("#benStat").css("background-color","orange");
+           if (!sd_muted) jBeep('js/jBeep.wav');
            break;
        case 2:
            $("#benStat").css("background-color","red");
+           if (!sd_muted) jBeep('js/jBeep.wav');
            break;
    }
 
@@ -190,9 +194,24 @@ function populate_form(dataStr) {
 
 };
 
+// toggle the global sd_muted flag and change button text.
+toggleMute = function() {
+   if (sd_muted) {
+       sd_muted = 0;
+       $("#muteButton").text("Mute Audible Alarm");
+   }
+   else {
+       sd_muted = 1;
+       $("#muteButton").text("Un-mute Audible Alarm");
+   }
+}
+
 $(document).ready(function() {  
+   sd_muted = 0;
    get_settings();
+   get_data();
    setInterval("get_data();",2000);
+   $("#muteButton").click(toggleMute);
 });
 </script>
 </html>
