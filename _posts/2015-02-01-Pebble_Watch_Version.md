@@ -84,14 +84,14 @@ The current prototype web interface in both normal and alarm modes is shown belo
 
 # Next Steps for Development
 
-1.  <strike>Provide more diagnostic information to the web interface (e.g. fft spectrum), to help with determining the most suitable frequency region of interest and
-power threshold (the current settings give false alarms for normal walking about).</strike>
+1.  Provide more diagnostic information to the web interface (e.g. fft spectrum), to help with determining the most suitable frequency region of interest and
+power threshold (the current settings give false alarms for normal walking about).
 2.  Provide some data logging on the phone so we can analyse historical data
 to improve performance.
 3.  Make it easy to alter analysis settings via the Android App or web
     interface to help with tuning the system.
-4.  <strike>Add an audible alarm to the web interface (quite easy because I have that on
-the android client for the kinect prototype.</strike>
+4.  Add an audible alarm to the web interface (quite easy because I have that on
+the android client for the kinect prototype.
 5.  Review stability of the system (we don't want too many crashes or false alarms).
 6.  Persuade Benjamin to wear the watch - quite a difficult one!
 7.  Modify our digital video monitors to connect to the Android Phone and
