@@ -6,6 +6,13 @@ category: Meta
 excerpt: Description of Possibility of using a 'Fitbit' activity tracker as a seizure detector.
 
 ---
+# Update 03 Feb 2015
+I abandoned the FitBit approach because of the difficulty in interpreting the 
+data and have gone for a Pebble Smart Watch, and have a very promising working
+prototype - see [this post](http://jones139.github.io/OpenSeizureDetector/2015/02/01/Pebble_Watch_Version/)
+
+
+
 
 # Hardware
 ![Fitbit One](http://static1.fitbit.com/simple.b-cssdisabled-png.h47e3210a910010717f0d5ec74009f261.pack?items=%2Fcontent%2Fassets%2Fonezip%2Fimages%2Ffeatures-carousel%2Fone%2Fblack%2Fproduct.png)
