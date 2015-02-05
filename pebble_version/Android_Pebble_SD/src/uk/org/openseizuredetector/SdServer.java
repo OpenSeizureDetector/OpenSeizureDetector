@@ -175,6 +175,7 @@ public class SdServer extends Service
                 new Intent(this, MainActivity.class), 0);
         notification.setLatestEventInfo(this, "OpenSeizureDetector",
                       text, contentIntent);
+	notification.flags |= Notification.FLAG_NO_CLEAR;
         mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mNM.notify(1, notification);
     }
