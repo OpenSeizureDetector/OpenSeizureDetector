@@ -7,12 +7,15 @@ import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Button;
 import android.util.Log;
+import java.net.InetAddress;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -59,7 +62,6 @@ public class MainActivity extends Activity
 	    }, 0, 1000);	
 
 	startServer();
-	onResume();
     }
 
     private void startServer() {
@@ -109,6 +111,13 @@ public class MainActivity extends Activity
 		TextView serverTextView = 
 		    (TextView) findViewById(R.id.textView3);
 		serverTextView.setText(serverText);	    
+
+		//WifiManager wm = 
+		//    (WifiManager) getSystemService(WIFI_SERVICE);
+		//byte[] ip = wm.getConnectionInfo().getIpAddress().toByteArray();
+		//InetAddress addr = InetAddress.getByAddress(ip);
+		//TextView ipTextView = (TextView)findViewById(R.id.textView1);
+		//ipTextView.setText("IP Address = "+addr.getHostAddress());
 	    }
 	};
     
