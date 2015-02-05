@@ -25,13 +25,14 @@ The Kinect version is the most promising at the moment, and is the subject
 of most of this site, but you can find information about the other versions
 on my <a href="https://github.com/jones139/OpenSeizureDetector">github repository</a> and my <a href="http://nerdytoad.blogspot.co.uk/search/label/Seizure_Detector">blog</a>.
 
-The current prototype system comprises two halves:
-<ul>
-  <li><i class="icon-link"></i>   A number of Raspberry Pi based BenTV <a href="{{site.baseurl}}/meta/2014/01/13/Digital_Video_Monitors/">Digital Video Monitors</a></li>
-  <li><i class="icon-link"></i>   <a href="{{site.baseurl}}/meta/2014/01/13/Kinect_Seizure_Detector/">Kinect Based Seizure Detector Prototype</a> which provides a web based interface (see image right), and interface to digital video monitors.</li>
-</ul>
+We currently have two working prototypes, one installed in Benjamin's bedroom that is based on a <a href="{{site.baseurl}}/meta/2014/01/13/Kinect_Seizure_Detector/">Kinect depth camera</a>, and using a number of Raspberry Pi based <a href="{{site.baseurl}}/meta/2014/01/13/Digital_Video_Monitors/">Digital Video Monitors</a></li> to show us he is ok.
+
+I have just completed a version based on a <a href="http://jones139.github.io/OpenSeizureDetector/2015/02/01/Pebble_Watch_Version/">Pebble Smart Watch</a> which connects to an Android mobile phone to share the analysis data.   It will be
+a challenge to persuade Benjamin to wear the watch (we may need to put pockets in his sleep suits to hold it), but it looks like the most reliable way I have of detecting the shaking associated with a tonic-clonic seizure.
+
 
 <h2>Current Status</h2>
+<h3>Kinect Version</h3>
 At the moment it is a functioning prototype breathing detector / alarm - it can detect that I am breathing,
  and alarm if I can hold my breath long enough (it is using a 30 second time 
 series, and it is hard to stay perfectly still for that long!).
@@ -39,12 +40,23 @@ The benTV digital video monitors talk to the web interface to display the
 results and display alarms by chaning colour (I don't trust it enough yet to 
 make an audible alarm in the night...).
 
+<h3>Pebble Watch Version</h3>
+Functioning prototpype comprising an app running on the watch to do analysis, and send analysis results to android phone.   The android app acts as a web server so client devices can see the results and raise alarms as necessary.
+<img src="https://raw.githubusercontent.com/jones139/OpenSeizureDetector/master/pebble_version/Documentation/diagram.jpg"/>
+
 <h2>Next Steps</h2>
+<h3>Kinect Version</h3>
 <ul>
   <li>Soak test the current system to see how often it raises false alarms, then modify as necessary.</li>
   <li>Extend the current system to do frequency analysis to see the frequencies of movement - this may allow me to get towards detecting the shaking associated with a seizure.</li>
   <li>Add an audible alarm to the video monitors</li>
   <li>Write an Android Application so it can work on a portable device such as a tablet computer.</li>
+</ul>
+<h3>Pebble Watch Version</h3>
+<ul>
+  <li>Add data logging to android app so we can see how many false alarms we get.</li>
+  <li>Update android app to provide indication of ip address of phone so users can connect to it easily.</li>
+
 </ul>
 
 
