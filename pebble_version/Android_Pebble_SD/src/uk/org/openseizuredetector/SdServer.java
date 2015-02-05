@@ -32,11 +32,14 @@ import fi.iki.elonen.NanoHTTPD;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
-import android.app.Service;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -100,6 +103,8 @@ public class SdServer extends Service
     private int DATA_TYPE_SETTINGS = 2;  // Settings
     private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
 
+    private NotificationManager mNM;
+
     private WebServer webServer;
     private final static String TAG = "SdServer";
     private Looper mServiceLooper;
@@ -156,12 +161,35 @@ public class SdServer extends Service
 	}
     }
 
+
+    /**
+     * Show a notification while this service is running.
+     */
+    private void showNotification() {
+	Log.v(TAG,"showNotification()");
+        CharSequence text = "OpenSeizureDetector Service Running";
+        Notification notification = 
+	   new Notification(R.drawable.stat_sample, text,
+			     System.currentTimeMillis());
+	PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+                new Intent(this, MainActivity.class), 0);
+        notification.setLatestEventInfo(this, "OpenSeizureDetector",
+                      text, contentIntent);
+        mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        mNM.notify(1, notification);
+    }
+
+
+
     /**
      * onCreate() - called when services is created.  Starts message
      * handler process to listen for messages from other processes.
      */
     @Override
     public void onCreate() {
+	Log.v(TAG,"onCreate()");
+	showNotification();
+
 	HandlerThread thread = new HandlerThread("ServiceStartArguments",
 						 Process.THREAD_PRIORITY_BACKGROUND);
 	thread.start();
