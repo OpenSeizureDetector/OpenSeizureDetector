@@ -11,6 +11,9 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Button;
@@ -30,6 +33,7 @@ public class MainActivity extends Activity
     private Intent sdServerIntent;
 
     final Handler serverStatusHandler = new Handler();
+    Messenger messenger = new Messenger(new ResponseHandler());
 
     /** Called when the activity is first created. */
     @Override
@@ -42,8 +46,8 @@ public class MainActivity extends Activity
 	Button button = (Button)findViewById(R.id.button1);
 	button.setOnClickListener(new View.OnClickListener() {
              public void onClick(View v) {
-		 Log.v(TAG,"onClick(): "+v.toString());
-		 // request settings from pebble
+		 Log.v(TAG,"Stopping Web Server");
+		 stopServer();
 	     }
 	    }
 	    );
@@ -57,6 +61,15 @@ public class MainActivity extends Activity
 	    });
 	
 
+	// send message to server
+	//Message message = Message.obtain(null,SdServer.ADD_RESPONSE_HANDLER);
+	//message.replyTo = messenger;
+	//try {
+	//    SdServer.send(message);
+	//} catch (RemoteException e) {
+	//    Log.v(TAG,e.toString());
+	//	}
+
 	Timer uiTimer = new Timer();
 	uiTimer.schedule(new TimerTask() {
 		@Override
@@ -66,10 +79,23 @@ public class MainActivity extends Activity
 	startServer();
     }
 
+    /**
+     * Start the SdServer service
+     */
     private void startServer() {
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
 	sdServerIntent.setData(Uri.parse("Start"));
 	getApplicationContext().startService(sdServerIntent);
+    }
+
+    /**
+     * Stop the SdServer service
+     */
+    private void stopServer() {
+	Log.v(TAG,"stopping Server...");
+	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
+	sdServerIntent.setData(Uri.parse("Stop"));
+	getApplicationContext().stopService(sdServerIntent);
     }
 
     /**
@@ -104,8 +130,8 @@ public class MainActivity extends Activity
 		for (Enumeration<InetAddress> enumIpAddr = intf
 			 .getInetAddresses(); enumIpAddr.hasMoreElements();) {
 		    InetAddress inetAddress = enumIpAddr.nextElement();
-		    Log.v(TAG,"ip1--:" + inetAddress);
-		    Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
+		    //Log.v(TAG,"ip1--:" + inetAddress);
+		    //Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
 		
 		    // for getting IPV4 format
 		    if (!inetAddress.isLoopbackAddress() 
@@ -113,7 +139,7 @@ public class MainActivity extends Activity
 				 inetAddress.getHostAddress())) {
 		    
 			String ip = inetAddress.getHostAddress().toString();
-			Log.v(TAG,"ip---::" + ip);
+			//Log.v(TAG,"ip---::" + ip);
 			return ip;
 		    }
 		}
@@ -169,6 +195,10 @@ public class MainActivity extends Activity
 	String viewText = "Unknown";
     }
 
-
+    class ResponseHandler extends Handler {
+	@Override public void handleMessage(Message message) {
+	    Log.v(TAG,"Message="+message.toString());
+	}
+    }
 
 }

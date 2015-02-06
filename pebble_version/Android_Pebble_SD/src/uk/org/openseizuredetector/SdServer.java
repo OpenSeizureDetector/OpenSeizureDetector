@@ -392,6 +392,14 @@ public class SdServer extends Service
     }
 
     /**
+     * Stop the web server - FIXME - doesn't seem to do anything!
+     */
+    protected void stopWebServer() {
+	Log.v(TAG,"stopWebServer()");
+        webServer.stop();
+    }
+
+    /**
      * Class describing the seizure detector web server - appears on port
      * 8080.
      */
