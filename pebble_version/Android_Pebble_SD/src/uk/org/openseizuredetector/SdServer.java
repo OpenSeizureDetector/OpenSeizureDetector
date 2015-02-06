@@ -169,7 +169,7 @@ public class SdServer extends Service
 	Log.v(TAG,"showNotification()");
         CharSequence text = "OpenSeizureDetector Service Running";
         Notification notification = 
-	   new Notification(R.drawable.stat_sample, text,
+	   new Notification(R.drawable.star_of_life_24x24, text,
 			     System.currentTimeMillis());
 	PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, MainActivity.class), 0);

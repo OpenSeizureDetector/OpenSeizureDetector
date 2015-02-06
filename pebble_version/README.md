@@ -37,7 +37,8 @@ The following libraries are used:
 * (jQuery)[http://jquery.org]
 * (jBeep)[http://www.ultraduz.com.br]
 
-Icons based on work by http://icons8.com/.
+Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
+
 
 
 Graham Jones, 15 January 2015.  (grahamjones139+sd@gmail.com)

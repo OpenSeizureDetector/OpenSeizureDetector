@@ -16,9 +16,11 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.util.Log;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import org.apache.http.conn.util.InetAddressUtils;
 
 
 public class MainActivity extends Activity
@@ -91,6 +93,38 @@ public class MainActivity extends Activity
     }
 
 
+    /** get the ip address of the phone.
+     * Based on http://stackoverflow.com/questions/11015912/how-do-i-get-ip-address-in-ipv4-format
+     */
+    public String getLocalIpAddress() {
+	try {
+	    for (Enumeration<NetworkInterface> en = NetworkInterface
+		     .getNetworkInterfaces(); en.hasMoreElements();) {
+		NetworkInterface intf = en.nextElement();
+		for (Enumeration<InetAddress> enumIpAddr = intf
+			 .getInetAddresses(); enumIpAddr.hasMoreElements();) {
+		    InetAddress inetAddress = enumIpAddr.nextElement();
+		    Log.v(TAG,"ip1--:" + inetAddress);
+		    Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
+		
+		    // for getting IPV4 format
+		    if (!inetAddress.isLoopbackAddress() 
+			&& InetAddressUtils.isIPv4Address(
+				 inetAddress.getHostAddress())) {
+		    
+			String ip = inetAddress.getHostAddress().toString();
+			Log.v(TAG,"ip---::" + ip);
+			return ip;
+		    }
+		}
+	    }
+	} catch (Exception ex) {
+	    Log.e("IP Address", ex.toString());
+	}
+	return null;
+    }
+
+
     /*
      * updateServerStatus - called by the uiTimer timer periodically.
      * requests the ui to be updated by calling serverStatusRunnable.
@@ -109,15 +143,13 @@ public class MainActivity extends Activity
 		    serverText = "Server Running OK";
 		}
 		TextView serverTextView = 
-		    (TextView) findViewById(R.id.textView3);
+		    (TextView) findViewById(R.id.textView1);
 		serverTextView.setText(serverText);	    
 
-		//WifiManager wm = 
-		//    (WifiManager) getSystemService(WIFI_SERVICE);
-		//byte[] ip = wm.getConnectionInfo().getIpAddress().toByteArray();
-		//InetAddress addr = InetAddress.getByAddress(ip);
-		//TextView ipTextView = (TextView)findViewById(R.id.textView1);
-		//ipTextView.setText("IP Address = "+addr.getHostAddress());
+		TextView ipTextView = (TextView)findViewById(R.id.textView2);
+		ipTextView.setText("Access Server at http://"
+				   +getLocalIpAddress()
+				   +":8080");
 	    }
 	};
     
