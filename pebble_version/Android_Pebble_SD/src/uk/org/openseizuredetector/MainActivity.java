@@ -51,19 +51,18 @@ public class MainActivity extends Activity
         setContentView(R.layout.main);
 	Button button = (Button)findViewById(R.id.button1);
 	button.setOnClickListener(new View.OnClickListener() {
-             public void onClick(View v) {
-		 Log.v(TAG,"Stopping Web Server");
-		 stopServer();
-	     }
-	    }
-	    );
+		public void onClick(View v) {
+		    Log.v(TAG,"Stopping Web Server");
+		    stopServer();
+		}
+	    });
 
 	button = (Button)findViewById(R.id.button2);
 	button.setOnClickListener(new View.OnClickListener() {
-             public void onClick(View v) {
-		 Log.v(TAG,"Starting Web Server");
-		 startServer();
-             }
+		public void onClick(View v) {
+		    Log.v(TAG,"Starting Web Server");
+		    startServer();
+		}
 	    });
 	
 
@@ -217,6 +216,18 @@ public class MainActivity extends Activity
 		ipTextView.setText("Access Server at http://"
 				   +getLocalIpAddress()
 				   +":8080");
+
+		TextView alarmTextView = 
+		    (TextView) findViewById(R.id.textView3);
+		try {
+		    if (mBound)
+			alarmTextView.setText(mSdServer.alarmPhrase);	    
+		    else
+			alarmTextView.setText("Not Bound to Server");
+		} catch (Exception e) {
+		    Log.v(TAG,"Exception - "+e.toString());
+		}
+
 	    }
 	};
     

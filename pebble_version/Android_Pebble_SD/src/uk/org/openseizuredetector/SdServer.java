@@ -110,32 +110,32 @@ public class SdServer extends Service
     private final static String TAG = "SdServer";
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
-    private boolean mPebbleConnected = false;
-    private boolean mPebbleAppRunning = false;
+    public boolean mPebbleConnected = false;
+    public boolean mPebbleAppRunning = false;
     private boolean mPebbleAppRunningCheck = false;
-    private Time mPebbleStatusTime;
-    private SdData sdData;
-    private short fftResults[];
+    public Time mPebbleStatusTime;
+    public SdData sdData;
+    public short fftResults[];
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
     /* Analysis results */
-    private long alarmState;
-    private long maxVal;
-    private long maxFreq;
-    private long specPower;
-    private long roiPower;
-    private String alarmPhrase;
+    public long alarmState;
+    public long maxVal;
+    public long maxFreq;
+    public long specPower;
+    public long roiPower;
+    public String alarmPhrase;
 
     /* Analysis settings */
-    private long alarmFreqMin;
-    private long alarmFreqMax;
-    private long nMin;
-    private long nMax;
-    private long warnTime;
-    private long alarmTime;
-    private long alarmThresh;
-    private long alarmRatioThresh;
-    private long batteryPc;
+    public long alarmFreqMin;
+    public long alarmFreqMax;
+    public long nMin;
+    public long nMax;
+    public long warnTime;
+    public long alarmTime;
+    public long alarmThresh;
+    public long alarmRatioThresh;
+    public long batteryPc;
 
     private final IBinder mBinder = new SdBinder();
 
