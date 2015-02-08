@@ -4,13 +4,16 @@ import android.app.Activity;
 import android.app.IntentService;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -25,10 +28,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 import org.apache.http.conn.util.InetAddressUtils;
 
+import uk.org.openseizuredetector.SdServer;
 
 public class MainActivity extends Activity
 {
     static final String TAG = "MainActivity";
+    SdServer mSdServer;
+    boolean mBound = false;
 
     private Intent sdServerIntent;
 
@@ -78,6 +84,41 @@ public class MainActivity extends Activity
 
 	startServer();
     }
+
+
+    @Override
+    protected void onStart() {
+	super.onStart();
+	Intent intent = new Intent(this,SdServer.class);
+	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+	super.onStop();
+	if (mBound) {
+	    unbindService(mConnection);
+	    mBound = false;
+	}
+    }
+
+  /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SdServer.SdBinder binder = (SdServer.SdBinder) service;
+            mSdServer = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
     /**
      * Start the SdServer service

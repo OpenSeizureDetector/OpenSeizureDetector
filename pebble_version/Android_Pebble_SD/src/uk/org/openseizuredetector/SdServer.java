@@ -44,6 +44,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
@@ -136,6 +137,18 @@ public class SdServer extends Service
     private long alarmRatioThresh;
     private long batteryPc;
 
+    private final IBinder mBinder = new SdBinder();
+
+    /**
+     * class to handle binding the MainApp activity to this service
+     * so it can access sdData.
+     */
+    public class SdBinder extends Binder {
+	SdServer getService() {
+	    return SdServer.this;
+	}
+    }
+
     /**
      * Constructor for SdServer class - does not do much!
      */
@@ -189,7 +202,6 @@ public class SdServer extends Service
     @Override
     public void onCreate() {
 	Log.v(TAG,"onCreate()");
-	showNotification();
 
 	HandlerThread thread = new HandlerThread("ServiceStartArguments",
 						 Process.THREAD_PRIORITY_BACKGROUND);
@@ -205,6 +217,7 @@ public class SdServer extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 	Log.v(TAG,"SdServer service starting");
+	showNotification();
 	mPebbleStatusTime = new Time(Time.getCurrentTimezone());
 	// Allocate memory for the FFT spectrum results
 	fftResults = new short[NSAMP/2];
@@ -235,18 +248,29 @@ public class SdServer extends Service
 
     @Override
     public IBinder onBind(Intent intent) {
-	return null;
+	return mBinder;
     }
 
     @Override
     public void onDestroy() {
 	Log.v(TAG,"SdServer Service stopping");
-	if (msgDataHandler != null) {
-	    unregisterReceiver(msgDataHandler);
-	    msgDataHandler = null;
+	try {
+	    stopWebServer();
+	    stopPebbleServer();
+	    stopSelf();
+	    if (msgDataHandler != null) {
+		unregisterReceiver(msgDataHandler);
+		msgDataHandler = null;
+	    }
+	} catch(Exception e) {
+	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
 	}
     }
 
+    /**
+     * Set this server to receive pebble data by registering it as
+     * A PebbleDataReceiver
+     */
     private void startPebbleServer() {
 	Log.v(TAG,"StartPebbleServer()");
 	final Handler handler = new Handler();
@@ -311,6 +335,14 @@ public class SdServer extends Service
 		}
 	    };
 	PebbleKit.registerReceivedDataHandler(this,msgDataHandler);
+    }
+
+    /**
+     * De-register this server from receiving pebble data
+     */
+    public void stopPebbleServer() {
+	Log.v(TAG,"Stopping Pebble Server");
+	getApplicationContext().unregisterReceiver(msgDataHandler);
     }
 
     /** 
@@ -396,7 +428,8 @@ public class SdServer extends Service
      */
     protected void stopWebServer() {
 	Log.v(TAG,"stopWebServer()");
-        webServer.stop();
+	if (webServer!=null)
+	    webServer.stop();
     }
 
     /**
@@ -404,6 +437,7 @@ public class SdServer extends Service
      * 8080.
      */
     private class WebServer extends NanoHTTPD {
+	private String TAG = "WebServer";
         public WebServer()
         {
 	    // Set the port to listen on (8080)
