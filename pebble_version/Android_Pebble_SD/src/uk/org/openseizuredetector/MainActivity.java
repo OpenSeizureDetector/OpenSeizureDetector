@@ -8,6 +8,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiInfo;
@@ -33,6 +36,9 @@ import uk.org.openseizuredetector.SdServer;
 public class MainActivity extends Activity
 {
     static final String TAG = "MainActivity";
+    private int okColour = Color.BLUE;
+    private int warnColour = Color.MAGENTA;
+    private int alarmColour = Color.RED;
     SdServer mSdServer;
     boolean mBound = false;
 
@@ -191,6 +197,12 @@ public class MainActivity extends Activity
     }
 
 
+    /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
+    private void beep() {
+	ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+	toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200); 
+    }
+
     /*
      * updateServerStatus - called by the uiTimer timer periodically.
      * requests the ui to be updated by calling serverStatusRunnable.
@@ -217,13 +229,55 @@ public class MainActivity extends Activity
 				   +getLocalIpAddress()
 				   +":8080");
 
-		TextView alarmTextView = 
-		    (TextView) findViewById(R.id.textView3);
+		TextView tv;
 		try {
-		    if (mBound)
-			alarmTextView.setText(mSdServer.alarmPhrase);	    
-		    else
-			alarmTextView.setText("Not Bound to Server");
+		    if (mBound) {
+			tv = (TextView) findViewById(R.id.alarmTv);
+			if (mSdServer.alarmState==0) {
+			    tv.setText(mSdServer.alarmPhrase);
+			    tv.setBackgroundColor(okColour);
+			}
+			if (mSdServer.alarmState==1) {
+			    tv.setText(mSdServer.alarmPhrase);
+			    tv.setBackgroundColor(warnColour);
+			}
+			if (mSdServer.alarmState==2) {
+			    tv.setText(mSdServer.alarmPhrase);
+			    tv.setBackgroundColor(alarmColour);
+			    beep();
+			}
+			tv = (TextView) findViewById(R.id.pebTimeTv);
+			tv.setText(mSdServer.mPebbleStatusTime.format("%H:%M:%S"));
+			// Pebble Connected Phrase
+			tv = (TextView) findViewById(R.id.pebbleTv);
+			if (mSdServer.mPebbleConnected) {
+			    tv.setText("Pebble Watch Connected OK");	    
+			    tv.setBackgroundColor(okColour);
+			} else {
+			    tv.setText("** Pebble Watch NOT Connected **");	    
+			    tv.setBackgroundColor(alarmColour);
+			}
+			tv = (TextView) findViewById(R.id.appTv);
+			if (mSdServer.mPebbleAppRunning) {
+			    tv.setText("Pebble App OK");	    
+			    tv.setBackgroundColor(okColour);
+			} else {
+			    tv.setText("** Pebble App NOT Running **");	    
+			}
+			tv = (TextView) findViewById(R.id.battTv);
+			tv.setText("Pebble Battery = "+String.valueOf(mSdServer.batteryPc)+"%");
+			if (mSdServer.batteryPc<=20)
+			    tv.setBackgroundColor(alarmColour);
+			if (mSdServer.batteryPc>20)
+			    tv.setBackgroundColor(warnColour);
+			if (mSdServer.batteryPc>=40)
+			    tv.setBackgroundColor(okColour);
+    
+		    }
+		    else {
+			tv = (TextView) findViewById(R.id.alarmTv);
+			tv.setText("Not Bound to Server");
+		    }
 		} catch (Exception e) {
 		    Log.v(TAG,"Exception - "+e.toString());
 		}
