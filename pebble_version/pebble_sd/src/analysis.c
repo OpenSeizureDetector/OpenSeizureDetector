@@ -37,7 +37,7 @@ uint32_t num_samples = NSAMP;
 short accData[NSAMP];   // Using short into for compatibility with integer_fft library.
 fft_complex_t fftdata[NSAMP];   // spectrum calculated by FFT
 short fftResults[NSAMP/2];  // FFT results
-
+int simpleSpec[10];   // simplified spectrum - 0-10 Hz
 
 int accDataPos = 0;   // Position in accData of last point in time series.
 int accDataFull = 0;  // Flag so we know when we have a complete buffer full
@@ -174,6 +174,19 @@ void do_analysis() {
   APP_LOG(APP_LOG_LEVEL_DEBUG,"roiPower=%ld",roiPower);
 
   roiRatio = 10 * roiPower/specPower;
+
+  // Calculate the simplified spectrum - power in 1Hz bins.
+  for (int ifreq=0;ifreq<10;ifreq++) {
+    int binMin = 1 + 1000*ifreq/freqRes;    // add 1 to loose dc component
+    int binMax = 1 + 1000*(ifreq+1)/freqRes;
+    simpleSpec[ifreq]=0;
+    for (int ibin=binMin;ibin<binMax;ibin++) {
+      simpleSpec[ifreq] = simpleSpec[ifreq] + fftdata[ibin].r;
+    }
+    simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax-binMin);
+    
+  }
+
 
   /* Start collecting new buffer of data */
   /* FIXME = it would be best to make this a rolling buffer and analyse it

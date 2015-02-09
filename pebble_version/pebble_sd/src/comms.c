@@ -70,6 +70,7 @@ void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
  */
 void sendSdData() {
   DictionaryIterator *iter;
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"sendSdData()");
   app_message_outbox_begin(&iter);
   dict_write_uint8(iter,KEY_DATA_TYPE,(uint8_t)DATA_TYPE_RESULTS);
   dict_write_uint8(iter,KEY_ALARMSTATE,(uint8_t)alarmState);
@@ -77,41 +78,13 @@ void sendSdData() {
   dict_write_uint32(iter,KEY_MAXFREQ,(uint32_t)maxFreq);
   dict_write_uint32(iter,KEY_SPECPOWER,(uint32_t)specPower);
   dict_write_uint32(iter,KEY_ROIPOWER,(uint32_t)roiPower);
+  // Send simplified spectrum - just 10 integers so it fits in a message.
+  dict_write_data(iter,KEY_SPEC_DATA,(uint8_t*)(&simpleSpec[0]),
+		  10*sizeof(simpleSpec[0]));
   app_message_outbox_send();
-  //sendFftSpec();
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"sent Results");
 }
 
-/***************************************************
- * Send Spectrum data to phone
- */
-void sendFftSpec() {
-  int i;
-  DictionaryIterator *iter;
-  int outboxSize = app_message_outbox_size_maximum();
-  int specLen = sizeof(fftResults)*sizeof(fftResults[0]);
-  int nPackets = specLen/outboxSize + 1;
-  int nVals = (specLen/nPackets - 2)/sizeof(fftResults[0]);    // number of values in each packet.
-  int posMax = 0;
-  int posMin = 0;
-  APP_LOG(APP_LOG_LEVEL_INFO,"outboxSize = %d, specLen=%d, nPackets = %d, nVals=%d",
-	  outboxSize,specLen,nPackets,nVals);
-
-  for (i = 0;i<nPackets;i++) {
-    posMin = i*nVals;
-    if (((NSAMP/2) - posMin)>nVals)
-      posMax = posMin + nVals;
-    else
-      posMax = NSAMP/2;
-    APP_LOG(APP_LOG_LEVEL_INFO,"posMin = %d, posMax = %d",posMin,posMax);
-    app_message_outbox_begin(&iter);
-    dict_write_uint8(iter,KEY_DATA_TYPE,(uint8_t)DATA_TYPE_SPEC);
-    dict_write_uint32(iter,KEY_POS_MIN,(uint32_t)(posMin));
-    dict_write_uint32(iter,KEY_POS_MAX,(uint32_t)alarmState);
-    dict_write_data(iter,KEY_SPEC_DATA,(uint8_t*)(&fftResults[posMin]),nVals*sizeof(fftResults[0]));
-  app_message_outbox_send();
-  }
-
-}
 
 
 /***************************************************

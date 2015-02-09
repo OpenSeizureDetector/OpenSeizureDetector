@@ -59,6 +59,7 @@ import java.net.URL;
 import android.net.Uri;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.nio.IntBuffer;
 import java.nio.ByteOrder;
 import android.text.format.Time;
 import org.json.JSONObject;
@@ -115,7 +116,7 @@ public class SdServer extends Service
     private boolean mPebbleAppRunningCheck = false;
     public Time mPebbleStatusTime;
     public SdData sdData;
-    public short fftResults[];
+    public int simpleSpec[];
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
     /* Analysis results */
@@ -202,7 +203,7 @@ public class SdServer extends Service
     @Override
     public void onCreate() {
 	Log.v(TAG,"onCreate()");
-
+	simpleSpec = new int[10];
 	HandlerThread thread = new HandlerThread("ServiceStartArguments",
 						 Process.THREAD_PRIORITY_BACKGROUND);
 	thread.start();
@@ -219,8 +220,6 @@ public class SdServer extends Service
 	Log.v(TAG,"SdServer service starting");
 	showNotification();
 	mPebbleStatusTime = new Time(Time.getCurrentTimezone());
-	// Allocate memory for the FFT spectrum results
-	fftResults = new short[NSAMP/2];
 	Message msg = mServiceHandler.obtainMessage();
 	msg.arg1 = startId;
 	mServiceHandler.sendMessage(msg);
@@ -279,16 +278,15 @@ public class SdServer extends Service
 		public void receiveData(final Context context,
 					final int transactionId,
 					final PebbleDictionary data) {
-		    Log.v(TAG,"Received message from Pebble");
+		    Log.v(TAG,"Received message from Pebble - data type="
+			  +data.getUnsignedIntegerAsLong(KEY_DATA_TYPE));
 		    // If we have a message, the app must be running
 		    mPebbleAppRunningCheck = true;  
 		    PebbleKit.sendAckToPebble(context,transactionId);
-		    Log.v(TAG,"Acknowledged Message");
 		    Log.v(TAG,"Message is: "+data.toJsonString());
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_RESULTS) {
 			Log.v(TAG,"DATA_TYPE = Results");
-			Log.v(TAG,"Results Received from Pebble");
 			alarmState = data.getUnsignedIntegerAsLong(
 								   KEY_ALARMSTATE);
 			maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
@@ -299,6 +297,20 @@ public class SdServer extends Service
 			if (alarmState==0) alarmPhrase="OK";
 			if (alarmState==1) alarmPhrase="WARNING";
 			if (alarmState==2) alarmPhrase="ALARM";
+
+			// Read the data that has been sent, and convert it into
+			// an integer array.
+			byte[] byteArr = data.getBytes(KEY_SPEC_DATA);
+			IntBuffer intBuf = ByteBuffer.wrap(byteArr)
+			    .order(ByteOrder.LITTLE_ENDIAN)
+			    .asIntBuffer();
+			int[] intArray = new int[intBuf.remaining()];
+			intBuf.get(intArray);
+			for (int i=0;i<intArray.length;i++) {
+			    simpleSpec[i] = intArray[i];
+			}
+
+
 		    }
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_SETTINGS) {
@@ -317,8 +329,9 @@ public class SdServer extends Service
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			== DATA_TYPE_SPEC) {
 			Log.v(TAG,"DATA_TYPE = Spectrum");
-			/*			int posMin = data.getUnsignedIntegerAsLong(KEY_POS_MIN).intValue();
+			int posMin = data.getUnsignedIntegerAsLong(KEY_POS_MIN).intValue();
 			int posMax = data.getUnsignedIntegerAsLong(KEY_POS_MAX).intValue();
+			Log.v(TAG,"DATA_TYPE = Spectrum, posMin="+posMin+" posMax="+posMax);
 			// Read the data that has been sent, and convert it into
 			// an integer array.
 			byte[] byteArr = data.getBytes(KEY_SPEC_DATA);
@@ -328,9 +341,9 @@ public class SdServer extends Service
 			short[] shortArray = new short[shortBuf.remaining()];
 			shortBuf.get(shortArray);
 			for (int i=0;i<shortArray.length;i++) {
-			    fftResults[posMin+i] = shortArray[i];
+			    simpleSpec[posMin+i] = shortArray[i];
 			}
-			*/
+			
 		    }
 		}
 	    };

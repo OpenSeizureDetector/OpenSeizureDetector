@@ -273,6 +273,11 @@ public class MainActivity extends Activity
 			if (mSdServer.batteryPc>=40)
 			    tv.setBackgroundColor(okColour);
     
+			tv = (TextView) findViewById(R.id.debugTv);
+			String specStr = "";
+			for (int i=0;i<10;i++)
+			    specStr = specStr + mSdServer.simpleSpec[i] + ", ";
+			tv.setText("Spec = "+specStr);
 		    }
 		    else {
 			tv = (TextView) findViewById(R.id.alarmTv);

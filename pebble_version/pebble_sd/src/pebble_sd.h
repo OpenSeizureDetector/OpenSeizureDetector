@@ -94,6 +94,7 @@ extern int accDataPos;   // Position in accData of last point in time series.
 extern int accDataFull;  // Flag so we know when we have a complete buffer full
                       // of data.
 extern short fftResults[NSAMP/2];  // FFT results
+extern int simpleSpec[10];  // Simplified spectrum - 1 to 10 Hz bins.
 extern AccelData latestAccelData;  // Latest accelerometer readings received.
 extern int maxVal;       // Peak amplitude in spectrum.
 extern int maxLoc;       // Location in output array of peak.
