@@ -233,16 +233,16 @@ public class MainActivity extends Activity
 		try {
 		    if (mBound) {
 			tv = (TextView) findViewById(R.id.alarmTv);
-			if (mSdServer.alarmState==0) {
-			    tv.setText(mSdServer.alarmPhrase);
+			if (mSdServer.sdData.alarmState==0) {
+			    tv.setText(mSdServer.sdData.alarmPhrase);
 			    tv.setBackgroundColor(okColour);
 			}
-			if (mSdServer.alarmState==1) {
-			    tv.setText(mSdServer.alarmPhrase);
+			if (mSdServer.sdData.alarmState==1) {
+			    tv.setText(mSdServer.sdData.alarmPhrase);
 			    tv.setBackgroundColor(warnColour);
 			}
-			if (mSdServer.alarmState==2) {
-			    tv.setText(mSdServer.alarmPhrase);
+			if (mSdServer.sdData.alarmState==2) {
+			    tv.setText(mSdServer.sdData.alarmPhrase);
 			    tv.setBackgroundColor(alarmColour);
 			    beep();
 			}
@@ -265,18 +265,18 @@ public class MainActivity extends Activity
 			    tv.setText("** Pebble App NOT Running **");	    
 			}
 			tv = (TextView) findViewById(R.id.battTv);
-			tv.setText("Pebble Battery = "+String.valueOf(mSdServer.batteryPc)+"%");
-			if (mSdServer.batteryPc<=20)
+			tv.setText("Pebble Battery = "+String.valueOf(mSdServer.sdData.batteryPc)+"%");
+			if (mSdServer.sdData.batteryPc<=20)
 			    tv.setBackgroundColor(alarmColour);
-			if (mSdServer.batteryPc>20)
+			if (mSdServer.sdData.batteryPc>20)
 			    tv.setBackgroundColor(warnColour);
-			if (mSdServer.batteryPc>=40)
+			if (mSdServer.sdData.batteryPc>=40)
 			    tv.setBackgroundColor(okColour);
     
 			tv = (TextView) findViewById(R.id.debugTv);
 			String specStr = "";
 			for (int i=0;i<10;i++)
-			    specStr = specStr + mSdServer.simpleSpec[i] + ", ";
+			    specStr = specStr + mSdServer.sdData.simpleSpec[i] + ", ";
 			tv.setText("Spec = "+specStr);
 		    }
 		    else {

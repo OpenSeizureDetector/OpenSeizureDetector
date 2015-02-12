@@ -116,27 +116,9 @@ public class SdServer extends Service
     private boolean mPebbleAppRunningCheck = false;
     public Time mPebbleStatusTime;
     public SdData sdData;
-    public int simpleSpec[];
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
-    /* Analysis results */
-    public long alarmState;
-    public long maxVal;
-    public long maxFreq;
-    public long specPower;
-    public long roiPower;
-    public String alarmPhrase;
 
-    /* Analysis settings */
-    public long alarmFreqMin;
-    public long alarmFreqMax;
-    public long nMin;
-    public long nMax;
-    public long warnTime;
-    public long alarmTime;
-    public long alarmThresh;
-    public long alarmRatioThresh;
-    public long batteryPc;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -155,7 +137,7 @@ public class SdServer extends Service
      */
     public SdServer() {
 	super();
-	//sdData = new SdData();
+	sdData = new SdData();
 	Log.v(TAG,"SdServer Created");
     }
 
@@ -203,7 +185,6 @@ public class SdServer extends Service
     @Override
     public void onCreate() {
 	Log.v(TAG,"onCreate()");
-	simpleSpec = new int[10];
 	HandlerThread thread = new HandlerThread("ServiceStartArguments",
 						 Process.THREAD_PRIORITY_BACKGROUND);
 	thread.start();
@@ -287,16 +268,18 @@ public class SdServer extends Service
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_RESULTS) {
 			Log.v(TAG,"DATA_TYPE = Results");
-			alarmState = data.getUnsignedIntegerAsLong(
+			sdData.dataTime = new Time(Time.getCurrentTimezone());
+
+			sdData.alarmState = data.getUnsignedIntegerAsLong(
 								   KEY_ALARMSTATE);
-			maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
-			maxFreq = data.getUnsignedIntegerAsLong(KEY_MAXFREQ);
-			specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
-			roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
-			alarmPhrase = "Unknown";
-			if (alarmState==0) alarmPhrase="OK";
-			if (alarmState==1) alarmPhrase="WARNING";
-			if (alarmState==2) alarmPhrase="ALARM";
+			sdData.maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
+			sdData.maxFreq = data.getUnsignedIntegerAsLong(KEY_MAXFREQ);
+			sdData.specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
+			sdData.roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
+			sdData.alarmPhrase = "Unknown";
+			if (sdData.alarmState==0) sdData.alarmPhrase="OK";
+			if (sdData.alarmState==1) sdData.alarmPhrase="WARNING";
+			if (sdData.alarmState==2) sdData.alarmPhrase="ALARM";
 
 			// Read the data that has been sent, and convert it into
 			// an integer array.
@@ -307,7 +290,7 @@ public class SdServer extends Service
 			int[] intArray = new int[intBuf.remaining()];
 			intBuf.get(intArray);
 			for (int i=0;i<intArray.length;i++) {
-			    simpleSpec[i] = intArray[i];
+			    sdData.simpleSpec[i] = intArray[i];
 			}
 
 
@@ -315,36 +298,16 @@ public class SdServer extends Service
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_SETTINGS) {
 			Log.v(TAG,"DATA_TYPE = Settings");
-			alarmFreqMin = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MIN);
-			alarmFreqMax = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MAX);
-			nMin = data.getUnsignedIntegerAsLong(KEY_NMIN);
-			nMax = data.getUnsignedIntegerAsLong(KEY_NMAX);
-			warnTime = data.getUnsignedIntegerAsLong(KEY_WARN_TIME);
-			alarmTime = data.getUnsignedIntegerAsLong(KEY_ALARM_TIME);
-			alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
-			alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
-			batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
-		    }
-
-		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
-			== DATA_TYPE_SPEC) {
-			Log.v(TAG,"DATA_TYPE = Spectrum");
-			int posMin = data.getUnsignedIntegerAsLong(KEY_POS_MIN).intValue();
-			int posMax = data.getUnsignedIntegerAsLong(KEY_POS_MAX).intValue();
-			Log.v(TAG,"DATA_TYPE = Spectrum, posMin="+posMin+" posMax="+posMax);
-			// Read the data that has been sent, and convert it into
-			// an integer array.
-			byte[] byteArr = data.getBytes(KEY_SPEC_DATA);
-			ShortBuffer shortBuf = ByteBuffer.wrap(byteArr)
-			    .order(ByteOrder.BIG_ENDIAN)
-			    .asShortBuffer();
-			short[] shortArray = new short[shortBuf.remaining()];
-			shortBuf.get(shortArray);
-			for (int i=0;i<shortArray.length;i++) {
-			    simpleSpec[posMin+i] = shortArray[i];
-			}
-			
-		    }
+			sdData.alarmFreqMin = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MIN);
+			sdData.alarmFreqMax = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MAX);
+			sdData.nMin = data.getUnsignedIntegerAsLong(KEY_NMIN);
+			sdData.nMax = data.getUnsignedIntegerAsLong(KEY_NMAX);
+			sdData.warnTime = data.getUnsignedIntegerAsLong(KEY_WARN_TIME);
+			sdData.alarmTime = data.getUnsignedIntegerAsLong(KEY_ALARM_TIME);
+			sdData.alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
+			sdData.alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
+			sdData.batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
+		    }	
 		}
 	    };
 	PebbleKit.registerReceivedDataHandler(this,msgDataHandler);
@@ -478,12 +441,12 @@ public class SdServer extends Service
 		try {
 		    JSONObject jsonObj = new JSONObject();
 		    jsonObj.put("Time",mPebbleStatusTime.format("%H:%M:%S"));
-		    jsonObj.put("alarmState",alarmState);
-		    jsonObj.put("alarmPhrase",alarmPhrase);
-		    jsonObj.put("maxVal",maxVal);
-		    jsonObj.put("maxFreq",maxFreq);
-		    jsonObj.put("specPower",specPower);
-		    jsonObj.put("roiPower",roiPower);
+		    jsonObj.put("alarmState",sdData.alarmState);
+		    jsonObj.put("alarmPhrase",sdData.alarmPhrase);
+		    jsonObj.put("maxVal",sdData.maxVal);
+		    jsonObj.put("maxFreq",sdData.maxFreq);
+		    jsonObj.put("specPower",sdData.specPower);
+		    jsonObj.put("roiPower",sdData.roiPower);
 		    jsonObj.put("pebCon",mPebbleConnected);
 		    jsonObj.put("pebAppRun",mPebbleAppRunning);
 		    answer = jsonObj.toString();
@@ -497,15 +460,15 @@ public class SdServer extends Service
 		Log.v(TAG,"WebServer.serve() - Returning settings");
 		try {
 		    JSONObject jsonObj = new JSONObject();
-		    jsonObj.put("alarmFreqMin",alarmFreqMin);
-		    jsonObj.put("alarmFreqMax",alarmFreqMax);
-		    jsonObj.put("nMin",nMin);
-		    jsonObj.put("nMax",nMax);
-		    jsonObj.put("warnTime",warnTime);
-		    jsonObj.put("alarmTime",alarmTime);
-		    jsonObj.put("alarmThresh",alarmThresh);
-		    jsonObj.put("alarmRatioThresh",alarmRatioThresh);
-		    jsonObj.put("batteryPc",batteryPc);
+		    jsonObj.put("alarmFreqMin",sdData.alarmFreqMin);
+		    jsonObj.put("alarmFreqMax",sdData.alarmFreqMax);
+		    jsonObj.put("nMin",sdData.nMin);
+		    jsonObj.put("nMax",sdData.nMax);
+		    jsonObj.put("warnTime",sdData.warnTime);
+		    jsonObj.put("alarmTime",sdData.alarmTime);
+		    jsonObj.put("alarmThresh",sdData.alarmThresh);
+		    jsonObj.put("alarmRatioThresh",sdData.alarmRatioThresh);
+		    jsonObj.put("batteryPc",sdData.batteryPc);
 		    answer = jsonObj.toString();
 		} catch (Exception ex) {
 		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
