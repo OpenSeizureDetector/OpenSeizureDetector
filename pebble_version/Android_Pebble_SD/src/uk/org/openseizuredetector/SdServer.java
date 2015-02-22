@@ -496,19 +496,6 @@ public class SdServer extends Service
     }
 
     
-    void listFiles(String uri) {
-	try {
-	    //Log.v(TAG,"listFiles("+uri+")");
-	    AssetManager assetManager = this.getAssets();
-	    String[] fileList = assetManager.list(uri);
-	    //Log.v(TAG,"listFiles("+uri+") - "+fileList.length+" files found");
-	    //for (int i=0;i<fileList.length;i++) {
-	    //	Log.v(TAG,"File "+i+" = "+fileList[i]);
-	    //}
-	} catch (Exception ioe) {
-	    Log.v(TAG,"Error Listing Files - Error = "+ioe.toString());
-	}
-    }
 
     /**
      * Return a file from the apps /assets folder
@@ -519,7 +506,6 @@ public class SdServer extends Service
 	try {
 	    if (ip!=null) ip.close();
 	    String assetPath = "www";
-	    listFiles(assetPath);
 	    String fname = assetPath+uri;
 	    //Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
 	    AssetManager assetManager = getResources().getAssets();
