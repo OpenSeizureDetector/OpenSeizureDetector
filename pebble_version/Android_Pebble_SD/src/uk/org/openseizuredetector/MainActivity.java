@@ -96,6 +96,7 @@ public class MainActivity extends Activity
 	super.onStart();
 	Intent intent = new Intent(this,SdServer.class);
 	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
+	mBound = true;
     }
 
     @Override
@@ -139,6 +140,12 @@ public class MainActivity extends Activity
      */
     private void stopServer() {
 	Log.v(TAG,"stopping Server...");
+	// unbind this activity from the service if it is bound.
+	if (mBound) {
+	    unbindService(mConnection);
+	    mBound = false;
+	}
+	// then send an Intent to stop the service.
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
 	sdServerIntent.setData(Uri.parse("Stop"));
 	getApplicationContext().stopService(sdServerIntent);

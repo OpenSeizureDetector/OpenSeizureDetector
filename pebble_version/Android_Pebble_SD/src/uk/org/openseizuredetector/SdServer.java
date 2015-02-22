@@ -105,16 +105,20 @@ public class SdServer extends Service
     private int DATA_TYPE_SETTINGS = 2;  // Settings
     private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
 
+    // Notification ID
+    private int NOTIFICATION_ID = 1;
+
     private NotificationManager mNM;
 
     private WebServer webServer;
     private final static String TAG = "SdServer";
     private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
     public boolean mPebbleConnected = false;
     public boolean mPebbleAppRunning = false;
     private boolean mPebbleAppRunningCheck = false;
     public Time mPebbleStatusTime;
+    private Timer statusTimer;
+    private Timer settingsTimer;
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
@@ -141,22 +145,6 @@ public class SdServer extends Service
 	Log.v(TAG,"SdServer Created");
     }
 
-    /**
-     * Handles messages sent from other processes.
-     * FIXME - this does not actually do anthing!
-     */
-    private final class ServiceHandler extends Handler {
-	public ServiceHandler(Looper looper) {
-	    super(looper);
-	}
-	@Override
-	public void handleMessage(Message msg) {
-	    Log.v(TAG,"SdServer handleMessage() - "+msg.toString());
-	    // FIXME - don't know why we stop it here???
-	    //stopSelf(msg.arg1);
-	}
-    }
-
 
     /**
      * Show a notification while this service is running.
@@ -173,7 +161,7 @@ public class SdServer extends Service
                       text, contentIntent);
 	notification.flags |= Notification.FLAG_NO_CLEAR;
         mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        mNM.notify(1, notification);
+        mNM.notify(NOTIFICATION_ID, notification);
     }
 
 
@@ -189,7 +177,6 @@ public class SdServer extends Service
 						 Process.THREAD_PRIORITY_BACKGROUND);
 	thread.start();
 	mServiceLooper = thread.getLooper();
-	mServiceHandler = new ServiceHandler(mServiceLooper);
     }
 
     /**
@@ -201,13 +188,10 @@ public class SdServer extends Service
 	Log.v(TAG,"SdServer service starting");
 	showNotification();
 	mPebbleStatusTime = new Time(Time.getCurrentTimezone());
-	Message msg = mServiceHandler.obtainMessage();
-	msg.arg1 = startId;
-	mServiceHandler.sendMessage(msg);
 
 	// Start timer to check status of pebble regularly.
 	getPebbleStatus();
-	Timer statusTimer = new Timer();
+	statusTimer = new Timer();
 	statusTimer.schedule(new TimerTask() {
 		@Override
 		public void run() {getPebbleStatus();}
@@ -215,7 +199,7 @@ public class SdServer extends Service
 
 	// Start timer to retrieve pebble settings regularly.
 	getPebbleSdSettings();
-	Timer settingsTimer = new Timer();
+	settingsTimer = new Timer();
 	settingsTimer.schedule(new TimerTask() {
 		@Override
 		public void run() {getPebbleSdSettings();}
@@ -233,15 +217,31 @@ public class SdServer extends Service
 
     @Override
     public void onDestroy() {
-	Log.v(TAG,"SdServer Service stopping");
+	Log.v(TAG,"onDestroy(): SdServer Service stopping");
 	try {
-	    stopWebServer();
-	    stopPebbleServer();
-	    stopSelf();
-	    if (msgDataHandler != null) {
-		unregisterReceiver(msgDataHandler);
-		msgDataHandler = null;
+	    Log.v(TAG,"onDestroy(): cancelling status timer");
+	    if (statusTimer!=null) {
+		statusTimer.cancel();
+		statusTimer = null;
 	    }
+	    Log.v(TAG,"onDestroy(): cancelling settings timer");
+	    if (settingsTimer!=null) {
+		settingsTimer.cancel();
+		settingsTimer = null;
+	    }
+	    Log.v(TAG,"onDestroy(): cancelling notification");
+	    mNM.cancel(NOTIFICATION_ID);
+	    Log.v(TAG,"onDestroy(): calling stopSelf()");
+	    stopSelf();
+	    Log.v(TAG,"onDestroy(): stopping web server");
+	    stopWebServer();
+	    Log.v(TAG,"onDestroy(): stopping pebble server");
+	    stopPebbleServer();
+	    //Log.v(TAG,"onDestroy(): unregistering message receiver");
+	    //if (msgDataHandler != null) {
+	    //	unregisterReceiver(msgDataHandler);
+	    //	msgDataHandler = null;
+	    //}
 	} catch(Exception e) {
 	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
 	}
@@ -264,7 +264,7 @@ public class SdServer extends Service
 		    // If we have a message, the app must be running
 		    mPebbleAppRunningCheck = true;  
 		    PebbleKit.sendAckToPebble(context,transactionId);
-		    Log.v(TAG,"Message is: "+data.toJsonString());
+		    //Log.v(TAG,"Message is: "+data.toJsonString());
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_RESULTS) {
 			Log.v(TAG,"DATA_TYPE = Results");
@@ -317,7 +317,7 @@ public class SdServer extends Service
      * De-register this server from receiving pebble data
      */
     public void stopPebbleServer() {
-	Log.v(TAG,"Stopping Pebble Server");
+	Log.v(TAG,"stopPebbleserver(): Stopping Pebble Server");
 	getApplicationContext().unregisterReceiver(msgDataHandler);
     }
 
@@ -431,13 +431,13 @@ public class SdServer extends Service
 	    while (it.hasNext()) {
 		Object key = it.next();
 		Object value = parameters.get(key);
-		Log.v(TAG,"Request parameters - key="+key+" value="+value);
+		//Log.v(TAG,"Request parameters - key="+key+" value="+value);
 	    }
 
 	    if (uri.equals("/")) uri = "/index.html";
 	    switch(uri) {
 	    case "/data":
-		Log.v(TAG,"WebServer.serve() - Returning data");
+		//Log.v(TAG,"WebServer.serve() - Returning data");
 		try {
 		    JSONObject jsonObj = new JSONObject();
 		    jsonObj.put("Time",mPebbleStatusTime.format("%H:%M:%S"));
@@ -457,7 +457,7 @@ public class SdServer extends Service
 		break;
 
 	    case "/settings":
-		Log.v(TAG,"WebServer.serve() - Returning settings");
+		//Log.v(TAG,"WebServer.serve() - Returning settings");
 		try {
 		    JSONObject jsonObj = new JSONObject();
 		    jsonObj.put("alarmFreqMin",sdData.alarmFreqMin);
@@ -481,7 +481,7 @@ public class SdServer extends Service
 		    uri.startsWith("/js/") ||
 		    uri.startsWith("/css/") ||
 		    uri.startsWith("/img/")) {
-		    Log.v(TAG,"Serving File");
+		    //Log.v(TAG,"Serving File");
 		    return serveFile(uri);
 		} 
 		else {
@@ -498,13 +498,13 @@ public class SdServer extends Service
     
     void listFiles(String uri) {
 	try {
-	    Log.v(TAG,"listFiles("+uri+")");
+	    //Log.v(TAG,"listFiles("+uri+")");
 	    AssetManager assetManager = this.getAssets();
 	    String[] fileList = assetManager.list(uri);
-	    Log.v(TAG,"listFiles("+uri+") - "+fileList.length+" files found");
-	    for (int i=0;i<fileList.length;i++) {
-		Log.v(TAG,"File "+i+" = "+fileList[i]);
-	    }
+	    //Log.v(TAG,"listFiles("+uri+") - "+fileList.length+" files found");
+	    //for (int i=0;i<fileList.length;i++) {
+	    //	Log.v(TAG,"File "+i+" = "+fileList[i]);
+	    //}
 	} catch (Exception ioe) {
 	    Log.v(TAG,"Error Listing Files - Error = "+ioe.toString());
 	}
@@ -521,7 +521,7 @@ public class SdServer extends Service
 	    String assetPath = "www";
 	    listFiles(assetPath);
 	    String fname = assetPath+uri;
-	    Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
+	    //Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
 	    AssetManager assetManager = getResources().getAssets();
 	    ip = assetManager.open(fname);
 	    String mimeStr = "text/html";
