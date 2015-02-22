@@ -162,10 +162,10 @@ public class SdServer extends Service
     @Override
     public void onCreate() {
 	Log.v(TAG,"onCreate()");
-	thread = new HandlerThread("ServiceStartArguments",
-						 Process.THREAD_PRIORITY_BACKGROUND);
-	thread.start();
-	mServiceLooper = thread.getLooper();
+	//thread = new HandlerThread("ServiceStartArguments",
+	//					 Process.THREAD_PRIORITY_BACKGROUND);
+    //thread.start();
+    //mServiceLooper = thread.getLooper();
     }
 
     /**
@@ -239,10 +239,10 @@ public class SdServer extends Service
 	    Log.v(TAG,"onDestroy(): calling stopSelf()");
 	    stopSelf();
 
-	    if (thread.isAlive()) {
-		Log.v(TAG,"onDestroy(): stopping thread.");
-		thread.quit();
-	    }
+	    //if (thread.isAlive()) {
+	    //	Log.v(TAG,"onDestroy(): stopping thread.");
+	    //	thread.quit();
+	    //}
 
 	} catch(Exception e) {
 	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
@@ -373,13 +373,17 @@ public class SdServer extends Service
      */
     protected void startWebServer() {
 	Log.v(TAG,"startWebServer()");
-        webServer = new WebServer();
-        try {
-            webServer.start();
-        } catch(IOException ioe) {
-            Log.w(TAG, "startWebServer(): Error: "+ioe.toString());
-        }
-        Log.w(TAG, "startWebServer(): Web server initialized.");
+	if (webServer == null) {
+	    webServer = new WebServer();
+	    try {
+		webServer.start();
+	    } catch(IOException ioe) {
+		Log.w(TAG, "startWebServer(): Error: "+ioe.toString());
+	    }
+	    Log.w(TAG, "startWebServer(): Web server initialized.");
+	} else {
+	    Log.v(TAG, "startWebServer(): server already running???");
+	}
     }
 
     /**
