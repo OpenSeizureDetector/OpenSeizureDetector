@@ -110,15 +110,16 @@ public class SdServer extends Service
 
     private NotificationManager mNM;
 
-    private WebServer webServer;
+    private WebServer webServer = null;
     private final static String TAG = "SdServer";
     private Looper mServiceLooper;
     public boolean mPebbleConnected = false;
     public boolean mPebbleAppRunning = false;
     private boolean mPebbleAppRunningCheck = false;
     public Time mPebbleStatusTime;
-    private Timer statusTimer;
-    private Timer settingsTimer;
+    private Timer statusTimer = null;
+    private Timer settingsTimer = null;
+    private HandlerThread thread;
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
@@ -146,6 +147,110 @@ public class SdServer extends Service
     }
 
 
+    @Override
+    public IBinder onBind(Intent intent) {
+	Log.v(TAG,"sdServer.onBind()");
+	return mBinder;
+    }
+
+
+
+    /**
+     * onCreate() - called when services is created.  Starts message
+     * handler process to listen for messages from other processes.
+     */
+    @Override
+    public void onCreate() {
+	Log.v(TAG,"onCreate()");
+	thread = new HandlerThread("ServiceStartArguments",
+						 Process.THREAD_PRIORITY_BACKGROUND);
+	thread.start();
+	mServiceLooper = thread.getLooper();
+    }
+
+    /**
+     * onStartCommand - start the web server and the message loop for
+     * communications with other processes.
+     */
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+	Log.v(TAG,"SdServer service starting");
+	
+	// Display a notification icon in the status bar of the phone to
+	// show the service is running.
+	showNotification();
+
+	// Start receiving data from the pebble watch
+	startPebbleServer();
+
+	// Start timer to check status of pebble regularly.
+	mPebbleStatusTime = new Time(Time.getCurrentTimezone());
+	//getPebbleStatus();
+	if (statusTimer==null) {
+	    Log.v(TAG,"onCreate(): starting status timer");
+	    statusTimer = new Timer();
+	    statusTimer.schedule(new TimerTask() {
+		    @Override
+		    public void run() {getPebbleStatus();}
+		}, 0, 1000);	
+	} else {
+	    Log.v(TAG,"onCreate(): status timer already running.");
+	}
+	
+	// Start timer to retrieve pebble settings regularly.
+	//getPebbleSdSettings();
+	if (settingsTimer == null) {
+	    Log.v(TAG,"onCreate(): starting settings timer");
+	    settingsTimer = new Timer();
+	    settingsTimer.schedule(new TimerTask() {
+		    @Override
+		    public void run() {getPebbleSdSettings();}
+		}, 0, 1000*60);	
+	} else {
+	    Log.v(TAG,"onCreate(): settings timer already running.");
+	}
+	// Start the web server
+	startWebServer();
+	return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+	Log.v(TAG,"onDestroy(): SdServer Service stopping");
+	try {
+	    if (statusTimer!=null) {
+		Log.v(TAG,"onDestroy(): cancelling status timer");
+		statusTimer.cancel();
+		statusTimer.purge();
+		statusTimer = null;
+	    }
+	    if (settingsTimer!=null) {
+		Log.v(TAG,"onDestroy(): cancelling settings timer");
+		settingsTimer.cancel();
+		settingsTimer.purge();
+		settingsTimer = null;
+	    }
+	    Log.v(TAG,"onDestroy(): cancelling notification");
+	    mNM.cancel(NOTIFICATION_ID);
+	    Log.v(TAG,"onDestroy(): stopping web server");
+	    stopWebServer();
+	    Log.v(TAG,"onDestroy(): stopping pebble server");
+	    stopPebbleServer();
+	    Log.v(TAG,"onDestroy(): calling stopSelf()");
+	    stopSelf();
+
+	    if (thread.isAlive()) {
+		Log.v(TAG,"onDestroy(): stopping thread.");
+		thread.quit();
+	    }
+
+	} catch(Exception e) {
+	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
+	}
+    }
+
+
+
     /**
      * Show a notification while this service is running.
      */
@@ -166,81 +271,6 @@ public class SdServer extends Service
 
 
 
-    /**
-     * onCreate() - called when services is created.  Starts message
-     * handler process to listen for messages from other processes.
-     */
-    @Override
-    public void onCreate() {
-	Log.v(TAG,"onCreate()");
-	HandlerThread thread = new HandlerThread("ServiceStartArguments",
-						 Process.THREAD_PRIORITY_BACKGROUND);
-	thread.start();
-	mServiceLooper = thread.getLooper();
-    }
-
-    /**
-     * onStartCommand - start the web server and the message loop for
-     * communications with other processes.
-     */
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-	Log.v(TAG,"SdServer service starting");
-	showNotification();
-	mPebbleStatusTime = new Time(Time.getCurrentTimezone());
-
-	// Start timer to check status of pebble regularly.
-	getPebbleStatus();
-	statusTimer = new Timer();
-	statusTimer.schedule(new TimerTask() {
-		@Override
-		public void run() {getPebbleStatus();}
-	    }, 0, 1000);	
-
-	// Start timer to retrieve pebble settings regularly.
-	getPebbleSdSettings();
-	settingsTimer = new Timer();
-	settingsTimer.schedule(new TimerTask() {
-		@Override
-		public void run() {getPebbleSdSettings();}
-	    }, 0, 1000*60);	
-
-	startPebbleServer();
-	startWebServer();
-	return START_STICKY;
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-	return mBinder;
-    }
-
-    @Override
-    public void onDestroy() {
-	Log.v(TAG,"onDestroy(): SdServer Service stopping");
-	try {
-	    Log.v(TAG,"onDestroy(): cancelling status timer");
-	    if (statusTimer!=null) {
-		statusTimer.cancel();
-		statusTimer = null;
-	    }
-	    Log.v(TAG,"onDestroy(): cancelling settings timer");
-	    if (settingsTimer!=null) {
-		settingsTimer.cancel();
-		settingsTimer = null;
-	    }
-	    Log.v(TAG,"onDestroy(): cancelling notification");
-	    mNM.cancel(NOTIFICATION_ID);
-	    Log.v(TAG,"onDestroy(): calling stopSelf()");
-	    stopSelf();
-	    Log.v(TAG,"onDestroy(): stopping web server");
-	    stopWebServer();
-	    Log.v(TAG,"onDestroy(): stopping pebble server");
-	    stopPebbleServer();
-	} catch(Exception e) {
-	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
-	}
-    }
 
     /**
      * Set this server to receive pebble data by registering it as
@@ -320,6 +350,54 @@ public class SdServer extends Service
 	    Log.v(TAG,"stopPebbleServer() - error "+e.toString());
 	}
     }
+    /**
+     * Attempt to start the pebble_sd watch app on the pebble watch.
+     */
+    public void startWatchApp() {
+	PebbleKit.startAppOnPebble(getApplicationContext(),
+				   SD_UUID);
+
+    }
+
+    /**
+     * stop the pebble_sd watch app on the pebble watch.
+     */
+    public void stopWatchApp() {
+	PebbleKit.closeAppOnPebble(getApplicationContext(),
+				   SD_UUID);
+    }
+
+
+    /**
+     * Start the web server (on port 8080)
+     */
+    protected void startWebServer() {
+	Log.v(TAG,"startWebServer()");
+        webServer = new WebServer();
+        try {
+            webServer.start();
+        } catch(IOException ioe) {
+            Log.w(TAG, "startWebServer(): Error: "+ioe.toString());
+        }
+        Log.w(TAG, "startWebServer(): Web server initialized.");
+    }
+
+    /**
+     * Stop the web server - FIXME - doesn't seem to do anything!
+     */
+    protected void stopWebServer() {
+	Log.v(TAG,"stopWebServer()");
+	if (webServer!=null) {
+	    webServer.stop();
+	    if (webServer.isAlive()) {
+		Log.v(TAG,"stopWebServer() - server still alive???");
+	    } else {
+		Log.v(TAG,"stopWebServer() - server died ok");
+	    }
+	    webServer = null;
+	}
+    }
+
 
     /** 
      * Checks the status of the connection to the pebble watch,
@@ -327,6 +405,10 @@ public class SdServer extends Service
      * If the watch app is not running, it attempts to re-start it.
      */
     public void getPebbleStatus() {
+	if (statusTimer!=null) 
+	    Log.v(TAG,"getPebbleStatus() - statusTimer = "+statusTimer.toString());
+	else
+	    Log.v(TAG,"getPebbleStatus() - statusTimer = null?????");
 	Time tnow = new Time(Time.getCurrentTimezone());
 	tnow.setToNow();
 	// Check we are actually connected to the pebble.
@@ -337,6 +419,7 @@ public class SdServer extends Service
 	// mPebbleAppRunningCheck is set to true in the receiveData handler. 
 	if (!mPebbleAppRunningCheck && 
 	    ((tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)) > 10000)) {
+	    Log.v(TAG,"tdiff = "+(tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)));
 	    mPebbleAppRunning = false;
 	    Log.v(TAG,"Pebble App Not Running - Attempting to Re-Start");
 	    startWatchApp();
@@ -366,47 +449,7 @@ public class SdServer extends Service
 				   data);     
     }
 
-    /**
-     * Attempt to start the pebble_sd watch app on the pebble watch.
-     */
-    public void startWatchApp() {
-	PebbleKit.startAppOnPebble(getApplicationContext(),
-				   SD_UUID);
 
-    }
-
-    /**
-     * stop the pebble_sd watch app on the pebble watch.
-     */
-    public void stopWatchApp() {
-	PebbleKit.closeAppOnPebble(getApplicationContext(),
-				   SD_UUID);
-    }
-
-
-    /**
-     * Start the web server (on port 8080)
-     */
-    protected void startWebServer() {
-	Log.v(TAG,"startWebServer()");
-        webServer = new WebServer();
-        try {
-            webServer.start();
-        } catch(IOException ioe) {
-            Log.w(TAG, "The server could not start.");
-	    Log.w(TAG, ioe.toString());
-        }
-        Log.w(TAG, "Web server initialized.");
-    }
-
-    /**
-     * Stop the web server - FIXME - doesn't seem to do anything!
-     */
-    protected void stopWebServer() {
-	Log.v(TAG,"stopWebServer()");
-	if (webServer!=null)
-	    webServer.stop();
-    }
 
     /**
      * Class describing the seizure detector web server - appears on port
@@ -419,6 +462,7 @@ public class SdServer extends Service
 	    // Set the port to listen on (8080)
             super(8080);
         }
+
         @Override
         public Response serve(String uri, Method method, 
                               Map<String, String> header,

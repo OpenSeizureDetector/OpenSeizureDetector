@@ -72,15 +72,6 @@ public class MainActivity extends Activity
 	    });
 	
 
-	// send message to server
-	//Message message = Message.obtain(null,SdServer.ADD_RESPONSE_HANDLER);
-	//message.replyTo = messenger;
-	//try {
-	//    SdServer.send(message);
-	//} catch (RemoteException e) {
-	//    Log.v(TAG,e.toString());
-	//	}
-
 	Timer uiTimer = new Timer();
 	uiTimer.schedule(new TimerTask() {
 		@Override
@@ -94,9 +85,7 @@ public class MainActivity extends Activity
     @Override
     protected void onStart() {
 	super.onStart();
-	Intent intent = new Intent(this,SdServer.class);
-	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
-	mBound = true;
+	startServer();
     }
 
     @Override
@@ -130,9 +119,16 @@ public class MainActivity extends Activity
      * Start the SdServer service
      */
     private void startServer() {
+	// Start the server
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
 	sdServerIntent.setData(Uri.parse("Start"));
 	getApplicationContext().startService(sdServerIntent);
+
+	// and bind to it so we can see its data
+	Intent intent = new Intent(this,SdServer.class);
+	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
+	mBound = true;
+
     }
 
     /**
