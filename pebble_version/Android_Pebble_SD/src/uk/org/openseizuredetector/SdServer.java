@@ -237,11 +237,6 @@ public class SdServer extends Service
 	    stopWebServer();
 	    Log.v(TAG,"onDestroy(): stopping pebble server");
 	    stopPebbleServer();
-	    //Log.v(TAG,"onDestroy(): unregistering message receiver");
-	    //if (msgDataHandler != null) {
-	    //	unregisterReceiver(msgDataHandler);
-	    //	msgDataHandler = null;
-	    //}
 	} catch(Exception e) {
 	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
 	}
@@ -317,8 +312,13 @@ public class SdServer extends Service
      * De-register this server from receiving pebble data
      */
     public void stopPebbleServer() {
-	Log.v(TAG,"stopPebbleserver(): Stopping Pebble Server");
-	getApplicationContext().unregisterReceiver(msgDataHandler);
+	Log.v(TAG,"stopPebbleServer(): Stopping Pebble Server");
+	Log.v(TAG,"stopPebbleServer(): msgDataHandler = "+msgDataHandler.toString());
+	try {
+	    unregisterReceiver(msgDataHandler);
+	} catch (Exception e) {
+	    Log.v(TAG,"stopPebbleServer() - error "+e.toString());
+	}
     }
 
     /** 
