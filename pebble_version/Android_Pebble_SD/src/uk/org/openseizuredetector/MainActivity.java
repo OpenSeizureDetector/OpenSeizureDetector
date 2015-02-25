@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.IntentService;
 import android.app.ActivityManager;
@@ -20,10 +21,14 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.TextView;
 import android.widget.Button;
 import android.util.Log;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
@@ -71,6 +76,21 @@ public class MainActivity extends Activity
 		}
 	    });
 	
+	/* Force display of overflow menu - from stackoverflow
+	 * "how to force use of..."
+	 */
+	try {
+	    ViewConfiguration config = ViewConfiguration.get(this);
+	    Field menuKeyField =
+		ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+	    if (menuKeyField!=null) {
+		menuKeyField.setAccessible(true);
+		menuKeyField.setBoolean(config,false);
+	    }
+	} catch (Exception e) {
+	    Log.v(TAG,"menubar fiddle exception: "+e.toString());
+	}
+
 
 	Timer uiTimer = new Timer();
 	uiTimer.schedule(new TimerTask() {
@@ -81,6 +101,39 @@ public class MainActivity extends Activity
 	startServer();
     }
 
+    /**
+     * Create Action Bar
+     */
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu)
+    {
+	getMenuInflater().inflate(R.menu.main_activity_actions,menu);
+	return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+	Log.v(TAG,"Option "+item.getItemId()+" selected");
+	switch (item.getItemId()) {
+	    //case R.id.home:
+	    //Log.v(TAG,"Home");
+	    //return true;
+	case R.id.action_sync:
+	    Log.v(TAG,"action_sync");
+	    return true;
+	case R.id.action_new:
+	    Log.v(TAG,"action_new");
+	    return true;
+	case R.id.action_3:
+	    Log.v(TAG,"action_3");
+	    return true;
+	case R.id.action_settings:
+	    Log.v(TAG,"action_settings");
+	    return true;
+	default:
+	    return super.onOptionsItemSelected(item);
+	}
+    }
 
     @Override
     protected void onStart() {
@@ -287,7 +340,7 @@ public class MainActivity extends Activity
 			tv.setText("Not Bound to Server");
 		    }
 		} catch (Exception e) {
-		    Log.v(TAG,"Exception - "+e.toString());
+		    Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());
 		}
 
 	    }
