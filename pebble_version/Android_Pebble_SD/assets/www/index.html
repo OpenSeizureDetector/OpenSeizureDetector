@@ -4,6 +4,7 @@
     <title>Ben's Pebble Watch Seizure Detector</title>
     <script src="js/jquery.js"></script>
     <script src="js/jBeep.js"></script>
+    <script src="js/Chart.min.js"></script>
   </head>
   
   <body>
@@ -55,7 +56,9 @@
 	SD Settings
       </div>
     </div>
-    <div><p>
+    <div>
+      <canvas id="specChart" width="400" height="400"></canvas>
+      <p>
 	For details see 
 	<a href="http://openseizuredetector.org.uk">
 	  OpenSeizureDetector.org.uk
@@ -225,6 +228,30 @@ function process_data(dataStr) {
 
 };
 
+// Request spectrum from the server.
+function get_spectrum() {
+   $.ajax({url:"/spectrum",success:process_spectrum});
+};
+
+function process_spectrum(dataStr) {
+   var dataObj = JSON.parse(dataStr);
+
+   var ctx = $("#specChart").get(0).getContext("2d");
+   var specChart = new Chart(ctx);
+   var chartData = {
+       labels:["1","2","3","4","5","6","7","8","9","10"],
+       datasets: [
+         { 
+             label:"Spectrum",
+             data:dataObj['simpleSpec']
+         }
+       ]
+       };
+    //alert(JSON.stringify(chartData));
+    var myLineChart = new Chart(ctx).Line(chartData);
+}
+
+
 // toggle the global sd_muted flag and change button text.
 toggleMute = function() {
    if (sd_muted) {
@@ -241,7 +268,10 @@ $(document).ready(function() {
    sd_muted = 0;
    get_settings();
    get_data();
+   get_spectrum();
    setInterval("get_data();",2000);
+   setInterval("get_settings();",60000);
+   setInterval("get_spectrum();",5000);
    $("#muteButton").click(toggleMute);
 });
 </script>

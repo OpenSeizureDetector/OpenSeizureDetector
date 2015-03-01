@@ -65,6 +65,7 @@ import java.nio.IntBuffer;
 import java.nio.ByteOrder;
 import android.text.format.Time;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import com.getpebble.android.kit.Constants;
 import com.getpebble.android.kit.PebbleKit;
@@ -541,6 +542,23 @@ public class SdServer extends Service
 		    jsonObj.put("alarmRatioThresh",sdData.alarmRatioThresh);
 		    jsonObj.put("batteryPc",sdData.batteryPc);
 		    answer = jsonObj.toString();
+		} catch (Exception ex) {
+		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
+		    answer = "Error Creating Data Object";
+		}
+		break;
+
+	    case "/spectrum":
+		Log.v(TAG,"WebServer.serve() - Returning spectrum - 1");
+		try {
+		    JSONObject jsonObj = new JSONObject();
+		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 2");
+		    JSONArray arr = new JSONArray(sdData.simpleSpec);
+		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 3");
+		    jsonObj.put("simpleSpec",arr);
+		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 4");
+		    answer = jsonObj.toString();
+		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 5"+answer);
 		} catch (Exception ex) {
 		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
 		    answer = "Error Creating Data Object";
