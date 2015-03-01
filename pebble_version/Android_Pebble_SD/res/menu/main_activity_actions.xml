@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
   <item android:id="@+id/action_start_stop"
-	android:icon="@drawable/start_server"
-	android:title="Start Server"
+	android:icon="@drawable/stop_server"
+	android:title="Stop Server"
 	android:showAsAction="never|withText"
 	/>
 

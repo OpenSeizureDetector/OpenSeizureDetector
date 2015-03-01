@@ -81,25 +81,6 @@
   </LinearLayout>
 
 
-  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		android:orientation="horizontal"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		>
-    <Button  
-	android:id="@+id/button1"
-	android:layout_width="wrap_content" 
-	android:layout_height="wrap_content" 
-	android:text="Stop Web Server"
-	/>
-    <Button  
-	android:id="@+id/button2"
-	android:layout_width="wrap_content" 
-	android:layout_height="wrap_content" 
-	android:text="Start Web Server"
-	/>
-  </LinearLayout>
-
   <TextView  
       android:id="@+id/debugTv"
       android:layout_width="wrap_content" 

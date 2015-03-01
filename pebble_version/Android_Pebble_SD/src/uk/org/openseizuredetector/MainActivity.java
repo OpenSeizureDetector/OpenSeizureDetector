@@ -46,6 +46,7 @@ public class MainActivity extends Activity
     private int alarmColour = Color.RED;
     SdServer mSdServer;
     boolean mBound = false;
+    private Menu mOptionsMenu;
 
     private Intent sdServerIntent;
 
@@ -60,22 +61,7 @@ public class MainActivity extends Activity
 
 	// Initialise the User Interface
         setContentView(R.layout.main);
-	Button button = (Button)findViewById(R.id.button1);
-	button.setOnClickListener(new View.OnClickListener() {
-		public void onClick(View v) {
-		    Log.v(TAG,"Stopping Web Server");
-		    stopServer();
-		}
-	    });
 
-	button = (Button)findViewById(R.id.button2);
-	button.setOnClickListener(new View.OnClickListener() {
-		public void onClick(View v) {
-		    Log.v(TAG,"Starting Web Server");
-		    startServer();
-		}
-	    });
-	
 	/* Force display of overflow menu - from stackoverflow
 	 * "how to force use of..."
 	 */
@@ -92,13 +78,13 @@ public class MainActivity extends Activity
 	}
 
 
+	// start timer to refresh user interface every second.
 	Timer uiTimer = new Timer();
 	uiTimer.schedule(new TimerTask() {
 		@Override
 		public void run() {updateServerStatus();}
 	    }, 0, 1000);	
 
-	startServer();
     }
 
     /**
@@ -108,6 +94,7 @@ public class MainActivity extends Activity
     public boolean onCreateOptionsMenu (Menu menu)
     {
 	getMenuInflater().inflate(R.menu.main_activity_actions,menu);
+	mOptionsMenu = menu;
 	return true;
     }
     
@@ -115,17 +102,16 @@ public class MainActivity extends Activity
     public boolean onOptionsItemSelected(MenuItem item) {
 	Log.v(TAG,"Option "+item.getItemId()+" selected");
 	switch (item.getItemId()) {
-	    //case R.id.home:
-	    //Log.v(TAG,"Home");
-	    //return true;
-	case R.id.action_sync:
-	    Log.v(TAG,"action_sync");
-	    return true;
-	case R.id.action_new:
-	    Log.v(TAG,"action_new");
-	    return true;
-	case R.id.action_3:
-	    Log.v(TAG,"action_3");
+	case R.id.action_start_stop:
+	    // Respond to the start/stop server menu item.
+	    Log.v(TAG,"action_sart_stop");
+	    if (mBound) {
+		Log.v(TAG,"Stopping Server");
+		stopServer();
+	    } else {
+		Log.v(TAG,"Starting Server");
+		startServer();
+	    }
 	    return true;
 	case R.id.action_settings:
 	    Log.v(TAG,"action_settings");
@@ -182,6 +168,15 @@ public class MainActivity extends Activity
 	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
 	mBound = true;
 
+	// Change the action bar icon to show the option to stop the service.
+	if (mOptionsMenu!=null) {
+	    Log.v(TAG,"Changing menu icons");
+	    MenuItem menuItem = mOptionsMenu.findItem(R.id.action_start_stop);
+	    menuItem.setIcon(R.drawable.stop_server);
+	    menuItem.setTitle("Stop Server");
+	} else {
+	    Log.v(TAG,"mOptionsMenu is null - not changing icons!");
+	}
     }
 
     /**
@@ -198,6 +193,16 @@ public class MainActivity extends Activity
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
 	sdServerIntent.setData(Uri.parse("Stop"));
 	getApplicationContext().stopService(sdServerIntent);
+
+	// Change the action bar icon to show the option to start the service.
+	if (mOptionsMenu!=null) {
+	    Log.v(TAG,"Changing action bar icons");
+	    mOptionsMenu.findItem(R.id.action_start_stop).setIcon(R.drawable.start_server);
+	    mOptionsMenu.findItem(R.id.action_start_stop).setTitle("Start Server");
+	} else {
+	    Log.v(TAG,"mOptionsMenu is null, not changing icons!");
+	}
+
     }
 
     /**
