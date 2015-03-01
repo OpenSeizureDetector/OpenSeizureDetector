@@ -553,7 +553,12 @@ public class SdServer extends Service
 		try {
 		    JSONObject jsonObj = new JSONObject();
 		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 2");
-		    JSONArray arr = new JSONArray(sdData.simpleSpec);
+		    // Initialised it this way because one phone was ok with JSONArray(sdData.simpleSpec), and the other crashed...
+		    JSONArray arr = new JSONArray();
+		    for (int i=0;i<sdData.simpleSpec.length;i++) {
+			arr.put(sdData.simpleSpec[i]);
+		    }
+
 		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 3");
 		    jsonObj.put("simpleSpec",arr);
 		    Log.v(TAG,"WebServer.serve() - Returning spectrum - 4");
