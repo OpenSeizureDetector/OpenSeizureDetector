@@ -1,22 +1,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-  <item android:id="@+id/action_sync"
-	android:icon="@drawable/star_of_life_48x48"
+  <item android:id="@+id/action_start_stop"
+	android:icon="@drawable/start_server"
 	android:title="action_refresh"
 	android:showAsAction="ifRoom|withText"
 	/>
 
-  <item android:id="@+id/action_new"
-	android:icon="@drawable/star_of_life_48x48"
-	android:title="action_add"
-	android:showAsAction="ifRoom|withText"
-	/>
-  <item android:id="@+id/action_3"
-	android:icon="@drawable/star_of_life_48x48"
-	android:title="action_add"
-	android:showAsAction="ifRoom|withText"
-	/>
   <item android:id="@+id/action_settings"
-	android:icon="@drawable/star_of_life_48x48"
+	android:icon="@drawable/ic_action_settings"
 	android:title="Settings"
 	android:showAsAction="never|withText"
 	/>
