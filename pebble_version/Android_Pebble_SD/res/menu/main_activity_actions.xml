@@ -1,8 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
   <item android:id="@+id/action_start_stop"
 	android:icon="@drawable/start_server"
-	android:title="action_refresh"
-	android:showAsAction="ifRoom|withText"
+	android:title="Start Server"
+	android:showAsAction="never|withText"
 	/>
 
   <item android:id="@+id/action_settings"

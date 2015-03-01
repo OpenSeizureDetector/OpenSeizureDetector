@@ -48,6 +48,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.Process;
 import android.util.Log;
 import java.util.Timer;
@@ -120,6 +122,7 @@ public class SdServer extends Service
     private Timer statusTimer = null;
     private Timer settingsTimer = null;
     private HandlerThread thread;
+    private WakeLock mWakeLock = null;
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
@@ -162,10 +165,11 @@ public class SdServer extends Service
     @Override
     public void onCreate() {
 	Log.v(TAG,"onCreate()");
-	//thread = new HandlerThread("ServiceStartArguments",
-	//					 Process.THREAD_PRIORITY_BACKGROUND);
-    //thread.start();
-    //mServiceLooper = thread.getLooper();
+
+	// Create a wake lock, but don't use it until the service is started.
+	PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+	mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+        "MyWakelockTag");
     }
 
     /**
@@ -211,38 +215,57 @@ public class SdServer extends Service
 	}
 	// Start the web server
 	startWebServer();
+
+	// Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
+	if (mWakeLock!=null) {
+	    mWakeLock.acquire();
+	    Log.v(TAG,"Applied Wake Lock to prevent device sleeping");
+	} else {
+	    Log.d(TAG,"mmm...mWakeLock is null, so not aquiring lock.  This shouldn't happen!");
+	}
+
 	return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
 	Log.v(TAG,"onDestroy(): SdServer Service stopping");
+	// release the wake lock to allow CPU to sleep and reduce
+	// battery drain.
+	if (mWakeLock!=null) {
+	    mWakeLock.release();
+	    Log.v(TAG,"Released Wake Lock to allow device to sleep.");
+	} else {
+	    Log.d(TAG,"mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
+	}
+
 	try {
+	    // Stop the status timer
 	    if (statusTimer!=null) {
 		Log.v(TAG,"onDestroy(): cancelling status timer");
 		statusTimer.cancel();
 		statusTimer.purge();
 		statusTimer = null;
 	    }
+	    // Stop the settings timer
 	    if (settingsTimer!=null) {
 		Log.v(TAG,"onDestroy(): cancelling settings timer");
 		settingsTimer.cancel();
 		settingsTimer.purge();
 		settingsTimer = null;
 	    }
+	    // Cancel the notification.
 	    Log.v(TAG,"onDestroy(): cancelling notification");
 	    mNM.cancel(NOTIFICATION_ID);
+	    // Stop web server
 	    Log.v(TAG,"onDestroy(): stopping web server");
 	    stopWebServer();
+	    // Stop pebble message handler.
 	    Log.v(TAG,"onDestroy(): stopping pebble server");
 	    stopPebbleServer();
+	    // stop this service.
 	    Log.v(TAG,"onDestroy(): calling stopSelf()");
 	    stopSelf();
-
-	    //if (thread.isAlive()) {
-	    //	Log.v(TAG,"onDestroy(): stopping thread.");
-	    //	thread.quit();
-	    //}
 
 	} catch(Exception e) {
 	    Log.v(TAG,"Error in onDestroy() - "+e.toString());
