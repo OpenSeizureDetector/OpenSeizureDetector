@@ -298,24 +298,27 @@ public class MainActivity extends Activity
     }
 	
     /*
-     * serverStatusRunnable - called by updateServerStatus
+     * serverStatusRunnable - called by updateServerStatus - updates the
+     * user interface to reflect the current status received from the server.
      */
     final Runnable serverStatusRunnable = new Runnable() {
 	    public void run() {
-		String serverText = "*** Server Stopped ***";
+		TextView tv;
+		tv = (TextView) findViewById(R.id.textView1);
 		if (isServerRunning()) {
-		    serverText = "Server Running OK";
-		}
-		TextView serverTextView = 
-		    (TextView) findViewById(R.id.textView1);
-		serverTextView.setText(serverText);	    
-
-		TextView ipTextView = (TextView)findViewById(R.id.textView2);
-		ipTextView.setText("Access Server at http://"
+		    tv.setText("Server Running OK");
+		    tv.setBackgroundColor(okColour);
+		    tv = (TextView)findViewById(R.id.textView2);
+		    tv.setText("Access Server at http://"
 				   +getLocalIpAddress()
 				   +":8080");
+		    tv.setBackgroundColor(okColour);
+		} else {
+		    tv.setText("*** Server Stopped ***");
+		    tv.setBackgroundColor(alarmColour);
+		}
 
-		TextView tv;
+
 		try {
 		    if (mBound) {
 			tv = (TextView) findViewById(R.id.alarmTv);
@@ -340,7 +343,7 @@ public class MainActivity extends Activity
 			    tv.setText("Pebble Watch Connected OK");	    
 			    tv.setBackgroundColor(okColour);
 			} else {
-			    tv.setText("** Pebble Watch NOT Connected **");	    
+			    tv.setText("** Pebble Watch NOT Connected **");
 			    tv.setBackgroundColor(alarmColour);
 			}
 			tv = (TextView) findViewById(R.id.appTv);
@@ -349,6 +352,7 @@ public class MainActivity extends Activity
 			    tv.setBackgroundColor(okColour);
 			} else {
 			    tv.setText("** Pebble App NOT Running **");	    
+			    tv.setBackgroundColor(alarmColour);
 			}
 			tv = (TextView) findViewById(R.id.battTv);
 			tv.setText("Pebble Battery = "+String.valueOf(mSdServer.sdData.batteryPc)+"%");
@@ -362,12 +366,15 @@ public class MainActivity extends Activity
 			tv = (TextView) findViewById(R.id.debugTv);
 			String specStr = "";
 			for (int i=0;i<10;i++)
-			    specStr = specStr + mSdServer.sdData.simpleSpec[i] + ", ";
+			    specStr = specStr 
+				+ mSdServer.sdData.simpleSpec[i] 
+				+ ", ";
 			tv.setText("Spec = "+specStr);
 		    }
 		    else {
 			tv = (TextView) findViewById(R.id.alarmTv);
 			tv.setText("Not Bound to Server");
+			tv.setBackgroundColor(alarmColour);
 		    }
 		} catch (Exception e) {
 		    Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());
