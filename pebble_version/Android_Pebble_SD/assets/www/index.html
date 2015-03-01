@@ -1,7 +1,7 @@
 <html>
   
   <head>
-    <title>Ben's Seizure Detector</title>
+    <title>Ben's Pebble Watch Seizure Detector</title>
     <script src="js/jquery.js"></script>
     <script src="js/jBeep.js"></script>
   </head>
@@ -14,8 +14,21 @@
     <div id="benStat">
       OK
     </div>
+    <div style="clear:both">
+      <h2>Pebble Status</h2>
+      <div id="pebStat1">
+	<font size="7">Pebble Watch Connected</font>
+      </div>
+      <div id="pebStat2">
+	<font size="7">Pebble App Running</font>
+      </div>
+      <div id="pebStat3">
+	Pebble Battery
+      </div>
+    </div>
+
     <div id="dataDiv">
-      <h2>Data</h2>
+      <h2>Seizure Detector Data</h2>
       <div id="maxFreq">
 	Maximum Frequency:
       </div>
@@ -36,23 +49,18 @@
       </div>
     </div>
     <div id="settingsDiv">
-      <h2>SD Settings</h2>
+      <h2>Seizure Detector Settings</h2>
       <button id="muteButton">Mute Alarm</button>
       <div id="sdSettings">
 	SD Settings
       </div>
     </div>
-    <div style="clear:both">
-      <h2>Pebble Status</h2>
-      <div id="pebStat1">
-	<font size="7">Pebble Watch Connected</font>
-      </div>
-      <div id="pebStat2">
-	<font size="7">Pebble App Running</font>
-      </div>
-      <div id="pebStat3">
-	Pebble Battery
-      </div>
+    <div><p>
+	For details see 
+	<a href="http://openseizuredetector.org.uk">
+	  OpenSeizureDetector.org.uk
+	</a>
+	</p>
     </div>
     <div id="debugInfo"></div>
       
@@ -188,6 +196,9 @@ function process_data(dataStr) {
            if (!sd_muted) jBeep('js/jBeep.wav');
            break;
    }
+
+   if (typeof alarmPhrase == 'undefined')
+           $("#benStat").css("background-color","orange");
 
    switch(pebCon) {
       case false:
