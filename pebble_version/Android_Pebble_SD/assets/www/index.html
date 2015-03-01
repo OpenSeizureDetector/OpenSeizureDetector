@@ -9,14 +9,13 @@
   
   <body>
     <div id="header">
-      <h1>Ben's Seizure Detector</h1>
+      <img src="img/icon_48x48.png" alt="logo"/>
+      <h1>Open Seizure Detector</h1>
     </div>
-    <h2>Ben's Status</h2>
     <div id="benStat">
       OK
     </div>
     <div style="clear:both">
-      <h2>Pebble Status</h2>
       <div id="pebStat1">
 	<font size="7">Pebble Watch Connected</font>
       </div>
@@ -26,6 +25,11 @@
       <div id="pebStat3">
 	Pebble Battery
       </div>
+    </div>
+
+    <div id="chartsDiv">
+      <canvas id="specChart1" width="400" height="300"></canvas>
+      <canvas id="specChart2" width="400" height="300"></canvas>
     </div>
 
     <div id="dataDiv">
@@ -56,8 +60,7 @@
 	SD Settings
       </div>
     </div>
-    <div>
-      <canvas id="specChart" width="400" height="400"></canvas>
+    <div style="clear:both">
       <p>
 	For details see 
 	<a href="http://openseizuredetector.org.uk">
@@ -70,6 +73,26 @@
   </body>
   
 <style>
+#header {
+   padding: 1px;
+   margin:0px;
+   background-color:#a0a0ff;
+}
+#header img {
+   height:36px;
+   width:36px;
+   float:left;
+}
+#header h1 {
+   position:relative;
+   top:00px;
+   left:10px;
+}
+h2 {
+  margin:0px;
+  padding: 5px;
+  background-color:#a0a0ff;
+}
 #benStat {
    background-color:blue;
    color:white;
@@ -101,6 +124,9 @@
    text-align:center;
    font-size:18pt;
    height:55px;
+}
+#chartsDiv {
+   float:left;
 }
 #dataDiv {
    float:left;
@@ -236,8 +262,6 @@ function get_spectrum() {
 function process_spectrum(dataStr) {
    var dataObj = JSON.parse(dataStr);
 
-   var ctx = $("#specChart").get(0).getContext("2d");
-   var specChart = new Chart(ctx);
    var chartData = {
        labels:["1","2","3","4","5","6","7","8","9","10"],
        datasets: [
@@ -247,8 +271,29 @@ function process_spectrum(dataStr) {
          }
        ]
        };
+
+
+   var ctx1 = $("#specChart1").get(0).getContext("2d");
+   var specChart1 = new Chart(ctx1);
     //alert(JSON.stringify(chartData));
-    var myLineChart = new Chart(ctx).Line(chartData);
+    var chartOpts = {
+		     animation: false,
+		     showScale: true,
+		     scaleOverride: true,
+		     scaleSteps: 10,
+		     scaleStepWidth: 30,
+		     scaleStartValue: 0
+		     };
+    var lineChart1 = new Chart(ctx1).Line(chartData,chartOpts);
+
+   var ctx2 = $("#specChart2").get(0).getContext("2d");
+   var specChart2 = new Chart(ctx2);
+    var chartOpts = {
+		     animation: false,
+		     showScale: true,
+		     scaleOverride: false,
+		     };
+    var lineChart2 = new Chart(ctx2).Line(chartData,chartOpts);
 }
 
 

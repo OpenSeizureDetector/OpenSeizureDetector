@@ -572,6 +572,7 @@ public class SdServer extends Service
 
 	    default:
 		if (uri.startsWith("/index.html") ||
+		    uri.startsWith("/favicon.ico") ||
 		    uri.startsWith("/js/") ||
 		    uri.startsWith("/css/") ||
 		    uri.startsWith("/img/")) {
