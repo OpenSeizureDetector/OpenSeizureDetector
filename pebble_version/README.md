@@ -39,6 +39,8 @@ The following libraries are used:
 
 Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
 
+Other icons crated using http://romannurik.github.io/AndroidAssetStudio.
 
 
-Graham Jones, 15 January 2015.  (grahamjones139+sd@gmail.com)
+
+Graham Jones, 01 March 2015.  (grahamjones139+sd@gmail.com)
