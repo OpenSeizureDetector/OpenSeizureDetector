@@ -4,8 +4,8 @@
         android:key="AudibleAlarm"
         android:title="Enable Audible Alarm"
         android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
-        android:defaultValue="false" />
-    <CheckBoxPreference
+        android:defaultValue="true" />
+<!--    <CheckBoxPreference
         android:key="PreventSleep"
         android:title="Prevent the screen from blanking."
         android:summary="Prevent the screen from blanking while the application is running."
@@ -15,35 +15,5 @@
         android:title="Display Update Period (ms)."
         android:summary="Display update period in miliseconds."
         android:defaultValue="1000" />
-    <EditTextPreference
-        android:key="SDBaseURL"
-        android:title="Base URL of Seizure Detector."
-        android:summary="Include trailing slash (/) e.g. http://192.168.1.14:8080/"
-        android:defaultValue="http://192.168.1.14:8080/" />
-    <EditTextPreference
-        android:key="SDDataFname"
-        android:title="Filename of Seizure Detector JSON Data File."
-        android:summary=""
-        android:defaultValue="jsonData" />
-    <EditTextPreference
-        android:key="SDRawImgFname"
-        android:title="Filename of the raw image File."
-        android:summary=""
-        android:defaultValue="rawImg.png" />
-    <EditTextPreference
-        android:key="SDMaskedImgFname"
-        android:title="Filename of the masked image File."
-        android:summary=""
-        android:defaultValue="maskedImg.png" />
-    <EditTextPreference
-        android:key="SDChartImgFname"
-        android:title="Filename of the chart image File."
-        android:summary=""
-        android:defaultValue="chartImg.png" />
-    <EditTextPreference
-        android:key="SDResetURL"
-        android:title="URL to reset background image"
-        android:summary=""
-        android:defaultValue="saveBgImg" />
-
+-->
 </PreferenceScreen>

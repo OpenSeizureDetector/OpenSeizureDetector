@@ -34,6 +34,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -46,6 +47,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -140,6 +142,14 @@ public class MainActivity extends Activity
 	    return true;
 	case R.id.action_settings:
 	    Log.v(TAG,"action_settings");
+	    try {
+		Intent prefsIntent = new Intent(
+						MainActivity.this,
+						PrefActivity.class);
+		this.startActivity(prefsIntent);
+	    } catch (Exception ex) {
+		Log.v(TAG,"exception starting settings activity "+ex.toString());
+	    }
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
@@ -149,6 +159,10 @@ public class MainActivity extends Activity
     @Override
     protected void onStart() {
 	super.onStart();
+	SharedPreferences SP = PreferenceManager
+	    .getDefaultSharedPreferences(getBaseContext());
+	boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
+	Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
 	startServer();
     }
 
@@ -157,7 +171,6 @@ public class MainActivity extends Activity
 	super.onStop();
 	if (mBound) {
 	    unbindService(mConnection);
-	    mBound = false;
 	}
     }
 
@@ -171,6 +184,13 @@ public class MainActivity extends Activity
             SdServer.SdBinder binder = (SdServer.SdBinder) service;
             mSdServer = binder.getService();
             mBound = true;
+	    if (mSdServer!=null) {
+		Log.v(TAG,"onServiceConnected() - Asking server to update its settings");
+		mSdServer.updatePrefs();
+	    }
+	    else {
+		Log.v(TAG,"onServiceConnected() - mSdServer is null - this is wrong!");
+	    }
         }
 
         @Override
@@ -191,8 +211,7 @@ public class MainActivity extends Activity
 	// and bind to it so we can see its data
 	Intent intent = new Intent(this,SdServer.class);
 	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
-	mBound = true;
-
+	
 	// Change the action bar icon to show the option to stop the service.
 	if (mOptionsMenu!=null) {
 	    Log.v(TAG,"Changing menu icons");
@@ -212,7 +231,6 @@ public class MainActivity extends Activity
 	// unbind this activity from the service if it is bound.
 	if (mBound) {
 	    unbindService(mConnection);
-	    mBound = false;
 	}
 	// then send an Intent to stop the service.
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
@@ -283,11 +301,6 @@ public class MainActivity extends Activity
     }
 
 
-    /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
-    private void beep() {
-	ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
-	toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 200); 
-    }
 
     /*
      * updateServerStatus - called by the uiTimer timer periodically.
@@ -333,7 +346,6 @@ public class MainActivity extends Activity
 			if (mSdServer.sdData.alarmState==2) {
 			    tv.setText(mSdServer.sdData.alarmPhrase);
 			    tv.setBackgroundColor(alarmColour);
-			    beep();
 			}
 			tv = (TextView) findViewById(R.id.pebTimeTv);
 			tv.setText(mSdServer.mPebbleStatusTime.format("%H:%M:%S"));

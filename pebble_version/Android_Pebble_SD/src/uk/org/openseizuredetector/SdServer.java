@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Bundle;
@@ -53,6 +54,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Process;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -128,7 +130,7 @@ public class SdServer extends Service
     private WakeLock mWakeLock = null;
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
-
+    private boolean mAudibleAlarm = false;
 
 
     private final IBinder mBinder = new SdBinder();
@@ -183,6 +185,9 @@ public class SdServer extends Service
     public int onStartCommand(Intent intent, int flags, int startId) {
 	Log.v(TAG,"SdServer service starting");
 	
+	// Update preferences.
+	updatePrefs();
+
 	// Display a notification icon in the status bar of the phone to
 	// show the service is running.
 	showNotification();
@@ -298,11 +303,16 @@ public class SdServer extends Service
 
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
     /**
-     * beep for duration miliseconds
+     * beep for duration miliseconds, but only if mAudibleAlarm is set.
      */
     private void beep(int duration) {
 	ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
-	toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
+	if (mAudibleAlarm) {
+	    toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
+	    Log.v(TAG,"beep()");
+	} else {
+	    Log.v(TAG,"beep() - silent...");
+	}
     }
 
 
@@ -452,10 +462,10 @@ public class SdServer extends Service
      * If the watch app is not running, it attempts to re-start it.
      */
     public void getPebbleStatus() {
-	if (statusTimer!=null) 
-	    Log.v(TAG,"getPebbleStatus() - statusTimer = "+statusTimer.toString());
-	else
-	    Log.v(TAG,"getPebbleStatus() - statusTimer = null?????");
+	//if (statusTimer!=null) 
+	//    Log.v(TAG,"getPebbleStatus() - statusTimer = "+statusTimer.toString());
+	//else
+	//    Log.v(TAG,"getPebbleStatus() - statusTimer = null?????");
 	Time tnow = new Time(Time.getCurrentTimezone());
 	tnow.setToNow();
 	// Check we are actually connected to the pebble.
@@ -496,6 +506,18 @@ public class SdServer extends Service
 				   data);     
     }
 
+
+    /**
+     * updatePrefs() - update basic settings from the SharedPreferences
+     * - defined in res/xml/prefs.xml
+     */
+    public void updatePrefs() {
+	Log.v(TAG,"updatePrefs()");
+	SharedPreferences SP = PreferenceManager
+	    .getDefaultSharedPreferences(getBaseContext());
+	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
+	Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
+    }
 
 
     /**

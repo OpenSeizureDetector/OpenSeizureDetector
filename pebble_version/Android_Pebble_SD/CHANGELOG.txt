@@ -1,0 +1,15 @@
+Android_Pebble_SD CHANGELOG
+===========================
+
+V1.2   02 Mar 2015
+       Fixed audible bleep on server phone so it will work in background.
+       Added Settings screen with option to switch audible alarm on and off.
+
+
+V1.1   01 Mar 2015
+       Fixed problem with device sleeping and stopping web server working.
+       Added graphs of acceleration spectrum to web interface.
+
+V1.0   23 Feb 2015
+       First Play Store release
+
