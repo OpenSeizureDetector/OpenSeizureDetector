@@ -40,6 +40,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.AssetFileDescriptor;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -294,6 +296,15 @@ public class SdServer extends Service
     }
 
 
+    /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
+    /**
+     * beep for duration miliseconds
+     */
+    private void beep(int duration) {
+	ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+	toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
+    }
+
 
 
     /**
@@ -326,9 +337,17 @@ public class SdServer extends Service
 			sdData.specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
 			sdData.roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
 			sdData.alarmPhrase = "Unknown";
-			if (sdData.alarmState==0) sdData.alarmPhrase="OK";
-			if (sdData.alarmState==1) sdData.alarmPhrase="WARNING";
-			if (sdData.alarmState==2) sdData.alarmPhrase="ALARM";
+			if (sdData.alarmState==0) {
+			    sdData.alarmPhrase="OK";
+			}
+			if (sdData.alarmState==1) {
+			    sdData.alarmPhrase="WARNING";
+			    beep(200);
+			}
+			if (sdData.alarmState==2) {
+			    sdData.alarmPhrase="ALARM";
+			    beep(1000);
+			}
 
 			// Read the data that has been sent, and convert it into
 			// an integer array.
