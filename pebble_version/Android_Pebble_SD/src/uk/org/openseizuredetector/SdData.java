@@ -58,6 +58,7 @@ public class SdData implements Parcelable {
 
     public SdData() {
 	simpleSpec = new int[10];
+	dataTime = new Time(Time.getCurrentTimezone());
     }
 
 
@@ -79,12 +80,13 @@ public class SdData implements Parcelable {
 		    jsonObj.put("alarmState",alarmState);
 		    jsonObj.put("alarmPhrase",alarmPhrase);
 		    if (dataTime != null) {
-			jsonObj.put("dataTimeStr",dataTime.format("%d-%m-%Y %H:%M:%S"));
-			jsonObj.put("dataTime",dataTime);
+			jsonObj.put("dataTime",dataTime.format("%d-%m-%Y %H:%M:%S"));
+			//jsonObj.put("dataTime",dataTime);
 		    } else {
 			jsonObj.put("dataTimeStr","00-00-00 00:00:00");
 			jsonObj.put("dataTime",0);
 		    }
+		    Log.v(TAG,"sdData.dataTime = "+dataTime);
 
 		    retval = jsonObj.toString();
 		} catch (Exception ex) {

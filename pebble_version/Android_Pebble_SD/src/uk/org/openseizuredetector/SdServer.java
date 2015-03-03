@@ -126,6 +126,7 @@ public class SdServer extends Service
     public Time mPebbleStatusTime;
     private Timer statusTimer = null;
     private Timer settingsTimer = null;
+    private Timer dataLogTimer = null;
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdData sdData;
@@ -191,7 +192,7 @@ public class SdServer extends Service
 	Log.v(TAG,"calling updatePrefs()");
 	updatePrefs();
 	
-	writeAlarmToSD();
+	//writeAlarmToSD();
 	
 
 	// Display a notification icon in the status bar of the phone to
@@ -228,6 +229,20 @@ public class SdServer extends Service
 	} else {
 	    Log.v(TAG,"onCreate(): settings timer already running.");
 	}
+
+	// Start timer to log data regularly..
+	if (dataLogTimer == null) {
+	    Log.v(TAG,"onCreate(): starting dataLog timer");
+	    dataLogTimer = new Timer();
+	    dataLogTimer.schedule(new TimerTask() {
+		    @Override
+		    public void run() {logData();}
+		}, 0, 1000*60);	
+	} else {
+	    Log.v(TAG,"onCreate(): dataLog timer already running.");
+	}
+
+
 	// Start the web server
 	startWebServer();
 
@@ -345,7 +360,8 @@ public class SdServer extends Service
 		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
 			==DATA_TYPE_RESULTS) {
 			Log.v(TAG,"DATA_TYPE = Results");
-			sdData.dataTime = new Time(Time.getCurrentTimezone());
+			sdData.dataTime.setToNow();
+			Log.v(TAG,"sdData.dataTime="+sdData.dataTime);
 
 			sdData.alarmState = data.getUnsignedIntegerAsLong(
 								   KEY_ALARMSTATE);
@@ -359,12 +375,22 @@ public class SdServer extends Service
 			}
 			if (sdData.alarmState==1) {
 			    sdData.alarmPhrase="WARNING";
-			    writeAlarmToSD();
+			    if (mLogAlarms) {
+				Log.v(TAG,"WARNING - Loggin to SD Card");
+				writeAlarmToSD();
+			    } else {
+				Log.v(TAG,"WARNING");
+			    }
 			    beep(200);
 			}
 			if (sdData.alarmState==2) {
 			    sdData.alarmPhrase="ALARM";
-			    writeAlarmToSD();
+			    if (mLogAlarms) {
+				Log.v(TAG,"***ALARM*** - Loggin to SD Card");
+				writeAlarmToSD();
+			    } else {
+				Log.v(TAG,"***ALARM***");
+			    }
 			    beep(1000);
 			}
 
@@ -464,6 +490,15 @@ public class SdServer extends Service
 	}
     }
 
+    /**
+     * Log data to SD card if mLogData is set in preferences.
+     */
+    public void logData() {
+	if (mLogData) {
+	    Log.v(TAG,"logData() - writing data to SD Card");
+	    writeToSD();
+	}
+    }
 
     /** 
      * Checks the status of the connection to the pebble watch,
@@ -553,27 +588,50 @@ public class SdServer extends Service
 	return file;
     }
 
+    /**
+     * Write data to SD card alarm log
+     */
     public void writeAlarmToSD() {
-	Log.v(TAG,"writeAlarmToSD()");
+	writeToSD(true);
+    }
+
+    /**
+     * Write to data log file on SD Card
+     */
+    public void writeToSD() {
+	writeToSD(false);
+    }
+    
+    /**
+     * Write data to SD card - writes to data log file unless alarm=true,
+     * in which case writes to alarm log file.
+     */
+    public void writeToSD(boolean alarm) {
+	Log.v(TAG,"writeToSD("+alarm+")");
+
+	// Select filename depending on 'alarm' parameter.
+	String fname;
+	if (alarm) 
+	    fname = "AlarmLog.txt";
+	else
+	    fname = "DataLog.txt";
+
 	// Open output directory on SD Card.
-	Log.v(TAG,"Opening output directory");
 	if (isExternalStorageWritable()) {
 	    try {
 		FileWriter of = new FileWriter(getDataStorageDir().toString() 
-					       + "/AlarmLog.txt", true);
+					       + "/" + fname, true);
 		if (sdData!=null) {
 		    Log.v(TAG,"writing sdData.toString()");
 		    of.append(sdData.toString()+"\n");
 		}
 		of.close();
-		Log.v(TAG,"File Closed");
 	    } catch(Exception ex) {
 		Log.e(TAG,"writeAlarmToSD - error "+ex.toString());
 	    }    
 	} else {
 	    Log.e(TAG,"ERROR - Can not Write to External Folder");
-	}
-	
+	}	
     }
 
     /**
