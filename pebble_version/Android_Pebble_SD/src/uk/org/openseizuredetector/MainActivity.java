@@ -198,6 +198,7 @@ public class MainActivity extends Activity
 	super.onStop();
 	if (mBound) {
 	    unbindService(mConnection);
+	    mBound = false;
 	}
     }
 
@@ -222,6 +223,7 @@ public class MainActivity extends Activity
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
+	    Log.v(TAG,"onServiceDisonnected()");
             mBound = false;
         }
     };
@@ -257,7 +259,12 @@ public class MainActivity extends Activity
 	Log.v(TAG,"stopping Server...");
 	// unbind this activity from the service if it is bound.
 	if (mBound) {
-	    unbindService(mConnection);
+	    try {
+		unbindService(mConnection);
+		mBound = false;
+	    } catch (Exception ex) {
+		Log.e(TAG,"stopServer - error unbinding service - "+ex.toString());
+	    }
 	}
 	// then send an Intent to stop the service.
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
