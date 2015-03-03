@@ -131,7 +131,9 @@ public class SdServer extends Service
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
     private boolean mAudibleAlarm = false;
-
+    private boolean mLogAlarms = true;
+    private boolean mLogData = false;
+    private File mOutFile;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -186,10 +188,15 @@ public class SdServer extends Service
 	Log.v(TAG,"SdServer service starting");
 	
 	// Update preferences.
+	Log.v(TAG,"calling updatePrefs()");
 	updatePrefs();
+	
+	writeAlarmToSD();
+	
 
 	// Display a notification icon in the status bar of the phone to
 	// show the service is running.
+	Log.v(TAG,"showing Notification");
 	showNotification();
 
 	// Start receiving data from the pebble watch
@@ -352,10 +359,12 @@ public class SdServer extends Service
 			}
 			if (sdData.alarmState==1) {
 			    sdData.alarmPhrase="WARNING";
+			    writeAlarmToSD();
 			    beep(200);
 			}
 			if (sdData.alarmState==2) {
 			    sdData.alarmPhrase="ALARM";
+			    writeAlarmToSD();
 			    beep(1000);
 			}
 
@@ -517,8 +526,55 @@ public class SdServer extends Service
 	    .getDefaultSharedPreferences(getBaseContext());
 	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
+	mLogAlarms = SP.getBoolean("LogAlarms",true);
+	Log.v(TAG,"updatePrefs() - mLogAlarms = "+mLogAlarms);
+	mLogData = SP.getBoolean("LogData",false);
+	Log.v(TAG,"updatePrefs() - mLogData = "+mLogData);
     }
 
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+	String state = Environment.getExternalStorageState();
+	if (Environment.MEDIA_MOUNTED.equals(state)) {
+	    return true;
+	}
+	return false;
+    }
+
+    public File getDataStorageDir() {
+	// Get the directory for the user's public pictures directory. 
+	File file = 
+	    new File(Environment.getExternalStorageDirectory()
+		     ,"OpenSeizureDetector");
+	if (!file.mkdirs()) {
+	    Log.e(TAG, "Directory not created");
+	}
+	return file;
+    }
+
+    public void writeAlarmToSD() {
+	Log.v(TAG,"writeAlarmToSD()");
+	// Open output directory on SD Card.
+	Log.v(TAG,"Opening output directory");
+	if (isExternalStorageWritable()) {
+	    try {
+		FileWriter of = new FileWriter(getDataStorageDir().toString() 
+					       + "/AlarmLog.txt", true);
+		if (sdData!=null) {
+		    Log.v(TAG,"writing sdData.toString()");
+		    of.append(sdData.toString()+"\n");
+		}
+		of.close();
+		Log.v(TAG,"File Closed");
+	    } catch(Exception ex) {
+		Log.e(TAG,"writeAlarmToSD - error "+ex.toString());
+	    }    
+	} else {
+	    Log.e(TAG,"ERROR - Can not Write to External Folder");
+	}
+	
+    }
 
     /**
      * Class describing the seizure detector web server - appears on port

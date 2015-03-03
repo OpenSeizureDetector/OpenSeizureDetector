@@ -33,8 +33,12 @@ import android.app.ActivityManager.RunningServiceInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
+import android.preference.Preference;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.Context;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -62,6 +66,9 @@ import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.apache.http.conn.util.InetAddressUtils;
+import java.lang.CharSequence;
+import android.util.AttributeSet;
+
 
 import uk.org.openseizuredetector.SdServer;
 
@@ -163,6 +170,26 @@ public class MainActivity extends Activity
 	    .getDefaultSharedPreferences(getBaseContext());
 	boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
+
+	TextView tv;
+	tv = (TextView) findViewById(R.id.versionTv);
+	String versionName = "unknown";
+	// From http://stackoverflow.com/questions/4471025/
+	//         how-can-you-get-the-manifest-version-number-
+	//         from-the-apps-layout-xml-variable
+	final PackageManager packageManager = getPackageManager();
+	if (packageManager != null) {
+	    try {
+		PackageInfo packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
+		versionName = packageInfo.versionName;
+	    } catch (PackageManager.NameNotFoundException e) {
+		Log.v(TAG,"failed to find versionName");
+		versionName = null;
+	    }
+	}
+	tv.setText("Android OpenSeizureDetector Version "+versionName);
+
+
 	startServer();
     }
 

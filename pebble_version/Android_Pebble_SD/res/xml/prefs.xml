@@ -5,6 +5,16 @@
         android:title="Enable Audible Alarm"
         android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
         android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="LogAlarms"
+        android:title="Log Alarm events to SD Card"
+        android:summary="Log Alarm events to SD Card"
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="LogData"
+        android:title="Log Data to SD Card"
+        android:summary="Log Data to SD Card Regularly"
+        android:defaultValue="false" />
 <!--    <CheckBoxPreference
         android:key="PreventSleep"
         android:title="Prevent the screen from blanking."

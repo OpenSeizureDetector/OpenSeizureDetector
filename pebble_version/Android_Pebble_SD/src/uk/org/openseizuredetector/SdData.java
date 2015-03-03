@@ -27,10 +27,14 @@ package uk.org.openseizuredetector;
 import android.os.Parcelable;
 import android.os.Parcel;
 import android.text.format.Time;
+import android.util.Log;
+import org.json.JSONObject;
+import org.json.JSONArray;
 
 /* based on http://stackoverflow.com/questions/2139134/how-to-send-an-object-from-one-android-activity-to-another-using-intents */
 
 public class SdData implements Parcelable {
+    private final static String TAG = "SdData";
     /* Analysis settings */
     public long alarmFreqMin;
     public long alarmFreqMax;
@@ -54,6 +58,41 @@ public class SdData implements Parcelable {
 
     public SdData() {
 	simpleSpec = new int[10];
+    }
+
+
+    public String toString() {
+	String retval;
+	retval = "SdData.toString() Output";
+		try {
+		    JSONObject jsonObj = new JSONObject();
+		    jsonObj.put("maxVal",maxVal);
+		    jsonObj.put("maxFreq",maxFreq);
+		    jsonObj.put("specPower",specPower);
+		    jsonObj.put("roiPower",roiPower);
+		    JSONArray arr = new JSONArray();
+		    for (int i=0;i<simpleSpec.length;i++) {
+			arr.put(simpleSpec[i]);
+		    }
+
+		    jsonObj.put("simpleSpec",arr);
+		    jsonObj.put("alarmState",alarmState);
+		    jsonObj.put("alarmPhrase",alarmPhrase);
+		    if (dataTime != null) {
+			jsonObj.put("dataTimeStr",dataTime.format("%d-%m-%Y %H:%M:%S"));
+			jsonObj.put("dataTime",dataTime);
+		    } else {
+			jsonObj.put("dataTimeStr","00-00-00 00:00:00");
+			jsonObj.put("dataTime",0);
+		    }
+
+		    retval = jsonObj.toString();
+		} catch (Exception ex) {
+		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
+		    retval = "Error Creating Data Object - "+ex.toString();
+		}
+
+	return(retval);
     }
 
     public int describeContents() {
