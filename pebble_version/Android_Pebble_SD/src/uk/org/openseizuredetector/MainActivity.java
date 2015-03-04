@@ -52,16 +52,18 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Button;
-import android.util.Log;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -69,6 +71,23 @@ import org.apache.http.conn.util.InetAddressUtils;
 import java.lang.CharSequence;
 import android.util.AttributeSet;
 
+//MPAndroidChart
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.Legend.LegendForm;
+import com.github.mikephil.charting.components.LimitLine;
+import com.github.mikephil.charting.components.LimitLine.LimitLabelPosition;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.DataSet;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.filter.Approximator;
+import com.github.mikephil.charting.data.filter.Approximator.ApproximatorType;
+import com.github.mikephil.charting.listener.OnChartGestureListener;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.utils.Highlight;
 
 import uk.org.openseizuredetector.SdServer;
 
@@ -425,7 +444,36 @@ public class MainActivity extends Activity
 		} catch (Exception e) {
 		    Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());
 		}
+		////////////////////////////////////////////////////////////
+		// Produce graph
+		LineChart mChart = (LineChart) findViewById(R.id.chart1);
+		mChart.setDescription("");
+		mChart.setNoDataTextDescription("You need to provide data for the chart.");
+		// X Values
+		ArrayList<String> xVals = new ArrayList<String>();
+		for (int i = 0; i < 10; i++) {
+		    xVals.add((i) + "");
+		}
+		// Y Values
+		ArrayList<Entry> yVals = new ArrayList<Entry>();
+		for (int i = 0; i < 10; i++) {
+		    if (mSdServer!=null)
+			yVals.add(new Entry(mSdServer.sdData.simpleSpec[i], i));
+		    else
+			yVals.add(new Entry(i, i));
+		}
 
+		// create a dataset and give it a type
+		LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
+		set1.setColor(Color.BLACK);
+		set1.setLineWidth(1f);
+
+		ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
+		dataSets.add(set1); // add the datasets
+		LineData data = new LineData(xVals, dataSets);
+		//data.setValueTextSize(10f);
+		mChart.setData(data);
+		mChart.invalidate();
 	    }
 	};
     
@@ -439,11 +487,11 @@ public class MainActivity extends Activity
 	super.onResume();
     }
 
-    public void updateUi() {
-	String statusPhrase;
-	String alarmPhrase;
-	String viewText = "Unknown";
-    }
+    //public void updateUi() {
+    //	String statusPhrase;
+    //	String alarmPhrase;
+    //	String viewText = "Unknown";
+    //}
 
     class ResponseHandler extends Handler {
 	@Override public void handleMessage(Message message) {
