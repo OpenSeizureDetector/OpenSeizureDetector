@@ -272,8 +272,11 @@ function process_spectrum(dataStr) {
        ]
        };
 
-
+   var chartWidth = 400;
+   var chartHeight = 300;
    var ctx1 = $("#specChart1").get(0).getContext("2d");
+   ctx1.canvas.width = chartWidth;
+   ctx1.canvas.height = chartHeight;
    var specChart1 = new Chart(ctx1);
     //alert(JSON.stringify(chartData));
     var chartOpts = {
@@ -287,6 +290,8 @@ function process_spectrum(dataStr) {
     var lineChart1 = new Chart(ctx1).Line(chartData,chartOpts);
 
    var ctx2 = $("#specChart2").get(0).getContext("2d");
+   ctx2.canvas.width = chartWidth;
+   ctx2.canvas.height = chartHeight;
    var specChart2 = new Chart(ctx2);
     var chartOpts = {
 		     animation: false,
@@ -315,7 +320,7 @@ $(document).ready(function() {
    get_data();
    get_spectrum();
    setInterval("get_data();",2000);
-   setInterval("get_settings();",60000);
+   setInterval("get_settings();",10000);
    setInterval("get_spectrum();",5000);
    $("#muteButton").click(toggleMute);
 });
