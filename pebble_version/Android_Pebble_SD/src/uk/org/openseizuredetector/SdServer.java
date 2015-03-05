@@ -378,6 +378,7 @@ public class SdServer extends Service
 			    if (mLogAlarms) {
 				Log.v(TAG,"WARNING - Loggin to SD Card");
 				writeAlarmToSD();
+				logData();
 			    } else {
 				Log.v(TAG,"WARNING");
 			    }
@@ -388,6 +389,7 @@ public class SdServer extends Service
 			    if (mLogAlarms) {
 				Log.v(TAG,"***ALARM*** - Loggin to SD Card");
 				writeAlarmToSD();
+				logData();
 			    } else {
 				Log.v(TAG,"***ALARM***");
 			    }
@@ -608,14 +610,18 @@ public class SdServer extends Service
      */
     public void writeToSD(boolean alarm) {
 	Log.v(TAG,"writeToSD("+alarm+")");
+	Time tnow = new Time(Time.getCurrentTimezone());
+	tnow.setToNow();
+	String dateStr = tnow.format("%Y-%M-%d");
 
 	// Select filename depending on 'alarm' parameter.
 	String fname;
 	if (alarm) 
-	    fname = "AlarmLog.txt";
+	    fname = "AlarmLog";
 	else
-	    fname = "DataLog.txt";
+	    fname = "DataLog";
 
+	fname = fname+"_"+dateStr+".txt";
 	// Open output directory on SD Card.
 	if (isExternalStorageWritable()) {
 	    try {
