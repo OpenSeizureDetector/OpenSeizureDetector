@@ -61,6 +61,7 @@ import java.util.TimerTask;
 import java.io.*;
 import java.util.*;
 import java.util.UUID;
+import java.util.StringTokenizer;
 import java.net.URL;
 import android.net.Uri;
 import java.nio.ByteBuffer;
@@ -740,7 +741,12 @@ public class SdServer extends Service
 		    //Log.v(TAG,"Serving File");
 		    return serveFile(uri);
 		} 
-		else {
+		else if (uri.startsWith("/logs")) {
+		    Log.v(TAG,"WebServer.serve() - serving data logs - uri="+uri);
+		    NanoHTTPD.Response resp = serveLogFile(uri);
+		    Log.v(TAG,"WebServer.serve() - response = "+resp.toString());
+		    return resp;
+		} else {
 		    Log.v(TAG,"WebServer.serve() - Unknown uri -"+
 			  uri);
 		    answer = "Unknown URI: ";
@@ -749,32 +755,94 @@ public class SdServer extends Service
 
             return new NanoHTTPD.Response(answer);
         }
-    }
+    
 
     
 
-    /**
-     * Return a file from the apps /assets folder
-     */
-    NanoHTTPD.Response serveFile(String uri) {
-	NanoHTTPD.Response res;
-	InputStream ip = null;
-	try {
-	    if (ip!=null) ip.close();
-	    String assetPath = "www";
-	    String fname = assetPath+uri;
-	    //Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
-	    AssetManager assetManager = getResources().getAssets();
-	    ip = assetManager.open(fname);
-	    String mimeStr = "text/html";
-	    res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
-					 mimeStr,ip);
-	    res.addHeader("Content-Length", "" + ip.available());
-	} catch (IOException ex) {
-	    Log.v(TAG,"Error Opening File - "+ex.toString());
-	    res = new NanoHTTPD.Response("Error Opening file "+uri);
-	} 
-	return(res);
+	/**
+	 * Return a file from the external storage folder
+	 */
+	NanoHTTPD.Response serveLogFile(String uri) {
+	    NanoHTTPD.Response res;
+	    InputStream ip = null;
+	    String uripart;
+	    Log.v(TAG,"serveLogFile("+uri+")");
+	    try {
+		if (ip!=null) ip.close();
+		String storageDir = getDataStorageDir().toString();
+		StringTokenizer uriParts = new StringTokenizer(uri,"/");
+		Log.v(TAG,"serveExternalFile - number of tokens = "+uriParts.countTokens());	    
+		while (uriParts.hasMoreTokens()) {
+		    uripart = uriParts.nextToken();
+		    Log.v(TAG,"uripart="+uripart);
+		}
+
+		// If we have only given a "/logs" URI, return a list of
+		// available files.
+		// Re-start the StringTokenizer from the start.
+		uriParts = new StringTokenizer(uri,"/");
+		Log.v(TAG,"serveExternalFile - number of tokens = "
+		      +uriParts.countTokens());	    
+		if (uriParts.countTokens()==1) {
+		    Log.v(TAG,"Returning list of files");
+		    
+		    File dirs = getDataStorageDir();
+		    try {
+			JSONObject jsonObj = new JSONObject();
+			if (dirs.exists()) {
+			    String[] fileList = dirs.list();
+			    JSONArray arr = new JSONArray();
+			    for (int i=0;i<fileList.length;i++)
+				arr.put(fileList[i]);
+			    jsonObj.put("logFileList",arr);
+			}
+			res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
+						     "text/html",jsonObj.toString());
+		    } catch(Exception ex) {
+			res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
+						     "text/html","ERROR - "+ex.toString());
+		    }
+		    return res;
+		}
+
+		uripart = uriParts.nextToken();  // This will just be /logs
+		uripart = uriParts.nextToken();  // this is the requested file.
+		String fname = storageDir + "/"+uripart;
+		Log.v(TAG,"serveLogFile - uri="+uri+", fname="+fname);
+		ip = new FileInputStream(fname);
+		String mimeStr = "text/html";
+		res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
+					     mimeStr,ip);
+		res.addHeader("Content-Length", "" + ip.available());
+	    } catch (IOException ex) {
+		Log.v(TAG,"serveLogFile(): Error Opening File - "+ex.toString());
+		res = new NanoHTTPD.Response("serveLogFile(): Error Opening file "+uri);
+	    } 
+	    return(res);
+	}
+	
+	/**
+	 * Return a file from the apps /assets folder
+	 */
+	NanoHTTPD.Response serveFile(String uri) {
+	    NanoHTTPD.Response res;
+	    InputStream ip = null;
+	    try {
+		if (ip!=null) ip.close();
+		String assetPath = "www";
+		String fname = assetPath+uri;
+		//Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
+		AssetManager assetManager = getResources().getAssets();
+		ip = assetManager.open(fname);
+		String mimeStr = "text/html";
+		res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
+					     mimeStr,ip);
+		res.addHeader("Content-Length", "" + ip.available());
+	    } catch (IOException ex) {
+		Log.v(TAG,"serveFile(): Error Opening File - "+ex.toString());
+		res = new NanoHTTPD.Response("serveFile(): Error Opening file "+uri);
+	    } 
+	    return(res);
+	}
     }
-    
 }
