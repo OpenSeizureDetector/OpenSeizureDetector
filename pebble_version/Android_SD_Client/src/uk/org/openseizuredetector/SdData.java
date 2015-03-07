@@ -28,6 +28,9 @@ import android.os.Parcelable;
 import android.os.Parcel;
 import android.text.format.Time;
 import android.util.Log;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -71,7 +74,14 @@ public class SdData implements Parcelable {
 	try {
 	    JSONObject jo = new JSONObject(jsonStr);
 	    Log.v(TAG,"fromJSON(): jo = "+jo.toString());
-	    dataTime = new Time(jo.optString("dataTime"));
+	    Log.v(TAG,"fromJSON(): dataTimeStr="+jo.optString("dataTimeStr"));
+	    //Calendar cal = Calendar.getInstance();
+	    //SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddTHHmmss", Locale.UK);
+	    //cal.setTime(sdf.parse(jo.optString("dataTimeStr")));
+	    //dataTime = cal.getTime();
+	    // FIXME - this doesn't work!!!
+	    dataTime.setToNow();
+	    Log.v(TAG,"fromJSON(): dataTime = "+dataTime.toString());
 	    maxVal = jo.optInt("maxVal");
 	    maxFreq = jo.optInt("maxFreq");
 	    specPower = jo.optInt("specPower");
@@ -81,6 +91,10 @@ public class SdData implements Parcelable {
 	    pebbleAppRunning = jo.optBoolean("pebbleAppRunning");
 	    alarmState = jo.optInt("alarmState");
 	    alarmPhrase = jo.optString("alarmPhrase");
+	    JSONArray specArr = jo.optJSONArray("simpleSpec");
+	    for (int i=0;i<specArr.length();i++) {
+		simpleSpec[i] = specArr.optInt(i);
+	    }
 	    return true;
 	} catch (Exception e) {
 	    Log.v(TAG,"fromJSON() - error parsing result");
