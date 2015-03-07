@@ -1,0 +1,13 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+  <item android:id="@+id/action_start_stop"
+	android:icon="@drawable/stop_server"
+	android:title="Stop Server"
+	android:showAsAction="never|withText"
+	/>
+
+  <item android:id="@+id/action_settings"
+	android:icon="@drawable/ic_action_settings"
+	android:title="Settings"
+	android:showAsAction="never|withText"
+	/>
+</menu>

@@ -1,0 +1,6 @@
+Android_SD_CLIENT CHANGELOG
+===========================
+
+V1.0   07 March 2015
+       First Play Store release
+
