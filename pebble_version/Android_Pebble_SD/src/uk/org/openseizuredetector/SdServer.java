@@ -121,10 +121,8 @@ public class SdServer extends Service
     private WebServer webServer = null;
     private final static String TAG = "SdServer";
     private Looper mServiceLooper;
-    public boolean mPebbleConnected = false;
-    public boolean mPebbleAppRunning = false;
-    private boolean mPebbleAppRunningCheck = false;
     public Time mPebbleStatusTime;
+    private boolean mPebbleAppRunningCheck = false;
     private Timer statusTimer = null;
     private Timer settingsTimer = null;
     private Timer dataLogTimer = null;
@@ -516,7 +514,7 @@ public class SdServer extends Service
 	Time tnow = new Time(Time.getCurrentTimezone());
 	tnow.setToNow();
 	// Check we are actually connected to the pebble.
-	mPebbleConnected = PebbleKit.isWatchConnected(this);
+	sdData.pebbleConnected = PebbleKit.isWatchConnected(this);
 	// And is the pebble_sd app running?
 	// set mPebbleAppRunningCheck has been false for more than 10 seconds
 	// the app is not talking to us
@@ -524,11 +522,11 @@ public class SdServer extends Service
 	if (!mPebbleAppRunningCheck && 
 	    ((tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)) > 10000)) {
 	    Log.v(TAG,"tdiff = "+(tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)));
-	    mPebbleAppRunning = false;
+	    sdData.pebbleAppRunning = false;
 	    Log.v(TAG,"Pebble App Not Running - Attempting to Re-Start");
 	    startWatchApp();
 	} else {
-	    mPebbleAppRunning = true;
+	    sdData.pebbleAppRunning = true;
 	}
 
 	// if we have confirmation that the app is running, reset the
@@ -673,17 +671,17 @@ public class SdServer extends Service
 	    case "/data":
 		//Log.v(TAG,"WebServer.serve() - Returning data");
 		try {
-		    JSONObject jsonObj = new JSONObject();
-		    jsonObj.put("Time",mPebbleStatusTime.format("%H:%M:%S"));
-		    jsonObj.put("alarmState",sdData.alarmState);
-		    jsonObj.put("alarmPhrase",sdData.alarmPhrase);
-		    jsonObj.put("maxVal",sdData.maxVal);
-		    jsonObj.put("maxFreq",sdData.maxFreq);
-		    jsonObj.put("specPower",sdData.specPower);
-		    jsonObj.put("roiPower",sdData.roiPower);
-		    jsonObj.put("pebCon",mPebbleConnected);
-		    jsonObj.put("pebAppRun",mPebbleAppRunning);
-		    answer = jsonObj.toString();
+		    //JSONObject jsonObj = new JSONObject();
+		    //jsonObj.put("Time",mPebbleStatusTime.format("%H:%M:%S"));
+		    //jsonObj.put("alarmState",sdData.alarmState);
+		    //jsonObj.put("alarmPhrase",sdData.alarmPhrase);
+		    //jsonObj.put("maxVal",sdData.maxVal);
+		    //jsonObj.put("maxFreq",sdData.maxFreq);
+		    //jsonObj.put("specPower",sdData.specPower);
+		    //jsonObj.put("roiPower",sdData.roiPower);
+		    //jsonObj.put("pebCon",mPebbleConnected);
+		    //jsonObj.put("pebAppRun",mPebbleAppRunning);
+		    answer = sdData.toString();
 		} catch (Exception ex) {
 		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
 		    answer = "Error Creating Data Object";

@@ -404,7 +404,7 @@ public class MainActivity extends Activity
 			tv.setText(mSdServer.mPebbleStatusTime.format("%H:%M:%S"));
 			// Pebble Connected Phrase
 			tv = (TextView) findViewById(R.id.pebbleTv);
-			if (mSdServer.mPebbleConnected) {
+			if (mSdServer.sdData.pebbleConnected) {
 			    tv.setText("Pebble Watch Connected OK");	    
 			    tv.setBackgroundColor(okColour);
 			} else {
@@ -412,7 +412,7 @@ public class MainActivity extends Activity
 			    tv.setBackgroundColor(alarmColour);
 			}
 			tv = (TextView) findViewById(R.id.appTv);
-			if (mSdServer.mPebbleAppRunning) {
+			if (mSdServer.sdData.pebbleAppRunning) {
 			    tv.setText("Pebble App OK");	    
 			    tv.setBackgroundColor(okColour);
 			} else {

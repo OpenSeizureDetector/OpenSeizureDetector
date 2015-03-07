@@ -55,12 +55,8 @@ public class SdData implements Parcelable {
     public long roiPower;
     public String alarmPhrase;
     public int simpleSpec[];
-    public Time mPebbleStatusTime;
-
-    /* Server status */
-    public boolean mPebbleConnected;
-    public boolean mPebbleAppRunning;
-
+    public boolean pebbleConnected = false;
+    public boolean pebbleAppRunning = false;
 
     public SdData() {
 	simpleSpec = new int[10];
@@ -75,13 +71,16 @@ public class SdData implements Parcelable {
 	try {
 	    JSONObject jo = new JSONObject(jsonStr);
 	    Log.v(TAG,"fromJSON(): jo = "+jo.toString());
+	    dataTime = new Time(jo.optString("dataTime"));
 	    maxVal = jo.optInt("maxVal");
 	    maxFreq = jo.optInt("maxFreq");
 	    specPower = jo.optInt("specPower");
 	    roiPower = jo.optInt("roiPower");
+	    batteryPc = jo.optInt("batteryPc");
+	    pebbleConnected = jo.optBoolean("pebbleConnected");
+	    pebbleAppRunning = jo.optBoolean("pebbleAppRunning");
 	    alarmState = jo.optInt("alarmState");
 	    alarmPhrase = jo.optString("alarmPhrase");
-	    dataTime = new Time(jo.optString("dataTime"));
 	    return true;
 	} catch (Exception e) {
 	    Log.v(TAG,"fromJSON() - error parsing result");
@@ -91,31 +90,39 @@ public class SdData implements Parcelable {
 
     }
 
+
     public String toString() {
+	return toDataString();
+    }
+
+    public String toDataString() {
 	String retval;
-	retval = "SdData.toString() Output";
+	retval = "SdData.toDataString() Output";
 		try {
 		    JSONObject jsonObj = new JSONObject();
+		    if (dataTime != null) {
+			jsonObj.put("dataTime",dataTime.format("%d-%m-%Y %H:%M:%S"));
+			jsonObj.put("dataTimeStr",dataTime.format("%Y%m%dT%H%M%S"));
+		    } else {
+			jsonObj.put("dataTimeStr","00000000T000000");
+			jsonObj.put("dataTime","00-00-00 00:00:00");
+		    }
+		    Log.v(TAG,"sdData.dataTime = "+dataTime);
 		    jsonObj.put("maxVal",maxVal);
 		    jsonObj.put("maxFreq",maxFreq);
 		    jsonObj.put("specPower",specPower);
 		    jsonObj.put("roiPower",roiPower);
+		    jsonObj.put("batteryPc",batteryPc);
+		    jsonObj.put("pebbleConnected",pebbleConnected);
+		    jsonObj.put("pebbleAppRunning",pebbleAppRunning);
+		    jsonObj.put("alarmState",alarmState);
+		    jsonObj.put("alarmPhrase",alarmPhrase);
 		    JSONArray arr = new JSONArray();
 		    for (int i=0;i<simpleSpec.length;i++) {
 			arr.put(simpleSpec[i]);
 		    }
 
 		    jsonObj.put("simpleSpec",arr);
-		    jsonObj.put("alarmState",alarmState);
-		    jsonObj.put("alarmPhrase",alarmPhrase);
-		    if (dataTime != null) {
-			jsonObj.put("dataTime",dataTime.format("%d-%m-%Y %H:%M:%S"));
-			//jsonObj.put("dataTime",dataTime);
-		    } else {
-			jsonObj.put("dataTimeStr","00-00-00 00:00:00");
-			jsonObj.put("dataTime",0);
-		    }
-		    Log.v(TAG,"sdData.toString - dataTime = "+dataTime);
 
 		    retval = jsonObj.toString();
 		} catch (Exception ex) {
