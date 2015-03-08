@@ -60,9 +60,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Button;
+import android.widget.Toast;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -106,6 +108,7 @@ public class ClientActivity extends Activity
     private Timer mDataTimer;
     SdClientService mSdClientService;
     private boolean mBound = false;
+    private int mUiUpdatePeriod = 2000;
     private Intent sdClientServiceIntent;
 
     /** Called when the activity is first created. */
@@ -116,7 +119,7 @@ public class ClientActivity extends Activity
 
 	// Initialise the User Interface
         setContentView(R.layout.main);
-
+	getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 	/* Force display of overflow menu - from stackoverflow
 	 * "how to force use of..."
 	 */
@@ -148,10 +151,24 @@ public class ClientActivity extends Activity
 	return true;
     }
     
+    /**
+     * Respond to menu selections (from action bar or menu button)
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 	Log.v(TAG,"Option "+item.getItemId()+" selected");
 	switch (item.getItemId()) {
+	case R.id.action_start_stop:
+	    // Respond to the start/stop server menu item.
+	    Log.v(TAG,"action_sart_stop");
+	    if (mBound) {
+		Log.v(TAG,"Stopping Server");
+		stopServer();
+	    } else {
+		Log.v(TAG,"Starting Server");
+		startServer();
+	    }
+	    return true;
 	case R.id.action_settings:
 	    Log.v(TAG,"action_settings");
 	    try {
@@ -175,15 +192,24 @@ public class ClientActivity extends Activity
 	    .getDefaultSharedPreferences(getBaseContext());
 	boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
+	try {
+	    String uiUpdatePeriodStr = SP.getString("UiUpdatePeriod","2000");
+	    mUiUpdatePeriod = Integer.parseInt(uiUpdatePeriodStr);
+	    Log.v(TAG,"onStart() - mUiUpdatePeriod = "+mUiUpdatePeriod);
+	} catch (Exception ex) {
+	    Log.v(TAG,"onStart() - Problem parsing preferences!");
+	    Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing Preferences - Something won't work",Toast.LENGTH_SHORT);
+	    toast.show();
+	}
 
-	// start timer to refresh user interface every second.
+	// start timer to refresh user interface every 5 seconds.
 	if (mUiTimer==null) {
 	    Log.v(TAG,"onstart(): starting mUiTimer.");
 	    mUiTimer = new Timer();
 	    mUiTimer.schedule(new TimerTask() {
 		    @Override
-		    public void run() {updateServerStatus();}
-		}, 0, 1000);	
+		    public void run() {updateUI();}
+		}, 0, mUiUpdatePeriod);	
 	    Log.v(TAG,"onStart(): started mUiTimer");
 	} else {
 	    Log.v(TAG,"onStart(): mUiTimer already running");
@@ -208,15 +234,27 @@ public class ClientActivity extends Activity
 	}
 	tv.setText("OpenSeizureDetector Client Version "+versionName);
 
+	startServer();
+
     }
 
     @Override
     protected void onStop() {
 	super.onStop();
+	// Disconnect from background service.
 	if (mBound) {
 	    unbindService(mConnection);
 	    mBound = false;
 	}
+	// Stop the User Interface timer
+	    // Stop the status timer
+	if (mUiTimer!=null) {
+	    Log.v(TAG,"onStop(): cancelling UI timer");
+		mUiTimer.cancel();
+		mUiTimer.purge();
+		mUiTimer = null;
+	    }
+
     }
 
 
@@ -325,32 +363,32 @@ public class ClientActivity extends Activity
 
 
     /*
-     * updateServerStatus - called by the uiTimer timer periodically.
+     * updateUI - called by the uiTimer timer periodically.
      * requests the ui to be updated by calling serverStatusRunnable.
      */
-    private void updateServerStatus() {
-	Log.v(TAG,"updateServerStatus()");
-	serverStatusHandler.post(serverStatusRunnable);
+    private void updateUI() {
+	Log.v(TAG,"updateUI()");
+	serverStatusHandler.post(updateUIRunnable);
     }
 	
     /*
-     * serverStatusRunnable - called by updateServerStatus - updates the
+     * updateUIRunnable - called by updateUI - updates the
      * user interface to reflect the current status received from the server.
      */
-    final Runnable serverStatusRunnable = new Runnable() {
+    final Runnable updateUIRunnable = new Runnable() {
 	    public void run() {
 		if (mSdClientService!=null) {
 		    TextView tv;
 		    tv = (TextView) findViewById(R.id.textView1);
-		    if (true) {   // was isServerRunning
+		    if (mSdClientService.mSdData.serverOK) {   // was isServerRunning
 			tv.setText("Server Running OK");
 			tv.setBackgroundColor(okColour);
 			tv = (TextView)findViewById(R.id.textView2);
-			tv.setText("Access Server at http://"
-				   +":8080");
+			tv.setText("Connecting to Server at http://"
+				   +mSdClientService.mServerIP+":8080");
 			tv.setBackgroundColor(okColour);
 		    } else {
-			tv.setText("*** Server Stopped ***");
+			tv.setText("***Can Not Access Server***");
 			tv.setBackgroundColor(alarmColour);
 		    }
 		    
@@ -405,7 +443,7 @@ public class ClientActivity extends Activity
 				+ ", ";
 			tv.setText("Spec = "+specStr);
 		    } catch (Exception e) {
-			Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());
+			Log.v(TAG,"updateUIRunnable: Exception - "+e.toString());
 		    }
 		    ////////////////////////////////////////////////////////////
 		    // Produce graph

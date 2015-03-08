@@ -58,6 +58,7 @@ import android.os.PowerManager.WakeLock;
 import android.os.Process;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.io.*;
@@ -96,7 +97,10 @@ public class SdClientService extends Service
     private WakeLock mWakeLock = null;
     public SdData mSdData;
     private boolean mAudibleAlarm = false;
+    public String mServerIP = "192.168.1.175";
+    private int mDataUpdatePeriod = 2000;
     private Time mStatusTime = null;
+    //private boolean mStatusOK = false;
     private final IBinder mBinder = new SdBinder();
 
     /**
@@ -166,8 +170,8 @@ public class SdClientService extends Service
 	    statusTimer = new Timer();
 	    statusTimer.schedule(new TimerTask() {
 		    @Override
-		    public void run() {getSdStatus();}
-		}, 0, 1000);	
+		    public void run() {getSdData();}
+		}, 0, mDataUpdatePeriod);	
 	} else {
 	    Log.v(TAG,"onCreate(): status timer already running.");
 	}
@@ -253,13 +257,6 @@ public class SdClientService extends Service
     }
 
 
-    public void getSdStatus() {
-	Log.v(TAG,"getSdStatus()");
-	mStatusTime.setToNow();
-    }
-
-
-
     /**
      * updatePrefs() - update basic settings from the SharedPreferences
      * - defined in res/xml/prefs.xml
@@ -269,18 +266,58 @@ public class SdClientService extends Service
 	SharedPreferences SP = PreferenceManager
 	    .getDefaultSharedPreferences(getBaseContext());
 	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
-	Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
+	Log.v(TAG,"updatePrefs() - mAudibleAlarm = "+mAudibleAlarm);
+	mServerIP = SP.getString("ServerIP","192.168.1.175");
+	Log.v(TAG,"updatePrefs() - mServerIP = "+mServerIP);
+	try {
+	    String dataUpdatePeriodStr = SP.getString("DataUpdatePeriod","2000");
+	    mDataUpdatePeriod = Integer.parseInt(dataUpdatePeriodStr);
+	    Log.v(TAG,"updatePrefs() - mDataUpdatePeriod = "+mDataUpdatePeriod);
+	} catch (Exception ex) {
+	    Log.v(TAG,"onStart() - Problem parsing preferences!");
+	    Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing Preferences - Something won't work",Toast.LENGTH_SHORT);
+	    toast.show();
+	}
+    }
+
+    /**
+     * Check the seizure detector data for alarm conditions and beep and
+     * display the ClientActivity if an alarm condition is shown.
+     */
+    private void checkAlarms() {
+	Log.v(TAG,"checkAlarms()");
+	    // Check the alarm state, and raise alarms if necessary.
+	    if (mSdData.alarmState==0) {
+		Log.v(TAG,"Status=OK");
+	    }
+	    if (mSdData.alarmState==1) {
+		Log.v(TAG,"Status=WARNING");
+		beep(200);
+	    }
+	    if (mSdData.alarmState==2) {
+		Log.v(TAG,"Status=ALARM");
+		beep(1000);
+		Intent clientActivityIntent = 
+		    new Intent(this, ClientActivity.class);
+		clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		startActivity(clientActivityIntent);
+	    }
     }
 
 
 
+    /**
+     * Retrive the current Seizure Detector Data from the server.
+     * Uses teh DownloadSdDataTask class to download the data in the
+     * background.  The data is processed in DownloadSdDataTask.onPostExecute().
+     */
     private void getSdData() {
 	Log.v(TAG,"getSdData()");
 	ConnectivityManager connMgr = (ConnectivityManager) 
             getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
-            new DownloadSdDataTask().execute("http://192.168.1.175:8080/data");
+            new DownloadSdDataTask().execute("http://"+mServerIP+":8080/data");
         } else {
             Log.v(TAG,"No network connection available.");
         }    }
@@ -298,9 +335,22 @@ public class SdClientService extends Service
         // onPostExecute displays the results of the AsyncTask.
         @Override
 	    protected void onPostExecute(String result) {
-	    Log.v(TAG,"onPostExecute() - result="+result);
-	    mSdData.fromJSON(result);
-	    Log.v(TAG,"onPostExecute(): mSdData = "+mSdData.toString());
+	    //Log.v(TAG,"onPostExecute() - result="+result);
+	    if (result.startsWith("Unable to retrieve web page")) {
+		    Log.v(TAG,"onPostExecute - Unable to retrieve data");
+		    mSdData.serverOK = false;
+		    mSdData.pebbleConnected = false;
+		    mSdData.pebbleAppRunning = false;
+		    mSdData.alarmState = 2;
+		    mSdData.alarmPhrase = "Warning - No Connection to Server";
+		} else {
+		    // Populate mSdData using the received data.
+		    mSdData.serverOK = true;
+		    mStatusTime.setToNow();
+		    mSdData.fromJSON(result);
+		    Log.v(TAG,"onPostExecute(): mSdData = "+mSdData.toString());
+		    checkAlarms();
+		}
 	}
     }
 
@@ -316,8 +366,8 @@ public class SdClientService extends Service
 	try {
 	    URL url = new URL(myurl);
 	    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-	    conn.setReadTimeout(10000 /* milliseconds */);
-	    conn.setConnectTimeout(15000 /* milliseconds */);
+	    conn.setReadTimeout(5000 /* milliseconds */);
+	    conn.setConnectTimeout(5000 /* milliseconds */);
 	    conn.setRequestMethod("GET");
 	    conn.setDoInput(true);
 	    // Starts the query

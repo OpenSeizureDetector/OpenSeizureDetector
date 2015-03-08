@@ -5,16 +5,24 @@
         android:title="Enable Audible Alarm"
         android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
         android:defaultValue="true" />
-    <CheckBoxPreference
-        android:key="LogAlarms"
-        android:title="Log Alarm events to SD Card"
-        android:summary="Log Alarm events to SD Card"
-        android:defaultValue="true" />
-    <CheckBoxPreference
-        android:key="LogData"
-        android:title="Log Data to SD Card"
-        android:summary="Log Data to SD Card Regularly"
-        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="ServerIP"
+        android:title="Server IP Addrss."
+        android:summary="IP Address of OpenSeizureDetector Server (e.g. 192.168.1.175)."
+        android:defaultValue="192.168.1.175" />
+    <EditTextPreference
+        android:key="UiUpdatePeriod"
+        android:title="UI Update Period (ms)"
+        android:summary="Update period for User Interface in miliseconds."
+	android:numeric="integer"
+        android:defaultValue="2000" />
+    <EditTextPreference
+        android:key="DataUpdatePeriod"
+        android:title="Data Update Period (ms)"
+        android:summary="Period between server data requests in miliseconds."
+	android:numeric="integer"
+        android:defaultValue="2000" />
+
 <!--    <CheckBoxPreference
         android:key="PreventSleep"
         android:title="Prevent the screen from blanking."

@@ -60,6 +60,7 @@ public class SdData implements Parcelable {
     public int simpleSpec[];
     public boolean pebbleConnected = false;
     public boolean pebbleAppRunning = false;
+    public boolean serverOK = false;
 
     public SdData() {
 	simpleSpec = new int[10];
