@@ -24,6 +24,9 @@
 	      android:icon="@drawable/star_of_life_48x48"
 	      >
     </activity>
+    <service
+        android:name=".SdClientService"
+        android:exported="false"/>    
   </application>
 </manifest> 
 

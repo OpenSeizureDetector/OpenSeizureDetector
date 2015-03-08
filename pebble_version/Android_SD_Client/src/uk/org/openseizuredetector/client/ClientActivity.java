@@ -30,12 +30,16 @@ package uk.org.openseizuredetector.client;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.app.IntentService;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageInfo;
 import android.preference.Preference;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.Context;
 import android.graphics.Color;
@@ -49,6 +53,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -64,8 +69,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Timer;
@@ -99,9 +102,11 @@ public class ClientActivity extends Activity
     private int alarmColour = Color.RED;
     private Menu mOptionsMenu;
     final Handler serverStatusHandler = new Handler();
-    private SdData mSdData;
     private Timer mUiTimer;
     private Timer mDataTimer;
+    SdClientService mSdClientService;
+    private boolean mBound = false;
+    private Intent sdClientServiceIntent;
 
     /** Called when the activity is first created. */
     @Override
@@ -111,8 +116,6 @@ public class ClientActivity extends Activity
 
 	// Initialise the User Interface
         setContentView(R.layout.main);
-
-	mSdData = new SdData();
 
 	/* Force display of overflow menu - from stackoverflow
 	 * "how to force use of..."
@@ -129,6 +132,7 @@ public class ClientActivity extends Activity
 	    Log.v(TAG,"menubar fiddle exception: "+e.toString());
 	}
 
+	startServer();
 
 
     }
@@ -172,19 +176,6 @@ public class ClientActivity extends Activity
 	boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
 
-	// Timer to retrieve data from the server.
-	if (mDataTimer==null) {
-	    Log.v(TAG,"onStart(): starting mDataTimer timer");
-	    mDataTimer = new Timer();
-	    mDataTimer.schedule(new TimerTask() {
-		    @Override
-		    public void run() {getSdData();}
-		}, 0, 1000);	
-	    Log.v(TAG,"onStart(): started mDataTimer");
-	} else {
-	    Log.v(TAG,"onstart(): mDataTimer timer already running.");
-	}
-
 	// start timer to refresh user interface every second.
 	if (mUiTimer==null) {
 	    Log.v(TAG,"onstart(): starting mUiTimer.");
@@ -222,83 +213,116 @@ public class ClientActivity extends Activity
     @Override
     protected void onStop() {
 	super.onStop();
+	if (mBound) {
+	    unbindService(mConnection);
+	    mBound = false;
+	}
     }
 
 
+  /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
 
-    private void getSdData() {
-	Log.v(TAG,"getSdData()");
-	ConnectivityManager connMgr = (ConnectivityManager) 
-            getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected()) {
-            new DownloadSdDataTask().execute("http://192.168.1.175:8080/data");
-        } else {
-            Log.v(TAG,"No network connection available.");
-        }    }
-    
-    private class DownloadSdDataTask extends AsyncTask<String, Void, String> {
         @Override
-	    protected String doInBackground(String... urls) {
-            // params comes from the execute() call: params[0] is the url.
-            try {
-                return downloadUrl(urls[0]);
-            } catch (IOException e) {
-                return "Unable to retrieve web page. URL may be invalid.";
-            }
+        public void onServiceConnected(ComponentName className,
+                IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            SdClientService.SdBinder binder = (SdClientService.SdBinder) service;
+            mSdClientService = binder.getService();
+            mBound = true;
+	    if (mSdClientService!=null) {
+		Log.v(TAG,"onServiceConnected() - Asking server to update its settings");
+		mSdClientService.updatePrefs();
+	    }
+	    else {
+		Log.v(TAG,"onServiceConnected() - mSdClientService is null - this is wrong!");
+	    }
         }
-        // onPostExecute displays the results of the AsyncTask.
+
         @Override
-	    protected void onPostExecute(String result) {
-	    Log.v(TAG,"onPostExecute() - result="+result);
-	    mSdData.fromJSON(result);
-	    Log.v(TAG,"onPostExecute(): mSdData = "+mSdData.toString());
+        public void onServiceDisconnected(ComponentName arg0) {
+	    Log.v(TAG,"onServiceDisonnected()");
+            mBound = false;
+        }
+    };
+
+    /**
+     * Start the SdClientService service
+     */
+    private void startServer() {
+	// Start the server
+	sdClientServiceIntent = new Intent(ClientActivity.this,SdClientService.class);
+	sdClientServiceIntent.setData(Uri.parse("Start"));
+	getApplicationContext().startService(sdClientServiceIntent);
+
+	// and bind to it so we can see its data
+	Intent intent = new Intent(this,SdClientService.class);
+	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
+	
+	// Change the action bar icon to show the option to stop the service.
+	if (mOptionsMenu!=null) {
+	    Log.v(TAG,"Changing menu icons");
+	    MenuItem menuItem = mOptionsMenu.findItem(R.id.action_start_stop);
+	    menuItem.setIcon(R.drawable.stop_server);
+	    menuItem.setTitle("Stop Server");
+	} else {
+	    Log.v(TAG,"mOptionsMenu is null - not changing icons!");
 	}
     }
 
-    // Given a URL, establishes an HttpUrlConnection and retrieves
-    // the web page content as a InputStream, which it returns as
-    // a string.
-    private String downloadUrl(String myurl) throws IOException {
-	InputStream is = null;
-	// Only display the first 500 characters of the retrieved
-	// web page content.
-	int len = 500;
-        
-	try {
-	    URL url = new URL(myurl);
-	    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-	    conn.setReadTimeout(10000 /* milliseconds */);
-	    conn.setConnectTimeout(15000 /* milliseconds */);
-	    conn.setRequestMethod("GET");
-	    conn.setDoInput(true);
-	    // Starts the query
-	    conn.connect();
-	    int response = conn.getResponseCode();
-	    Log.d(TAG, "The response is: " + response);
-	    is = conn.getInputStream();
-	    
-	    // Convert the InputStream into a string
-	    String contentAsString = readInputStream(is, len);
-	    return contentAsString;
-	    
-	    // Makes sure that the InputStream is closed after the app is
-	    // finished using it.
-	} finally {
-	    if (is != null) {
-		is.close();
-	    } 
+    /**
+     * Stop the SdClientService service
+     */
+    private void stopServer() {
+	Log.v(TAG,"stopping Server...");
+	// unbind this activity from the service if it is bound.
+	if (mBound) {
+	    try {
+		unbindService(mConnection);
+		mBound = false;
+	    } catch (Exception ex) {
+		Log.e(TAG,"stopServer - error unbinding service - "+ex.toString());
+	    }
 	}
+	// then send an Intent to stop the service.
+	sdClientServiceIntent = new Intent(ClientActivity.this,SdClientService.class);
+	sdClientServiceIntent.setData(Uri.parse("Stop"));
+	getApplicationContext().stopService(sdClientServiceIntent);
+
+	// Change the action bar icon to show the option to start the service.
+	if (mOptionsMenu!=null) {
+	    Log.v(TAG,"Changing action bar icons");
+	    mOptionsMenu.findItem(R.id.action_start_stop).setIcon(R.drawable.start_server);
+	    mOptionsMenu.findItem(R.id.action_start_stop).setTitle("Start Server");
+	} else {
+	    Log.v(TAG,"mOptionsMenu is null, not changing icons!");
+	}
+
     }
-    
-    // Reads an InputStream and converts it to a String.
-    public String readInputStream(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
-	Reader reader = null;
-	reader = new InputStreamReader(stream, "UTF-8");        
-	char[] buffer = new char[len];
-	reader.read(buffer);
-	return new String(buffer);
+
+    /**
+     * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
+     */
+    public boolean isServerRunning() {
+	//Log.v(TAG,"isServerRunning()................");
+	ActivityManager manager = 
+	    (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+	for (RunningServiceInfo service : 
+		 manager.getRunningServices(Integer.MAX_VALUE)) {
+	    //Log.v(TAG,"Service: "+service.service.getClassName());
+	    if ("uk.org.openseizuredetector.SdClientService"
+		.equals(service.service.getClassName())) {
+		//Log.v(TAG,"Yes!");
+            return true;
+	    }
+	}
+	//Log.v(TAG,"No!");
+	return false;
     }
+
+
+
+
 
     /*
      * updateServerStatus - called by the uiTimer timer periodically.
@@ -315,103 +339,107 @@ public class ClientActivity extends Activity
      */
     final Runnable serverStatusRunnable = new Runnable() {
 	    public void run() {
-		TextView tv;
-		tv = (TextView) findViewById(R.id.textView1);
-		if (true) {   // was isServerRunning
-		    tv.setText("Server Running OK");
-		    tv.setBackgroundColor(okColour);
-		    tv = (TextView)findViewById(R.id.textView2);
-		    tv.setText("Access Server at http://"
+		if (mSdClientService!=null) {
+		    TextView tv;
+		    tv = (TextView) findViewById(R.id.textView1);
+		    if (true) {   // was isServerRunning
+			tv.setText("Server Running OK");
+			tv.setBackgroundColor(okColour);
+			tv = (TextView)findViewById(R.id.textView2);
+			tv.setText("Access Server at http://"
 				   +":8080");
-		    tv.setBackgroundColor(okColour);
-		} else {
-		    tv.setText("*** Server Stopped ***");
-		    tv.setBackgroundColor(alarmColour);
-		}
-
-
-		try {
-		    tv = (TextView) findViewById(R.id.alarmTv);
-		    if (mSdData.alarmState==0) {
-			tv.setText(mSdData.alarmPhrase);
-			    tv.setBackgroundColor(okColour);
-		    }
-		    if (mSdData.alarmState==1) {
-			tv.setText(mSdData.alarmPhrase);
-			tv.setBackgroundColor(warnColour);
-		    }
-		    if (mSdData.alarmState==2) {
-			tv.setText(mSdData.alarmPhrase);
-			tv.setBackgroundColor(alarmColour);
-		    }
-		    tv = (TextView) findViewById(R.id.pebTimeTv);
-		    tv.setText(mSdData.dataTime.format("%H:%M:%S"));
-			// Pebble Connected Phrase
-		    tv = (TextView) findViewById(R.id.pebbleTv);
-		    if (mSdData.pebbleConnected) {
-			tv.setText("Pebble Watch Connected OK");	    
 			tv.setBackgroundColor(okColour);
 		    } else {
-			tv.setText("** Pebble Watch NOT Connected **");
+			tv.setText("*** Server Stopped ***");
 			tv.setBackgroundColor(alarmColour);
 		    }
-		    tv = (TextView) findViewById(R.id.appTv);
-		    if (mSdData.pebbleAppRunning) {
-			tv.setText("Pebble App OK");	    
-			tv.setBackgroundColor(okColour);
-		    } else {
-			tv.setText("** Pebble App NOT Running **");	    
-			tv.setBackgroundColor(alarmColour);
-		    }
-		    tv = (TextView) findViewById(R.id.battTv);
-		    tv.setText("Pebble Battery = "+String.valueOf(mSdData.batteryPc)+"%");
-		    if (mSdData.batteryPc<=20)
-			tv.setBackgroundColor(alarmColour);
-		    if (mSdData.batteryPc>20)
-			tv.setBackgroundColor(warnColour);
-		    if (mSdData.batteryPc>=40)
-			tv.setBackgroundColor(okColour);
 		    
-		    tv = (TextView) findViewById(R.id.debugTv);
-		    String specStr = "";
-		    for (int i=0;i<10;i++)
-			specStr = specStr 
-			    + mSdData.simpleSpec[i] 
-			    + ", ";
-		    tv.setText("Spec = "+specStr);
-		} catch (Exception e) {
-		    Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());
+		    
+		    try {
+			tv = (TextView) findViewById(R.id.alarmTv);
+			if (mSdClientService.mSdData.alarmState==0) {
+			    tv.setText(mSdClientService.mSdData.alarmPhrase);
+			    tv.setBackgroundColor(okColour);
+			}
+			if (mSdClientService.mSdData.alarmState==1) {
+			    tv.setText(mSdClientService.mSdData.alarmPhrase);
+			    tv.setBackgroundColor(warnColour);
+			}
+			if (mSdClientService.mSdData.alarmState==2) {
+			    tv.setText(mSdClientService.mSdData.alarmPhrase);
+			    tv.setBackgroundColor(alarmColour);
+			}
+			tv = (TextView) findViewById(R.id.pebTimeTv);
+			tv.setText(mSdClientService.mSdData.dataTime.format("%H:%M:%S"));
+			// Pebble Connected Phrase
+			tv = (TextView) findViewById(R.id.pebbleTv);
+			if (mSdClientService.mSdData.pebbleConnected) {
+			    tv.setText("Pebble Watch Connected OK");	    
+			    tv.setBackgroundColor(okColour);
+			} else {
+			    tv.setText("** Pebble Watch NOT Connected **");
+			    tv.setBackgroundColor(alarmColour);
+			}
+			tv = (TextView) findViewById(R.id.appTv);
+			if (mSdClientService.mSdData.pebbleAppRunning) {
+			    tv.setText("Pebble App OK");	    
+			tv.setBackgroundColor(okColour);
+			} else {
+			    tv.setText("** Pebble App NOT Running **");	    
+			    tv.setBackgroundColor(alarmColour);
+			}
+			tv = (TextView) findViewById(R.id.battTv);
+			tv.setText("Pebble Battery = "+String.valueOf(mSdClientService.mSdData.batteryPc)+"%");
+			if (mSdClientService.mSdData.batteryPc<=20)
+			    tv.setBackgroundColor(alarmColour);
+			if (mSdClientService.mSdData.batteryPc>20)
+			    tv.setBackgroundColor(warnColour);
+			if (mSdClientService.mSdData.batteryPc>=40)
+			    tv.setBackgroundColor(okColour);
+			
+			tv = (TextView) findViewById(R.id.debugTv);
+			String specStr = "";
+			for (int i=0;i<10;i++)
+			    specStr = specStr 
+				+ mSdClientService.mSdData.simpleSpec[i] 
+				+ ", ";
+			tv.setText("Spec = "+specStr);
+		    } catch (Exception e) {
+			Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());
+		    }
+		    ////////////////////////////////////////////////////////////
+		    // Produce graph
+		    LineChart mChart = (LineChart) findViewById(R.id.chart1);
+		    mChart.setDescription("");
+		    mChart.setNoDataTextDescription("You need to provide data for the chart.");
+		    // X Values
+		    ArrayList<String> xVals = new ArrayList<String>();
+		    for (int i = 0; i < 10; i++) {
+			xVals.add((i) + "");
+		    }
+		    // Y Values
+		    ArrayList<Entry> yVals = new ArrayList<Entry>();
+		    for (int i = 0; i < 10; i++) {
+			if (mSdClientService.mSdData!=null)
+			    yVals.add(new Entry(mSdClientService.mSdData.simpleSpec[i], i));
+			else
+			    yVals.add(new Entry(i, i));
+		    }
+		    
+		    // create a dataset and give it a type
+		    LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
+		    set1.setColor(Color.BLACK);
+		    set1.setLineWidth(1f);
+		    
+		    ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
+		    dataSets.add(set1); // add the datasets
+		    LineData data = new LineData(xVals, dataSets);
+		    //data.setValueTextSize(10f);
+		    mChart.setData(data);
+		    mChart.invalidate();
+		} else {
+		    Log.v(TAG,"mSdClientService is null - service not running?");
 		}
-		////////////////////////////////////////////////////////////
-		// Produce graph
-		LineChart mChart = (LineChart) findViewById(R.id.chart1);
-		mChart.setDescription("");
-		mChart.setNoDataTextDescription("You need to provide data for the chart.");
-		// X Values
-		ArrayList<String> xVals = new ArrayList<String>();
-		for (int i = 0; i < 10; i++) {
-		    xVals.add((i) + "");
-		}
-		// Y Values
-		ArrayList<Entry> yVals = new ArrayList<Entry>();
-		for (int i = 0; i < 10; i++) {
-		    if (mSdData!=null)
-			yVals.add(new Entry(mSdData.simpleSpec[i], i));
-		    else
-			yVals.add(new Entry(i, i));
-		}
-
-		// create a dataset and give it a type
-		LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
-		set1.setColor(Color.BLACK);
-		set1.setLineWidth(1f);
-
-		ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
-		dataSets.add(set1); // add the datasets
-		LineData data = new LineData(xVals, dataSets);
-		//data.setValueTextSize(10f);
-		mChart.setData(data);
-		mChart.invalidate();
 	    }
 	};
     
