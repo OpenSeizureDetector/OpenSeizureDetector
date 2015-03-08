@@ -1,6 +1,20 @@
 Android_Pebble_SD CHANGELOG
 ===========================
 
+V1.6   08 Mar 2015
+       Minor changes to web interface data format for
+       compatibility with new android client app.
+
+V1.5   06 Mar 2015
+       Added access to log files from web interface (and changed web interface
+       to use jQuery-mobile).
+
+V1.4   05 Mar 2015
+       Added spectrum graphs to the web interface and android app.
+
+V1.3   04 Mar 2015
+       Added data and alarm logging to SD Card.
+
 V1.2   02 Mar 2015
        Fixed audible bleep on server phone so it will work in background.
        Added Settings screen with option to switch audible alarm on and off.

@@ -611,7 +611,7 @@ public class SdServer extends Service
 	Log.v(TAG,"writeToSD("+alarm+")");
 	Time tnow = new Time(Time.getCurrentTimezone());
 	tnow.setToNow();
-	String dateStr = tnow.format("%Y-%M-%d");
+	String dateStr = tnow.format("%Y-%m-%d");
 
 	// Select filename depending on 'alarm' parameter.
 	String fname;
