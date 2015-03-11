@@ -5,6 +5,11 @@
         android:title="Enable Audible Alarm"
         android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
         android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="AudibleWarning"
+        android:title="Enable Audible Warnings"
+        android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
+        android:defaultValue="true" />
     <EditTextPreference
         android:key="ServerIP"
         android:title="Server IP Addrss."

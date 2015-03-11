@@ -169,6 +169,18 @@ public class ClientActivity extends Activity
 		startServer();
 	    }
 	    return true;
+	case R.id.action_test_alarm_beep:
+	    Log.v(TAG,"action_test_alarm_beep");
+	    if (mBound) {
+		mSdClientService.alarmBeep();
+	    }
+	    return true;
+	case R.id.action_test_warning_beep:
+	    Log.v(TAG,"action_test_warning_beep");
+	    if (mBound) {
+		mSdClientService.warningBeep();
+	    }
+	    return true;
 	case R.id.action_settings:
 	    Log.v(TAG,"action_settings");
 	    try {
@@ -189,9 +201,10 @@ public class ClientActivity extends Activity
     protected void onStart() {
 	super.onStart();
 	SharedPreferences SP = PreferenceManager
-	    .getDefaultSharedPreferences(getBaseContext());
-	boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
-	Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
+	   .getDefaultSharedPreferences(getBaseContext());
+	//boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
+	//boolean audibleWarning = SP.getBoolean("AudibleWarning",true);
+	//Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
 	try {
 	    String uiUpdatePeriodStr = SP.getString("UiUpdatePeriod","2000");
 	    mUiUpdatePeriod = Integer.parseInt(uiUpdatePeriodStr);

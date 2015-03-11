@@ -96,7 +96,8 @@ public class SdClientService extends Service
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdData mSdData;
-    private boolean mAudibleAlarm = false;
+    private boolean mAudibleAlarm = true;
+    private boolean mAudibleWarning = true;
     public String mServerIP = "192.168.1.175";
     private int mDataUpdatePeriod = 2000;
     private Time mStatusTime = null;
@@ -244,15 +245,35 @@ public class SdClientService extends Service
 
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
     /**
-     * beep for duration miliseconds, but only if mAudibleAlarm is set.
+     * beep for duration miliseconds.
      */
     private void beep(int duration) {
 	ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+	toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
+	Log.v(TAG,"beep()");
+    }
+
+    /*
+     * beep, provided mAudibleAlarm is set
+     */
+    public void alarmBeep() {
 	if (mAudibleAlarm) {
-	    toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
-	    Log.v(TAG,"beep()");
+	    beep(1000);
+	    Log.v(TAG,"alarmBeep()");
 	} else {
-	    Log.v(TAG,"beep() - silent...");
+	    Log.v(TAG,"alarmBeep() - silent...");
+	}
+    }
+
+    /*
+     * beep, provided mAudibleWarning is set
+     */
+    public void warningBeep() {
+	if (mAudibleWarning) {
+	    beep(100);
+	    Log.v(TAG,"warningBeep()");
+	} else {
+	    Log.v(TAG,"warningBeep() - silent...");
 	}
     }
 
@@ -267,6 +288,8 @@ public class SdClientService extends Service
 	    .getDefaultSharedPreferences(getBaseContext());
 	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"updatePrefs() - mAudibleAlarm = "+mAudibleAlarm);
+	mAudibleWarning = SP.getBoolean("AudibleWarning",true);
+	Log.v(TAG,"updatePrefs() - mAudibleWarning = "+mAudibleWarning);
 	mServerIP = SP.getString("ServerIP","192.168.1.175");
 	Log.v(TAG,"updatePrefs() - mServerIP = "+mServerIP);
 	try {
@@ -292,11 +315,11 @@ public class SdClientService extends Service
 	    }
 	    if (mSdData.alarmState==1) {
 		Log.v(TAG,"Status=WARNING");
-		beep(200);
+		warningBeep();
 	    }
 	    if (mSdData.alarmState==2) {
 		Log.v(TAG,"Status=ALARM");
-		beep(1000);
+		alarmBeep();
 		Intent clientActivityIntent = 
 		    new Intent(this, ClientActivity.class);
 		clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

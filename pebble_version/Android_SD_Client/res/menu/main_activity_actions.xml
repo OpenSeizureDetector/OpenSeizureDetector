@@ -5,6 +5,18 @@
 	android:showAsAction="never|withText"
 	/>
 
+  <item android:id="@+id/action_test_alarm_beep"
+	android:icon="@drawable/stop_server"
+	android:title="Test Alarm Beep"
+	android:showAsAction="never|withText"
+	/>
+
+  <item android:id="@+id/action_test_warning_beep"
+	android:icon="@drawable/stop_server"
+	android:title="Test Warning Beep"
+	android:showAsAction="never|withText"
+	/>
+
   <item android:id="@+id/action_settings"
 	android:icon="@drawable/ic_action_settings"
 	android:title="Settings"

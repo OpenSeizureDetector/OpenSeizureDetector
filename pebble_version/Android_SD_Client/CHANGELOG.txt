@@ -1,6 +1,11 @@
 Android_SD_CLIENT CHANGELOG
 ===========================
 
+V1.1   10 March 2015
+       Added option to mute warning alarms and full alarms separately, and
+       Added warning and alarm beep test menu options to check volume levels 
+       on device.
+
 V1.0   07 March 2015
        First Play Store release
 
