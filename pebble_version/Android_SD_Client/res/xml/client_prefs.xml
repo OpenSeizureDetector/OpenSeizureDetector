@@ -11,6 +11,12 @@
         android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
         android:defaultValue="true" />
     <EditTextPreference
+        android:key="CancelAudiblePeriod"
+        android:title="Cancel Audible Duration (min)"
+        android:summary="Duration that Audible Alarms are muted when 'Cancel Audible' button is pressed."
+	android:numeric="integer"
+        android:defaultValue="5" />
+    <EditTextPreference
         android:key="ServerIP"
         android:title="Server IP Addrss."
         android:summary="IP Address of OpenSeizureDetector Server (e.g. 192.168.1.175)."

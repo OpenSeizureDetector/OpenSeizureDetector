@@ -119,7 +119,9 @@ public class ClientActivity extends Activity
 
 	// Initialise the User Interface
         setContentView(R.layout.main);
+	// Force the screen to stay on when the app is running
 	getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 	/* Force display of overflow menu - from stackoverflow
 	 * "how to force use of..."
 	 */
@@ -135,6 +137,18 @@ public class ClientActivity extends Activity
 	    Log.v(TAG,"menubar fiddle exception: "+e.toString());
 	}
 
+	// Deal with the 'Cancel Audible Button'
+	Button button = (Button) findViewById(R.id.cancelAudibleButton);
+	button.setOnClickListener(new View.OnClickListener() {
+		public void onClick(View v) {
+		    Log.v(TAG,"cancelAudibleButton.onClick()");
+		    if (mBound) {
+			mSdClientService.cancelAudible();
+		    }
+		}
+	    });
+
+	// Start the background service to monitor the server.
 	startServer();
 
 
@@ -202,9 +216,7 @@ public class ClientActivity extends Activity
 	super.onStart();
 	SharedPreferences SP = PreferenceManager
 	   .getDefaultSharedPreferences(getBaseContext());
-	//boolean audibleAlarm = SP.getBoolean("AudibleAlarm",true);
-	//boolean audibleWarning = SP.getBoolean("AudibleWarning",true);
-	//Log.v(TAG,"onStart - auidbleAlarm = "+audibleAlarm);
+
 	try {
 	    String uiUpdatePeriodStr = SP.getString("UiUpdatePeriod","2000");
 	    mUiUpdatePeriod = Integer.parseInt(uiUpdatePeriodStr);
@@ -404,8 +416,24 @@ public class ClientActivity extends Activity
 			tv.setText("***Can Not Access Server***");
 			tv.setBackgroundColor(alarmColour);
 		    }
-		    
-		    
+		 
+		    // Deal with Cancel Audible button
+		    Button cancelAudibleButton = 
+			(Button) findViewById(R.id.cancelAudibleButton);
+		    if (mSdClientService.isAudibleCancelled()) {
+			cancelAudibleButton.setText("Audible Alarms Cancelled "
+						    + "for "
+						    + mSdClientService.
+						    cancelAudibleTimeRemaining()
+						    + " sec."
+						    + " Press to re-enable");
+		    } else {
+			if (mSdClientService.mAudibleAlarm) {
+			    cancelAudibleButton.setText("Cancel Audible Alarms (temporarily)");
+			} else {
+			    cancelAudibleButton.setText("Audible Alarms OFF");
+			}
+		    }
 		    try {
 			tv = (TextView) findViewById(R.id.alarmTv);
 			if (mSdClientService.mSdData.alarmState==0) {

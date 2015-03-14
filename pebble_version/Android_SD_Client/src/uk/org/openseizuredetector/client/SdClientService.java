@@ -50,6 +50,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Binder;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
@@ -93,11 +94,15 @@ public class SdClientService extends Service
     private final static String TAG = "SdClientService";
     private Looper mServiceLooper;
     private Timer statusTimer = null;
+    private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
+    private long mCancelAudibleTimeRemaining = 0;
+    private CountDownTimer mCancelAudibleTimer = null;
+    private boolean mCancelAudible = false;
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdData mSdData;
-    private boolean mAudibleAlarm = true;
-    private boolean mAudibleWarning = true;
+    public boolean mAudibleAlarm = true;
+    public boolean mAudibleWarning = true;
     public String mServerIP = "192.168.1.175";
     private int mDataUpdatePeriod = 2000;
     private Time mStatusTime = null;
@@ -229,19 +234,66 @@ public class SdClientService extends Service
      */
     private void showNotification() {
 	Log.v(TAG,"showNotification()");
-        CharSequence text = "OpenSeizureDetector Alarm Client Running";
+        CharSequence text = "Alarm Client for OpenSeizureDetector Running";
         Notification notification = 
 	   new Notification(R.drawable.star_of_life_24x24, text,
 			     System.currentTimeMillis());
 	PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, ClientActivity.class), 0);
-        notification.setLatestEventInfo(this, "OpenSeizureDetector",
+        notification.setLatestEventInfo(this, "Alarm Client for OpenSeizureDetector",
                       text, contentIntent);
 	notification.flags |= Notification.FLAG_NO_CLEAR;
         mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mNM.notify(NOTIFICATION_ID, notification);
     }
 
+    /*
+     * Temporary cancel audible alarms, for the period specified by the
+     * CancelAudiblePeriod setting.
+     */
+    private class CancelAudibleTimer extends CountDownTimer {
+	public CancelAudibleTimer(long startTime, long interval) {
+	    super(startTime, interval);
+	}	
+	@Override
+	public void onFinish() {
+	    mCancelAudible = false;
+	    Log.v(TAG,"mCancelAudibleTimer - removing cancelAudible flag");
+	}
+	@Override
+	public void onTick(long msRemaining) {
+	    mCancelAudibleTimeRemaining = msRemaining/1000;
+	    Log.v(TAG,"mCancelAudibleTimer - onTick() - Time Remaining = "
+		  + mCancelAudibleTimeRemaining);
+	}
+	
+    }
+    
+    public void cancelAudible() {
+	// Start timer to remove the cancel audible flag
+	// after the required period.
+	if (mCancelAudibleTimer!=null) {
+	    Log.v(TAG,"onCreate(): cancel audible timer already running - cancelling it.");
+	    mCancelAudibleTimer.cancel();
+	    mCancelAudibleTimer = null;
+	    mCancelAudible = false;
+	} else {
+	    Log.v(TAG,"cancelAudible(): starting cancel audible timer");
+	    mCancelAudible = true;
+	    mCancelAudibleTimer = 
+		// conver to ms.
+		new CancelAudibleTimer(mCancelAudiblePeriod*60*1000,1000);
+	    mCancelAudibleTimer.start();
+	}
+    }
+
+    public boolean isAudibleCancelled() {
+	return mCancelAudible;
+    }
+
+    public long cancelAudibleTimeRemaining() {
+	return mCancelAudibleTimeRemaining;
+    }
 
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
     /**
@@ -257,11 +309,15 @@ public class SdClientService extends Service
      * beep, provided mAudibleAlarm is set
      */
     public void alarmBeep() {
-	if (mAudibleAlarm) {
-	    beep(1000);
-	    Log.v(TAG,"alarmBeep()");
+	if (mCancelAudible) {
+	    Log.v(TAG,"alarmBeep() - CancelAudible Active - silent beep...");
 	} else {
-	    Log.v(TAG,"alarmBeep() - silent...");
+	    if (mAudibleAlarm) {
+		beep(1000);
+		Log.v(TAG,"alarmBeep()");
+	    } else {
+		Log.v(TAG,"alarmBeep() - silent...");
+	    }
 	}
     }
 
@@ -269,11 +325,15 @@ public class SdClientService extends Service
      * beep, provided mAudibleWarning is set
      */
     public void warningBeep() {
-	if (mAudibleWarning) {
-	    beep(100);
-	    Log.v(TAG,"warningBeep()");
+	if (mCancelAudible) {
+	    Log.v(TAG,"warningBeep() - CancelAudible Active - silent beep...");
 	} else {
-	    Log.v(TAG,"warningBeep() - silent...");
+	    if (mAudibleWarning) {
+		beep(100);
+		Log.v(TAG,"warningBeep()");
+	    } else {
+		Log.v(TAG,"warningBeep() - silent...");
+	    }
 	}
     }
 
@@ -301,6 +361,19 @@ public class SdClientService extends Service
 	    Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing Preferences - Something won't work",Toast.LENGTH_SHORT);
 	    toast.show();
 	}
+
+	// Parse the CancelAudible period setting.
+	try {
+	    String cancelAudiblePeriodStr = SP.getString("CancelAudiblePeriod","10");
+	    mCancelAudiblePeriod = Integer.parseInt(cancelAudiblePeriodStr);
+	    Log.v(TAG,"onStart() - mCancelAudiblePeriod = "+mCancelAudiblePeriod);
+	} catch (Exception ex) {
+	    Log.v(TAG,"onStart() - Problem cancelAudiblePeriod preference!");
+	    Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing CancelAudiblePeriod Preference",Toast.LENGTH_SHORT);
+	    toast.show();
+	}
+
+
     }
 
     /**

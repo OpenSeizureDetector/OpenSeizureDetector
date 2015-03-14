@@ -1,6 +1,10 @@
 Android_SD_CLIENT CHANGELOG
 ===========================
 
+V1.2   14 March 2015
+       Added a 'Cancel Audible' button to the main screen to disable audible
+       alarms for a short period (default 5 mins).
+
 V1.1   10 March 2015
        Added option to mute warning alarms and full alarms separately, and
        Added warning and alarm beep test menu options to check volume levels 
