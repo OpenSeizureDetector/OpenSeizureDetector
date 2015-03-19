@@ -6,6 +6,27 @@
         android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
         android:defaultValue="true" />
     <CheckBoxPreference
+        android:key="AudibleWarning"
+        android:title="Enable Audible Warnings"
+        android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="SMSAlarm"
+        android:title="Enable SMS Alarm"
+        android:summary="Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition."
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="SMSNumbers"
+        android:title="SMS Alarm numbers"
+        android:summary="Telephone number(s) to notify by SMS of Alarm (comma separated)."
+        android:defaultValue="" />
+    <EditTextPreference
+        android:key="SMSMsg"
+        android:title="SMS Message"
+        android:summary="Message to be Sent by SMS when a Seizure is Detected."
+        android:defaultValue="**SEIZURE DETECTED**" />
+
+    <CheckBoxPreference
         android:key="LogAlarms"
         android:title="Log Alarm events to SD Card"
         android:summary="Log Alarm events to SD Card"

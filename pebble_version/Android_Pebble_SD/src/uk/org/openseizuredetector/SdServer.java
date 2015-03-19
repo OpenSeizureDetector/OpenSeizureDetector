@@ -55,6 +55,8 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Process;
 import android.preference.PreferenceManager;
+import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.util.Log;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -131,6 +133,11 @@ public class SdServer extends Service
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
     private boolean mAudibleAlarm = false;
+    private boolean mAudibleWarning = false;
+    private boolean mSMSAlarm = false;
+    private String[] mSMSNumbers;
+    private String mSMSMsgStr = "default SMS Message";
+    public Time mSMSTime = null;  // last time we sent an SMS Alarm (limited to one per minute)
     private boolean mLogAlarms = true;
     private boolean mLogData = false;
     private File mOutFile;
@@ -198,6 +205,11 @@ public class SdServer extends Service
 	// show the service is running.
 	Log.v(TAG,"showing Notification");
 	showNotification();
+
+	// Record last time we sent an SMS so we can limit rate of SMS
+	// sending to one per minute.
+	mSMSTime = new Time(Time.getCurrentTimezone());
+
 
 	// Start receiving data from the pebble watch
 	startPebbleServer();
@@ -339,6 +351,22 @@ public class SdServer extends Service
 
 
     /**
+     * Sends SMS Alarms to the telephone numbers specified in mSMSNumbers[]
+     */
+    private void sendSMSAlarm() {
+	Log.v(TAG,"sendSMSAlarm() - Sending to "+mSMSNumbers.length+" Numbers");
+	Time tnow = new Time(Time.getCurrentTimezone());
+	tnow.setToNow();
+	String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
+	SmsManager sm = SmsManager.getDefault();
+	for (int i=0;i<mSMSNumbers.length;i++) {
+	    Log.v(TAG,"sendSMSAlarm() - Sending to "+mSMSNumbers[i]);
+	    sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr+" - "+dateStr, null, null);
+	}
+
+    }
+
+    /**
      * Set this server to receive pebble data by registering it as
      * A PebbleDataReceiver
      */
@@ -392,7 +420,20 @@ public class SdServer extends Service
 			    } else {
 				Log.v(TAG,"***ALARM***");
 			    }
+			    // Make alarm beep tone
 			    beep(1000);
+			    // Send SMS Alarm.
+			    if (mSMSAlarm) {
+				Time tnow = new Time(Time.getCurrentTimezone());
+				tnow.setToNow();
+				// limit SMS alarms to one per minute
+				if  ((tnow.toMillis(false) 
+				      - mSMSTime.toMillis(false)) 
+				     > 60000) {
+				sendSMSAlarm();
+				mSMSTime = tnow;
+				}
+			    }
 			}
 
 			// Read the data that has been sent, and convert it into
@@ -562,6 +603,15 @@ public class SdServer extends Service
 	    .getDefaultSharedPreferences(getBaseContext());
 	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
+	mAudibleWarning = SP.getBoolean("AudibleWarning",true);
+	Log.v(TAG,"updatePrefs() - mAuidbleWarning = "+mAudibleWarning);
+	mSMSAlarm = SP.getBoolean("SMSAlarm",false);
+	Log.v(TAG,"updatePrefs() - mSMSAlarm = "+mSMSAlarm);
+	String SMSNumberStr = SP.getString("SMSNumbers","");
+	mSMSNumbers = SMSNumberStr.split(",");
+	mSMSMsgStr = SP.getString("SMSMsg","Seizure Detected!!!");
+	Log.v(TAG,"updatePrefs() - SMSNumberStr = "+SMSNumberStr);
+	Log.v(TAG,"updatePrefs() - mSMSNumbers = "+mSMSNumbers);
 	mLogAlarms = SP.getBoolean("LogAlarms",true);
 	Log.v(TAG,"updatePrefs() - mLogAlarms = "+mLogAlarms);
 	mLogData = SP.getBoolean("LogData",false);
