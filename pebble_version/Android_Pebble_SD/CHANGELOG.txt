@@ -1,6 +1,9 @@
 Android_Pebble_SD CHANGELOG
 ===========================
 
+V1.7   19 Mar 2015
+       Added SMS Alarm notification function.
+
 V1.6   08 Mar 2015
        Minor changes to web interface data format for
        compatibility with new android client app.
