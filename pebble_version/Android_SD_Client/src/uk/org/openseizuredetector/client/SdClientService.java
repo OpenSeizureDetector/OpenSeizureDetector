@@ -101,6 +101,7 @@ public class SdClientService extends Service
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdData mSdData;
+    public boolean mAudibleFaultWarning = true;
     public boolean mAudibleAlarm = true;
     public boolean mAudibleWarning = true;
     public String mServerIP = "192.168.1.175";
@@ -308,6 +309,24 @@ public class SdClientService extends Service
     /*
      * beep, provided mAudibleAlarm is set
      */
+    public void faultWarningBeep() {
+	if (mCancelAudible) {
+	    Log.v(TAG,"faultWarningBeep() - CancelAudible Active - silent beep...");
+	} else {
+	    if (mAudibleFaultWarning) {
+		beep(10);
+		Log.v(TAG,"faultWarningBeep()");
+	    } else {
+		Log.v(TAG,"faultWarningBeep() - silent...");
+	    }
+	}
+    }
+
+
+
+    /*
+     * beep, provided mAudibleAlarm is set
+     */
     public void alarmBeep() {
 	if (mCancelAudible) {
 	    Log.v(TAG,"alarmBeep() - CancelAudible Active - silent beep...");
@@ -346,6 +365,8 @@ public class SdClientService extends Service
 	Log.v(TAG,"updatePrefs()");
 	SharedPreferences SP = PreferenceManager
 	    .getDefaultSharedPreferences(getBaseContext());
+	mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning",true);
+	Log.v(TAG,"updatePrefs() - mAudibleFaultWarning = "+mAudibleFaultWarning);
 	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"updatePrefs() - mAudibleAlarm = "+mAudibleAlarm);
 	mAudibleWarning = SP.getBoolean("AudibleWarning",true);
@@ -398,6 +419,10 @@ public class SdClientService extends Service
 		clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(clientActivityIntent);
 	    }
+	    if ((mSdData.pebbleConnected == false) || 
+		(mSdData.pebbleAppRunning == false)) {
+		faultWarningBeep();
+	    }
     }
 
 
@@ -439,6 +464,7 @@ public class SdClientService extends Service
 		    mSdData.pebbleAppRunning = false;
 		    mSdData.alarmState = 2;
 		    mSdData.alarmPhrase = "Warning - No Connection to Server";
+		    faultWarningBeep();
 		} else {
 		    // Populate mSdData using the received data.
 		    mSdData.serverOK = true;

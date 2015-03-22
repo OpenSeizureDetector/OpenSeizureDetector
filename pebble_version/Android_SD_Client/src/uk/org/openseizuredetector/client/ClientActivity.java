@@ -183,6 +183,12 @@ public class ClientActivity extends Activity
 		startServer();
 	    }
 	    return true;
+	case R.id.action_test_fault_warning_beep:
+	    Log.v(TAG,"action_test_fault_warning_beep");
+	    if (mBound) {
+		mSdClientService.faultWarningBeep();
+	    }
+	    return true;
 	case R.id.action_test_alarm_beep:
 	    Log.v(TAG,"action_test_alarm_beep");
 	    if (mBound) {
