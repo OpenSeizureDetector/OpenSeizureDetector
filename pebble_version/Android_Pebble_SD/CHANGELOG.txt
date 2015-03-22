@@ -1,6 +1,10 @@
 Android_Pebble_SD CHANGELOG
 ===========================
 
+V1.8   22 Mar 2015
+       Added fault warning audible alarm to alert user to loss of connection to
+       watch or server.
+
 V1.7   19 Mar 2015
        Added SMS Alarm notification function.
 

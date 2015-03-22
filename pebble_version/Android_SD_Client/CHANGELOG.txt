@@ -1,6 +1,10 @@
 Android_SD_CLIENT CHANGELOG
 ===========================
 
+V1.3   22 march 2015
+       Added fault warning audible alarm to alert user to loss of connection to
+       watch or server.
+
 V1.2   14 March 2015
        Added a 'Cancel Audible' button to the main screen to disable audible
        alarms for a short period (default 5 mins).
