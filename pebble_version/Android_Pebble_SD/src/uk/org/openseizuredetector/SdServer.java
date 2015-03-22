@@ -58,6 +58,7 @@ import android.preference.PreferenceManager;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
+import android.widget.Toast;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.io.*;
@@ -132,8 +133,10 @@ public class SdServer extends Service
     private WakeLock mWakeLock = null;
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
+    private boolean mCancelAudible = false;
     private boolean mAudibleAlarm = false;
     private boolean mAudibleWarning = false;
+    private boolean mAudibleFaultWarning = false;
     private boolean mSMSAlarm = false;
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
@@ -340,30 +343,82 @@ public class SdServer extends Service
      */
     private void beep(int duration) {
 	ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
-	if (mAudibleAlarm) {
-	    toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
-	    Log.v(TAG,"beep()");
+	toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration); 
+	Log.v(TAG,"beep()");
+    }
+
+    /*
+     * beep, provided mAudibleAlarm is set
+     */
+    public void faultWarningBeep() {
+	if (mCancelAudible) {
+	    Log.v(TAG,"faultWarningBeep() - CancelAudible Active - silent beep...");
 	} else {
-	    Log.v(TAG,"beep() - silent...");
+	    if (mAudibleFaultWarning) {
+		beep(10);
+		Log.v(TAG,"faultWarningBeep()");
+	    } else {
+		Log.v(TAG,"faultWarningBeep() - silent...");
+	    }
 	}
     }
 
 
 
+    /*
+     * beep, provided mAudibleAlarm is set
+     */
+    public void alarmBeep() {
+	if (mCancelAudible) {
+	    Log.v(TAG,"alarmBeep() - CancelAudible Active - silent beep...");
+	} else {
+	    if (mAudibleAlarm) {
+		beep(1000);
+		Log.v(TAG,"alarmBeep()");
+	    } else {
+		Log.v(TAG,"alarmBeep() - silent...");
+	    }
+	}
+    }
+
+    /*
+     * beep, provided mAudibleWarning is set
+     */
+    public void warningBeep() {
+	if (mCancelAudible) {
+	    Log.v(TAG,"warningBeep() - CancelAudible Active - silent beep...");
+	} else {
+	    if (mAudibleWarning) {
+		beep(100);
+		Log.v(TAG,"warningBeep()");
+	    } else {
+		Log.v(TAG,"warningBeep() - silent...");
+	    }
+	}
+    }
+
+
     /**
      * Sends SMS Alarms to the telephone numbers specified in mSMSNumbers[]
      */
-    private void sendSMSAlarm() {
-	Log.v(TAG,"sendSMSAlarm() - Sending to "+mSMSNumbers.length+" Numbers");
-	Time tnow = new Time(Time.getCurrentTimezone());
-	tnow.setToNow();
-	String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
-	SmsManager sm = SmsManager.getDefault();
-	for (int i=0;i<mSMSNumbers.length;i++) {
-	    Log.v(TAG,"sendSMSAlarm() - Sending to "+mSMSNumbers[i]);
-	    sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr+" - "+dateStr, null, null);
+    public void sendSMSAlarm() {
+	if (mSMSAlarm) {
+	    Log.v(TAG,"sendSMSAlarm() - Sending to "+mSMSNumbers.length+" Numbers");
+	    Time tnow = new Time(Time.getCurrentTimezone());
+	    tnow.setToNow();
+	    String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
+	    SmsManager sm = SmsManager.getDefault();
+	    for (int i=0;i<mSMSNumbers.length;i++) {
+		Log.v(TAG,"sendSMSAlarm() - Sending to "+mSMSNumbers[i]);
+		sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr+" - "+dateStr, null, null);
+	    }
+	} else {
+	    Log.v(TAG,"sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
+	    Toast toast = Toast.makeText(getApplicationContext(),
+					 "SMS Alarms Disabled - not doing anything!",
+					 Toast.LENGTH_SHORT);
+	    toast.show();
 	}
-
     }
 
     /**
@@ -409,7 +464,7 @@ public class SdServer extends Service
 			    } else {
 				Log.v(TAG,"WARNING");
 			    }
-			    beep(200);
+			    warningBeep();
 			}
 			if (sdData.alarmState==2) {
 			    sdData.alarmPhrase="ALARM";
@@ -421,7 +476,7 @@ public class SdServer extends Service
 				Log.v(TAG,"***ALARM***");
 			    }
 			    // Make alarm beep tone
-			    beep(1000);
+			    alarmBeep();
 			    // Send SMS Alarm.
 			    if (mSMSAlarm) {
 				Time tnow = new Time(Time.getCurrentTimezone());
@@ -548,10 +603,6 @@ public class SdServer extends Service
      * If the watch app is not running, it attempts to re-start it.
      */
     public void getPebbleStatus() {
-	//if (statusTimer!=null) 
-	//    Log.v(TAG,"getPebbleStatus() - statusTimer = "+statusTimer.toString());
-	//else
-	//    Log.v(TAG,"getPebbleStatus() - statusTimer = null?????");
 	Time tnow = new Time(Time.getCurrentTimezone());
 	tnow.setToNow();
 	// Check we are actually connected to the pebble.
@@ -566,6 +617,9 @@ public class SdServer extends Service
 	    sdData.pebbleAppRunning = false;
 	    Log.v(TAG,"Pebble App Not Running - Attempting to Re-Start");
 	    startWatchApp();
+	    if (mAudibleFaultWarning) {
+		faultWarningBeep();
+	    }
 	} else {
 	    sdData.pebbleAppRunning = true;
 	}
@@ -601,6 +655,8 @@ public class SdServer extends Service
 	Log.v(TAG,"updatePrefs()");
 	SharedPreferences SP = PreferenceManager
 	    .getDefaultSharedPreferences(getBaseContext());
+	mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning",true);
+	Log.v(TAG,"updatePrefs() - mAuidbleFaultWarning = "+mAudibleFaultWarning);
 	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
 	Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
 	mAudibleWarning = SP.getBoolean("AudibleWarning",true);

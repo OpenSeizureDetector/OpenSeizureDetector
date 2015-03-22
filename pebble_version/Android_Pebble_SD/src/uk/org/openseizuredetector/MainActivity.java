@@ -155,6 +155,16 @@ public class MainActivity extends Activity
     public boolean onOptionsItemSelected(MenuItem item) {
 	Log.v(TAG,"Option "+item.getItemId()+" selected");
 	switch (item.getItemId()) {
+	case R.id.action_launch_pebble_app:
+	    Log.v(TAG,"action_launch_pebble_app");
+	    try {
+		PackageManager pm = this.getPackageManager();
+		Intent pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
+		this.startActivity(pebbleAppIntent);
+	    } catch (Exception ex) {
+		Log.v(TAG,"exception starting pebble App "+ex.toString());
+	    }
+	    return true;
 	case R.id.action_start_stop:
 	    // Respond to the start/stop server menu item.
 	    Log.v(TAG,"action_sart_stop");
@@ -164,6 +174,30 @@ public class MainActivity extends Activity
 	    } else {
 		Log.v(TAG,"Starting Server");
 		startServer();
+	    }
+	    return true;
+	case R.id.action_test_fault_beep:
+	    Log.v(TAG,"action_test_fault_beep");
+	    if (mBound) {
+		mSdServer.faultWarningBeep();
+	    }
+	    return true;
+	case R.id.action_test_alarm_beep:
+	    Log.v(TAG,"action_test_alarm_beep");
+	    if (mBound) {
+		mSdServer.alarmBeep();
+	    }
+	    return true;
+	case R.id.action_test_warning_beep:
+	    Log.v(TAG,"action_test_warning_beep");
+	    if (mBound) {
+		mSdServer.warningBeep();
+	    }
+	    return true;
+	case R.id.action_test_sms_alarm:
+	    Log.v(TAG,"action_test_sms_alarm");
+	    if (mBound) {
+		mSdServer.sendSMSAlarm();
 	    }
 	    return true;
 	case R.id.action_settings:
