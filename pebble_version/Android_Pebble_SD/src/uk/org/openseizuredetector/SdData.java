@@ -39,6 +39,7 @@ import org.json.JSONArray;
 public class SdData implements Parcelable {
     private final static String TAG = "SdData";
     /* Analysis settings */
+    public boolean haveSettings = false;   // flag to say if we have received settings or not.
     public long alarmFreqMin;
     public long alarmFreqMax;
     public long nMin;

@@ -243,7 +243,7 @@ public class MainActivity extends Activity
 		versionName = null;
 	    }
 	}
-	tv.setText("Android OpenSeizureDetector Version "+versionName);
+	tv.setText("OpenSeizureDetector Server Version "+versionName);
 
 	if (!isServerRunning()) {
 	    Log.v(TAG,"Server not Running - Starting Server");
@@ -495,8 +495,8 @@ public class MainActivity extends Activity
 		    }
 		    else {
 			tv = (TextView) findViewById(R.id.alarmTv);
-			tv.setText("Not Bound to Server");
-			tv.setBackgroundColor(alarmColour);
+			tv.setText("Not Connected to Server");
+			tv.setBackgroundColor(warnColour);
 		    }
 		} catch (Exception e) {
 		    Log.v(TAG,"ServerStatusRunnable: Exception - "+e.toString());

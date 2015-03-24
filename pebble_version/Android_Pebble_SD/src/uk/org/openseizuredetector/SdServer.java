@@ -320,13 +320,13 @@ public class SdServer extends Service
      */
     private void showNotification() {
 	Log.v(TAG,"showNotification()");
-        CharSequence text = "OpenSeizureDetector Service Running";
+        CharSequence text = "OpenSeizureDetector Server Running";
         Notification notification = 
 	   new Notification(R.drawable.star_of_life_24x24, text,
 			     System.currentTimeMillis());
 	PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, MainActivity.class), 0);
-        notification.setLatestEventInfo(this, "OpenSeizureDetector",
+        notification.setLatestEventInfo(this, "OpenSeizureDetector Server",
                       text, contentIntent);
 	notification.flags |= Notification.FLAG_NO_CLEAR;
         mNM = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
@@ -514,6 +514,7 @@ public class SdServer extends Service
 			sdData.alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
 			sdData.alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
 			sdData.batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
+			sdData.haveSettings = true;
 		    }	
 		}
 	    };
@@ -627,6 +628,11 @@ public class SdServer extends Service
 	if (mPebbleAppRunningCheck) {
 	    mPebbleAppRunningCheck = false;
 	    mPebbleStatusTime.setToNow();
+	}
+
+	if (!sdData.haveSettings) {
+	    Log.v(TAG,"getPebbleStatus() - no settings received yet - requesting");
+	    getPebbleSdSettings();
 	}
     }
 
