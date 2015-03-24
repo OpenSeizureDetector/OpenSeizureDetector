@@ -614,6 +614,7 @@ public class SdServer extends Service
 	    sdData.pebbleAppRunning = false;
 	    Log.v(TAG,"Pebble App Not Running - Attempting to Re-Start");
 	    startWatchApp();
+	    getPebbleSdSettings();
 	    if (mAudibleFaultWarning) {
 		faultWarningBeep();
 	    }
