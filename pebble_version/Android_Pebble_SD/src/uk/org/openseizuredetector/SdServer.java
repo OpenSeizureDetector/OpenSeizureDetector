@@ -195,15 +195,12 @@ public class SdServer extends Service
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-	Log.v(TAG,"SdServer service starting");
+	Log.v(TAG,"onStartCommand() - SdServer service starting");
 	
 	// Update preferences.
-	Log.v(TAG,"calling updatePrefs()");
+	Log.v(TAG,"onStartCommand() - calling updatePrefs()");
 	updatePrefs();
 	
-	//writeAlarmToSD();
-	
-
 	// Display a notification icon in the status bar of the phone to
 	// show the service is running.
 	Log.v(TAG,"showing Notification");
@@ -232,7 +229,7 @@ public class SdServer extends Service
 	}
 	
 	// Start timer to retrieve pebble settings regularly.
-	//getPebbleSdSettings();
+	getPebbleSdSettings();
 	if (settingsTimer == null) {
 	    Log.v(TAG,"onCreate(): starting settings timer");
 	    settingsTimer = new Timer();
