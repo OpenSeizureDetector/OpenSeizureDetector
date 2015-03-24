@@ -170,10 +170,13 @@ public class MainActivity extends Activity
 	    Log.v(TAG,"action_sart_stop");
 	    if (mBound) {
 		Log.v(TAG,"Stopping Server");
+		unbindFromServer();
 		stopServer();
 	    } else {
 		Log.v(TAG,"Starting Server");
 		startServer();
+		// and bind to it so we can see its data
+		bindToServer();
 	    }
 	    return true;
 	case R.id.action_test_fault_beep:
@@ -242,17 +245,21 @@ public class MainActivity extends Activity
 	}
 	tv.setText("Android OpenSeizureDetector Version "+versionName);
 
+	if (!isServerRunning()) {
+	    Log.v(TAG,"Server not Running - Starting Server");
+	    startServer();
+	} else {
+	    Log.v(TAG,"Server Already Running OK");
+	}
+	// and bind to it so we can see its data
+	bindToServer();
 
-	startServer();
     }
 
     @Override
     protected void onStop() {
 	super.onStop();
-	if (mBound) {
-	    unbindService(mConnection);
-	    mBound = false;
-	}
+	unbindFromServer();
     }
 
   /** Defines callbacks for service binding, passed to bindService() */
@@ -281,6 +288,34 @@ public class MainActivity extends Activity
         }
     };
 
+
+    /**
+     * bind to an already running server.
+     */
+    private void bindToServer() {
+	Log.v(TAG,"bindToServer() - binding to SdServer");
+	Intent intent = new Intent(this,SdServer.class);
+	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    /** 
+     * unbind from server
+     */
+    private void unbindFromServer() {
+	// unbind this activity from the service if it is bound.
+	if (mBound) {
+	    Log.v(TAG,"unbindFromServer() - unbinding");
+	    try {
+		unbindService(mConnection);
+		mBound = false;
+	    } catch (Exception ex) {
+		Log.e(TAG,"unbindFromServer() - error unbinding service - "+ex.toString());
+	    }
+	} else {
+	    Log.v(TAG,"unbindFromServer() - not bound to server - ignoring");
+	}
+    }
+
     /**
      * Start the SdServer service
      */
@@ -290,10 +325,6 @@ public class MainActivity extends Activity
 	sdServerIntent.setData(Uri.parse("Start"));
 	getApplicationContext().startService(sdServerIntent);
 
-	// and bind to it so we can see its data
-	Intent intent = new Intent(this,SdServer.class);
-	bindService(intent,mConnection, Context.BIND_AUTO_CREATE);
-	
 	// Change the action bar icon to show the option to stop the service.
 	if (mOptionsMenu!=null) {
 	    Log.v(TAG,"Changing menu icons");
@@ -310,15 +341,7 @@ public class MainActivity extends Activity
      */
     private void stopServer() {
 	Log.v(TAG,"stopping Server...");
-	// unbind this activity from the service if it is bound.
-	if (mBound) {
-	    try {
-		unbindService(mConnection);
-		mBound = false;
-	    } catch (Exception ex) {
-		Log.e(TAG,"stopServer - error unbinding service - "+ex.toString());
-	    }
-	}
+
 	// then send an Intent to stop the service.
 	sdServerIntent = new Intent(MainActivity.this,SdServer.class);
 	sdServerIntent.setData(Uri.parse("Stop"));
