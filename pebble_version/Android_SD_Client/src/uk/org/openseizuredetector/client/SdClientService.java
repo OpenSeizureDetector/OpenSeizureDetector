@@ -95,9 +95,12 @@ public class SdClientService extends Service
     private Looper mServiceLooper;
     private Timer statusTimer = null;
     private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
+    private int mFaultTimerPeriod = 30;  // Cancel Audible Period in sec
     private long mCancelAudibleTimeRemaining = 0;
     private CountDownTimer mCancelAudibleTimer = null;
     private boolean mCancelAudible = false;
+    private FaultTimer mFaultTimer = null;
+    private boolean mFaultTimerCompleted = false;
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdData mSdData;
@@ -248,6 +251,31 @@ public class SdClientService extends Service
         mNM.notify(NOTIFICATION_ID, notification);
     }
 
+
+    /*
+     * Inhibit fault alarm initiation for a period to avoid spurious warning 
+     * beeps caused by short term network interruptions.
+     */
+    private class FaultTimer extends CountDownTimer {
+	public long mFaultTimerRemaining = 0;
+	public FaultTimer(long startTime, long interval) {
+	    super(startTime, interval);
+	}	
+	@Override
+	public void onFinish() {
+	    mFaultTimerCompleted = true;
+	    Log.v(TAG,"mFaultTimer - removing mFaultTimerRunning flag");
+	}
+	@Override
+	public void onTick(long msRemaining) {
+	    mFaultTimerRemaining = msRemaining/1000;
+	    Log.v(TAG,"mFaultTimer - onTick() - Time Remaining = "
+		  + mFaultTimerRemaining);
+	}
+	
+    }
+
+
     /*
      * Temporary cancel audible alarms, for the period specified by the
      * CancelAudiblePeriod setting.
@@ -269,6 +297,35 @@ public class SdClientService extends Service
 	}
 	
     }
+
+    /** 
+     * Start the fault timer that is used to require a fault to remain
+     * standing for a period before raising fault beeps.
+     */
+    public void startFaultTimer() {
+	if (mFaultTimer!=null) {
+	    Log.v(TAG,"startFaultTimer(): fault timer already running - not doing anything.");
+	} else {
+	    Log.v(TAG,"startFaultTimer(): starting fault timer.");
+	    mFaultTimerCompleted = false;
+	    mFaultTimer = 
+		// conver to ms.
+		new FaultTimer(mFaultTimerPeriod*1000,1000);
+	    mFaultTimer.start();
+	}
+    }
+
+    public void stopFaultTimer() {
+	if (mFaultTimer!=null) {
+	    Log.v(TAG,"stopFaultTimer(): fault timer already running - cancelling it.");
+	    mFaultTimer.cancel();
+	    mFaultTimer = null;
+	    mFaultTimerCompleted = false;
+	} else {
+	    Log.v(TAG,"stopFaultTimer(): fault timer not running - not doing anything.");
+	}
+    }
+
     
     public void cancelAudible() {
 	// Start timer to remove the cancel audible flag
@@ -310,15 +367,20 @@ public class SdClientService extends Service
      * beep, provided mAudibleAlarm is set
      */
     public void faultWarningBeep() {
-	if (mCancelAudible) {
-	    Log.v(TAG,"faultWarningBeep() - CancelAudible Active - silent beep...");
-	} else {
-	    if (mAudibleFaultWarning) {
-		beep(10);
-		Log.v(TAG,"faultWarningBeep()");
+	if (mFaultTimerCompleted) {
+	    if (mCancelAudible) {
+		Log.v(TAG,"faultWarningBeep() - CancelAudible Active - silent beep...");
 	    } else {
-		Log.v(TAG,"faultWarningBeep() - silent...");
+		if (mAudibleFaultWarning) {
+		    beep(10);
+		    Log.v(TAG,"faultWarningBeep()");
+		} else {
+		    Log.v(TAG,"faultWarningBeep() - silent...");
+		}
 	    }
+	} else {
+	    startFaultTimer();
+	    Log.v(TAG,"faultWarningBeep() - starting Fault Timer");
 	}
     }
 
@@ -394,6 +456,16 @@ public class SdClientService extends Service
 	    toast.show();
 	}
 
+	// Parse the CancelAudible period setting.
+	try {
+	    String faultTimerPeriodStr = SP.getString("FaultTimerPeriod","30");
+	    mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
+	    Log.v(TAG,"onStart() - mFaultTimerPeriod = "+mFaultTimerPeriod);
+	} catch (Exception ex) {
+	    Log.v(TAG,"onStart() - Problem with FaultTimerPeriod preference!");
+	    Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing FaultTimerPeriod Preference",Toast.LENGTH_SHORT);
+	    toast.show();
+	}
 
     }
 
@@ -416,12 +488,14 @@ public class SdClientService extends Service
 		alarmBeep();
 		Intent clientActivityIntent = 
 		    new Intent(this, ClientActivity.class);
-		clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		//clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(clientActivityIntent);
 	    }
 	    if ((mSdData.pebbleConnected == false) || 
 		(mSdData.pebbleAppRunning == false)) {
 		faultWarningBeep();
+	    } else {
+		stopFaultTimer();
 	    }
     }
 
@@ -437,7 +511,8 @@ public class SdClientService extends Service
 	ConnectivityManager connMgr = (ConnectivityManager) 
             getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        if (networkInfo != null && networkInfo.isConnected()) {
+        //if (networkInfo != null && networkInfo.isConnected()) {
+	if (true) {
             new DownloadSdDataTask().execute("http://"+mServerIP+":8080/data");
         } else {
             Log.v(TAG,"No network connection available.");
@@ -462,17 +537,17 @@ public class SdClientService extends Service
 		    mSdData.serverOK = false;
 		    mSdData.pebbleConnected = false;
 		    mSdData.pebbleAppRunning = false;
-		    mSdData.alarmState = 2;
+		    mSdData.alarmState = 0;
 		    mSdData.alarmPhrase = "Warning - No Connection to Server";
-		    faultWarningBeep();
+		    //faultWarningBeep();
 		} else {
 		    // Populate mSdData using the received data.
 		    mSdData.serverOK = true;
 		    mStatusTime.setToNow();
 		    mSdData.fromJSON(result);
 		    Log.v(TAG,"onPostExecute(): mSdData = "+mSdData.toString());
-		    checkAlarms();
 		}
+	    checkAlarms();
 	}
     }
 
