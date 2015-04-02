@@ -3,12 +3,16 @@ OpenSeizureDetector
 
 A suite of open source and open hardware projects designed to detect and 
 alert people to someone suffering from an epileptic seizure (fit).   
-This is a work in progress at the moment, and four different technologies 
-are being developed to see which work best: 
+This is a work in progress at the moment.  The most promising version is based on a Pebble Smart Watch to measure movement of the arm during a tonic-clonic seizure.
+Other prototypes include:
    * Acceleration Detection
    * Audio Detection
    * Video Detection
    * Microsoft Kinect (depth camera) Detection
+
+Pebble Smart Watch Seizure Detector
+===================================
+See http://openseizuredetector.org.uk
 
 Acceleration Detection
 ======================
