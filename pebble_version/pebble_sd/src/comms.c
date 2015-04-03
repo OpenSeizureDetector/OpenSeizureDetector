@@ -44,10 +44,29 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
         APP_LOG(APP_LOG_LEVEL_INFO, "***********Phone Requesting Settings");
 	sendSettings();
         break;
+    case KEY_SET_SETTINGS:
+        APP_LOG(APP_LOG_LEVEL_INFO, "***********Phone Setting Settings");
+	// We don't actually do anything here - the following sections
+	// process the data and update the settings.
+	break;
     case KEY_ALARM_FREQ_MIN:
       APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_FREQ_MIN to %d",
 	      alarmFreqMin = (int)t->value);
-      
+    case KEY_ALARM_FREQ_MAX:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_FREQ_MAX to %d",
+	      alarmFreqMax = (int)t->value);
+    case KEY_WARN_TIME:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting WARN_TIME to %d",
+	      warnTime = (int)t->value);
+    case KEY_ALARM_TIME:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_TIME to %d",
+	      alarmTime = (int)t->value);
+    case KEY_ALARM_THRESH:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_THRESH to %d",
+	      alarmThresh = (int)t->value);
+    case KEY_ALARM_RATIO_THRESH:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_RATIO_THRESH to %d",
+	      alarmRatioThresh = (int)t->value);
     }
     // Get next pair, if any
     t = dict_read_next(iterator);

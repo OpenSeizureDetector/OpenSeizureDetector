@@ -73,6 +73,7 @@
 #define KEY_NMAX 17
 #define KEY_ALARM_RATIO_THRESH 18
 #define KEY_BATTERY_PC 19
+#define KEY_SET_SETTINGS 20  // Phone is asking us to update watch app settings.
 
 // Values of the KEY_DATA_TYPE entry in a message
 #define DATA_TYPE_RESULTS 1   // Analysis Results
