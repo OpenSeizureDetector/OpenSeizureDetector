@@ -41,4 +41,12 @@
 	android:title="Settings"
 	android:showAsAction="never|withText"
 	/>
+
+<!--
+  <item android:id="@+id/action_watch_settings"
+	android:icon="@drawable/ic_action_settings"
+	android:title="Watch Settings"
+	android:showAsAction="never|withText"
+	/>
+  -->
 </menu>

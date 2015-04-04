@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="uk.org.openseizuredetector"
-      android:versionCode="11"
-      android:versionName="1.9">
+      android:versionCode="12"
+      android:versionName="1.10">
   <uses-sdk android:minSdkVersion="11" />
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -23,6 +23,11 @@
     </activity>
     <activity android:name="PrefActivity"
               android:label="OpenSeizureDetector Preferences"
+	      android:icon="@drawable/star_of_life_48x48"
+	      >
+    </activity>
+    <activity android:name="WatchPrefActivity"
+              android:label="OpenSeizureDetector Watch App Preferences"
 	      android:icon="@drawable/star_of_life_48x48"
 	      >
     </activity>

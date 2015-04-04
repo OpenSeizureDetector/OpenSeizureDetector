@@ -52,4 +52,36 @@
         android:summary="Display update period in miliseconds."
         android:defaultValue="1000" />
 -->
+    <EditTextPreference
+        android:key="AlarmFreqMin"
+        android:title="AlarmFreqMin (Hz)"
+        android:summary="Minimum Frequency of ROI (Hz) (Default = 5 Hz)"
+        android:defaultValue="5" />
+    <EditTextPreference
+        android:key="AlarmFreqMax"
+        android:title="AlarmFreqMax (Hz)"
+        android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
+        android:defaultValue="10" />
+    <EditTextPreference
+        android:key="WarnTime"
+        android:title="WarnTime (sec)"
+        android:summary="Time to wait before initiating warning (Default = 5 sec)"
+        android:defaultValue="5" />
+    <EditTextPreference
+        android:key="AlarmTime"
+        android:title="AlarmTime (sec)"
+        android:summary="Time to wait before initiating alarm (Default = 10 sec)"
+        android:defaultValue="10" />
+    <EditTextPreference
+        android:key="AlarmThresh"
+        android:title="AlarmThresh"
+        android:summary="Alarm Threshold (Default = 100)"
+        android:defaultValue="100" />
+    <EditTextPreference
+        android:key="AlarmRatioThresh"
+        android:title="AlarmRatioThresh"
+        android:summary="Alarm Ratio Threshold (Default = 30)"
+        android:defaultValue="30" />
+
+
 </PreferenceScreen>

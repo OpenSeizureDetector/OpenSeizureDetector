@@ -676,6 +676,44 @@ public class SdServer extends Service
 	Log.v(TAG,"updatePrefs() - mLogAlarms = "+mLogAlarms);
 	mLogData = SP.getBoolean("LogData",false);
 	Log.v(TAG,"updatePrefs() - mLogData = "+mLogData);
+
+	// Watch Settings 
+	PebbleDictionary setDict = new PebbleDictionary();
+	short intVal;
+	String prefStr;
+	prefStr = SP.getString("AlarmFreqMin","5");
+	intVal = (short)Integer.parseInt(prefStr);
+	Log.v(TAG,"updatePrefs() AlarmFreqMin = "+intVal);
+	setDict.addInt16(KEY_ALARM_FREQ_MIN,intVal);
+
+	prefStr = SP.getString("AlarmFreqMax","10");
+	intVal = (short)Integer.parseInt(prefStr);
+	Log.v(TAG,"updatePrefs() AlarmFreqMax = "+intVal);
+	setDict.addUint16(KEY_ALARM_FREQ_MAX,(short)intVal);
+
+	prefStr = SP.getString("WarnTime","5");
+	intVal = (short)Integer.parseInt(prefStr);
+	Log.v(TAG,"updatePrefs() WarnTime = "+intVal);
+	setDict.addUint16(KEY_WARN_TIME,(short)intVal);
+
+	prefStr = SP.getString("AlarmTime","10");
+	intVal = (short)Integer.parseInt(prefStr);
+	Log.v(TAG,"updatePrefs() AlarmTime = "+intVal);
+	setDict.addUint16(KEY_ALARM_TIME,(short)intVal);
+
+	prefStr = SP.getString("AlarmThresh","100");
+	intVal = (short)Integer.parseInt(prefStr);
+	Log.v(TAG,"updatePrefs() AlarmThresh = "+intVal);
+	setDict.addUint16(KEY_ALARM_THRESH,(short)intVal);
+
+	prefStr = SP.getString("AlarmRatioThresh","30");
+	intVal = (short)Integer.parseInt(prefStr);
+	Log.v(TAG,"updatePrefs() AlarmRatioThresh = "+intVal);
+	setDict.addUint16(KEY_ALARM_RATIO_THRESH,(short)intVal);
+
+	// Send to Pebble
+	Log.v(TAG,"updatePrefs() - setDict = "+setDict.toJsonString());
+	PebbleKit.sendDataToPebble(getApplicationContext(), SD_UUID, setDict);
     }
 
 
