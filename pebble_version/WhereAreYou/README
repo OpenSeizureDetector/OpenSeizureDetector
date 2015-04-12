@@ -1,0 +1,14 @@
+WhereAreYouNow
+==============
+WhereAreYouNow is an android application to help with finding people who have difficulty communicating if they 
+become lost.   It has been written with an Autistic person in mind, but may be useful for people with other
+disabilities.
+
+Its current form is a SMS message auto responder.   The carer sends a text message to the phone, which includes a secret password.  If hte password is correct, the phone will atempt to obtain its location, convert the location into an address, and reply to the SMS text message with the address and location.
+
+The current version uses internet access to convert the lat,lon location into an address using the <a href="http://www.openstreetmap.org">OpenStreetMap</a> Nominatim service.   A future development will be to include OpenStreetMap data on the phone to avoid the need for network access.
+
+It contains a basic user interface to allow the auto responder to be switched off and on, and to change the password.
+
+For details please contact Graham Jones (grhamjones139@gmail.com).
+
