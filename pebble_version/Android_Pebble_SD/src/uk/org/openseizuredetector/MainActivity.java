@@ -214,18 +214,6 @@ public class MainActivity extends Activity
 		Log.v(TAG,"exception starting settings activity "+ex.toString());
 	    }
 	    return true;
-	    /*case R.id.action_watch_settings:
-	    Log.v(TAG,"action_watch_settings");
-	    try {
-		Intent watchSettingsIntent = new Intent(
-							MainActivity.this,
-							WatchPrefActivity.class);
-		this.startActivity(watchSettingsIntent);
-	    } catch (Exception ex) {
-		Log.v(TAG,"exception starting watch settings activity "+ex.toString());
-	    }
-	    return true;
-	    */
 	default:
 	    return super.onOptionsItemSelected(item);
 	}

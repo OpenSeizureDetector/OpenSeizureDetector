@@ -26,11 +26,6 @@
 	      android:icon="@drawable/star_of_life_48x48"
 	      >
     </activity>
-    <activity android:name="WatchPrefActivity"
-              android:label="OpenSeizureDetector Watch App Preferences"
-	      android:icon="@drawable/star_of_life_48x48"
-	      >
-    </activity>
     <service
         android:name=".SdServer"
         android:exported="false"/>    
