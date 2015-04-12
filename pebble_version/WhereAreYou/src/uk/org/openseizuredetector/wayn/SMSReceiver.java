@@ -13,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
@@ -26,11 +27,6 @@ import android.widget.Toast;
  * If it contains 'WAYN', the current location is determined, 
  * and an SMS reply sent with details
  * of the current locations.
- * If it contains 'WAY_UPLOAD', the SMS text is parsed assuming it is 
- * of the format:
- *   WAY_UPLOAD?UNAME=xxx&PASSWD=xxx&LON=xxx&LAT=xxx&DATE=xxx.
- * Provided the string parses correctly, a data point is uploaded to 
- * the server based on the data provided.
  */
 public class SMSReceiver extends BroadcastReceiver 
     implements LocationReceiver 
@@ -62,9 +58,7 @@ public class SMSReceiver extends BroadcastReceiver
 	getPrefs(contextArg);
 	Log.d(TAG, "onReceive()");
 	if (bundle == null) {
-	    Toast.makeText(contextArg,
-			   "Empty SMS Message Received - Ignoring",
-			   Toast.LENGTH_SHORT).show();
+	    showToast("Empty SMS Message Received - Ignoring");
 	    Log.d(TAG, "onReceive() - Empty SMS Message - Ignoring");
 	} else {
 	    if (mActive) {
@@ -79,38 +73,38 @@ public class SMSReceiver extends BroadcastReceiver
 		    str += " :";
 		    str += msgs[i].getMessageBody().toString();
 		    str += "\n";        
-		    Toast.makeText(contextArg,
-				   str,
-				   Toast.LENGTH_SHORT).show();
+		    showToast(str);
 		}
 		String msg0 = msgs[0].getMessageBody().toString();
-		if (msg0.toUpperCase().contains("WAYN")) {
+		if (msg0.toUpperCase().contains(mPassword)) {
 		    // Start the LocationFinder service if it is not running.
 		    if (lf==null) {
 			lf = new LocationFinder(contextArg);
 		    }
-		    Log.d(TAG, "onReceive() - Message contains WAYN - getting location...");
-		    Toast.makeText(contextArg,
-				   "Found WAYN - getting Location....",
-				   Toast.LENGTH_SHORT).show();
+		    Log.d(TAG, "onReceive() - Message contains the Password - getting location...");
+		    showToast("WAYN Password found - getting Location....");
 		    // Get the location using the LocationFinder.
 		    smsNumber = msgs[0].getOriginatingAddress();
 		    lf.getLocationLL((LocationReceiver) this,mTimeOutSec,mUseGPS);
-		    Toast.makeText(contextArg,
-				   "Returned from getLocationLL()",
-				   Toast.LENGTH_SHORT).show();
-		   
+		} else if (msg0.toUpperCase().contains("GEO:")) {
+		    Log.d(TAG, "onReceive() - Message contains geo: - displaying location...");
+		    int nPos = msg0.toUpperCase().indexOf("GEO:");
+		    String uriStr = msg0.substring(nPos);
+		    Log.d(TAG,"onReceive() - uriStr = "+uriStr);
+		    showToast("onReceive() - uriStr = "+uriStr);
+		    Uri uri = Uri.parse(uriStr);
+		    Intent intent = new Intent(
+			 android.content.Intent.ACTION_VIEW, uri);
+		    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		    mContext.startActivity(intent);
 		} else {
-		    Log.d(TAG, "onReceive() - Message does not contain WAYN - Ignoring");
-		    Toast.makeText(contextArg,
-				   "Message does not contain 'WAYN' - ignoring",
-				   Toast.LENGTH_SHORT).show();
+		    Log.d(TAG, "onReceive() - Message does not contain Password or geo: - Ignoring");
+
+		    showToast("Message does not contain WAYN Password or geo: - ignoring");
 		}
 	    } else {
 		Log.d(TAG, "onReceive() - mActive False - Ignoring");
-		Toast.makeText(contextArg,
-			       "WAYN Disabled - Ignoring",
-			       Toast.LENGTH_SHORT).show();
+		showToast("WAYN Disabled - Ignoring");
 	    }
 	}
     }
@@ -132,8 +126,6 @@ public class SMSReceiver extends BroadcastReceiver
      */
     public void onLocationFound(LonLat ll) {
 	Log.d(TAG, "onLocationFound.");
-	Toast.makeText(mContext, "onLocationFound()", Toast.LENGTH_SHORT)
-	    .show();
 	if (ll != null) {
 	    //String resultStr = "Location is "+ll.toStr()+"\n<a href=\""+ll.toGeoUri()+"\">View on Map</a>";
 	    String resultStr = "Location is "+ll.toStr()+"\n"+ll.toGeoUri();
@@ -142,15 +134,13 @@ public class SMSReceiver extends BroadcastReceiver
 	    
 	    // ---display the new SMS message on the screen.---
 	    Log.d(TAG,"onLocationFound:  " +ll.toString());
-	    Toast.makeText(mContext, " Replying: " + resultStr,
-			   Toast.LENGTH_SHORT).show();
+	    showToast("Replying: " + resultStr);
 	    // Now reply to the message with our location.
 	    SmsManager sm = SmsManager.getDefault();
 	    sm.sendTextMessage(smsNumber, null, resultStr, null, null);
 	    
 	} else {
-	    Toast.makeText(mContext, "Failed to find location - sorry!",
-			   Toast.LENGTH_SHORT).show();
+	    showToast("Failed to find location - sorry!");
 	    Log.d(TAG, "onLocationFound() - Failed to find location - ll is null");
 	}
 	
@@ -160,6 +150,15 @@ public class SMSReceiver extends BroadcastReceiver
     public void msgBox(String msg) {
 	// TODO Do nothing - we operate silently...
 	Log.d(TAG,"msgbox() - msg = "+msg);
+    }
+
+
+    // Show a 'Toast' message box.
+    private void showToast(String msg) {
+	Toast.makeText(mContext,
+		       msg,
+		       Toast.LENGTH_SHORT).show();
+
     }
 
 }
