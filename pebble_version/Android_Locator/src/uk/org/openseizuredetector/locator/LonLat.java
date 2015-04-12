@@ -1,4 +1,4 @@
-package uk.org.openseizuredetector.wayn;
+package uk.org.openseizuredetector.locator;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -30,7 +30,14 @@ public class LonLat {
      */
     String toGeoUri() {
 	NumberFormat df = new DecimalFormat("#0.000");
-	return ("geo:"+df.format(_lat)+","+df.format(_lon)+";u="+df.format(_acc));
+	return ("geo:"
+		+df.format(_lat)+","+df.format(_lon)
+		+";u="+df.format(_acc)
+		// The ?q parameter does not display a marker in osmand so
+		// don't bother sending it.
+		//+"?q="+df.format(_lat)+","+df.format(_lon)
+
+		);
     }
     
     

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:key="RespondToSMS"
+        android:title="Respond to SMS Messages Automatically"
+        android:summary="Respond to SMS messages containing the password given below automatically (also displays location of any sms containing 'geo:'"
+        android:defaultValue="true" />
+    <EditTextPreference
+        android:key="Password"
+        android:title="Password"
+        android:summary="Automatic response will be sent to any SMS containing this password value."
+        android:defaultValue="WAYN" />
+    <EditTextPreference
+        android:key="MessageText"
+        android:title="Message Text"
+        android:summary="Content of SMS Response (to which location is appended)."
+        android:defaultValue="WAYN Response:\n" />
+    <CheckBoxPreference
+        android:key="UseGPS"
+        android:title="Use GPS Location"
+        android:summary="Use GPS Receiver to determine location (more accurate)"
+        android:defaultValue="true" />
+    <EditTextPreference
+        android:key="GpsTimeoutPeriod"
+        android:title="Timeout Period (in seconds) for GPS Fix"
+        android:summary="Maximum time we wait for a GPS fix before giving up and falling back on network location."
+	android:numeric="integer"
+        android:defaultValue="30" />
+</PreferenceScreen>
