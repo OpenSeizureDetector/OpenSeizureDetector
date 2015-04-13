@@ -1,6 +1,9 @@
 Android_Pebble_SD CHANGELOG
 ===========================
 
+V1.10  03 Apr 2015
+       Added ability to change watch alarm settings from android server app.
+
 V1.9   24 Mar 2015
        Fixed issue with multiple instances of server starting when screen is
        rotated.

@@ -101,17 +101,13 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   }
  
 
-
-
-
-
   // Update data display.
-  snprintf(s_buffer,sizeof(s_buffer),
-	   "max=%d, P=%ld\n%d Hz",
-	   /*latestAccelData.x, latestAccelData.y, latestAccelData.z,*/
-	   maxVal,specPower,maxFreq
-	   );
-  text_layer_set_text(text_layer, s_buffer);
+  //snprintf(s_buffer,sizeof(s_buffer),
+  //	   "max=%d, P=%ld\n%d Hz",
+  //	   /*latestAccelData.x, latestAccelData.y, latestAccelData.z,*/
+  //	   maxVal,specPower,maxFreq
+  //	   );
+  text_layer_set_text(text_layer, "OpenSeizureDetector");
 
   // and update clock display.
   if (clock_is_24h_style()) {

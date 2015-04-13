@@ -659,23 +659,66 @@ public class SdServer extends Service
 	Log.v(TAG,"updatePrefs()");
 	SharedPreferences SP = PreferenceManager
 	    .getDefaultSharedPreferences(getBaseContext());
-	mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning",true);
-	Log.v(TAG,"updatePrefs() - mAuidbleFaultWarning = "+mAudibleFaultWarning);
-	mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
-	Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
-	mAudibleWarning = SP.getBoolean("AudibleWarning",true);
-	Log.v(TAG,"updatePrefs() - mAuidbleWarning = "+mAudibleWarning);
-	mSMSAlarm = SP.getBoolean("SMSAlarm",false);
-	Log.v(TAG,"updatePrefs() - mSMSAlarm = "+mSMSAlarm);
-	String SMSNumberStr = SP.getString("SMSNumbers","");
-	mSMSNumbers = SMSNumberStr.split(",");
-	mSMSMsgStr = SP.getString("SMSMsg","Seizure Detected!!!");
-	Log.v(TAG,"updatePrefs() - SMSNumberStr = "+SMSNumberStr);
-	Log.v(TAG,"updatePrefs() - mSMSNumbers = "+mSMSNumbers);
-	mLogAlarms = SP.getBoolean("LogAlarms",true);
-	Log.v(TAG,"updatePrefs() - mLogAlarms = "+mLogAlarms);
-	mLogData = SP.getBoolean("LogData",false);
-	Log.v(TAG,"updatePrefs() - mLogData = "+mLogData);
+	try {
+	    mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning",true);
+	    Log.v(TAG,"updatePrefs() - mAuidbleFaultWarning = "+mAudibleFaultWarning);
+	    mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);
+	    Log.v(TAG,"updatePrefs() - mAuidbleAlarm = "+mAudibleAlarm);
+	    mAudibleWarning = SP.getBoolean("AudibleWarning",true);
+	    Log.v(TAG,"updatePrefs() - mAuidbleWarning = "+mAudibleWarning);
+	    mSMSAlarm = SP.getBoolean("SMSAlarm",false);
+	    Log.v(TAG,"updatePrefs() - mSMSAlarm = "+mSMSAlarm);
+	    String SMSNumberStr = SP.getString("SMSNumbers","");
+	    mSMSNumbers = SMSNumberStr.split(",");
+	    mSMSMsgStr = SP.getString("SMSMsg","Seizure Detected!!!");
+	    Log.v(TAG,"updatePrefs() - SMSNumberStr = "+SMSNumberStr);
+	    Log.v(TAG,"updatePrefs() - mSMSNumbers = "+mSMSNumbers);
+	    mLogAlarms = SP.getBoolean("LogAlarms",true);
+	    Log.v(TAG,"updatePrefs() - mLogAlarms = "+mLogAlarms);
+	    mLogData = SP.getBoolean("LogData",false);
+	    Log.v(TAG,"updatePrefs() - mLogData = "+mLogData);
+	    
+	    // Watch Settings 
+	    PebbleDictionary setDict = new PebbleDictionary();
+	    short intVal;
+	    String prefStr;
+	    prefStr = SP.getString("AlarmFreqMin","5");
+	    intVal = (short)Integer.parseInt(prefStr);
+	    Log.v(TAG,"updatePrefs() AlarmFreqMin = "+intVal);
+	    setDict.addInt16(KEY_ALARM_FREQ_MIN,intVal);
+	    
+	    prefStr = SP.getString("AlarmFreqMax","10");
+	    intVal = (short)Integer.parseInt(prefStr);
+	    Log.v(TAG,"updatePrefs() AlarmFreqMax = "+intVal);
+	    setDict.addUint16(KEY_ALARM_FREQ_MAX,(short)intVal);
+
+	    prefStr = SP.getString("WarnTime","5");
+	    intVal = (short)Integer.parseInt(prefStr);
+	    Log.v(TAG,"updatePrefs() WarnTime = "+intVal);
+	    setDict.addUint16(KEY_WARN_TIME,(short)intVal);
+	    
+	    prefStr = SP.getString("AlarmTime","10");
+	    intVal = (short)Integer.parseInt(prefStr);
+	    Log.v(TAG,"updatePrefs() AlarmTime = "+intVal);
+	    setDict.addUint16(KEY_ALARM_TIME,(short)intVal);
+	    
+	    prefStr = SP.getString("AlarmThresh","100");
+	    intVal = (short)Integer.parseInt(prefStr);
+	    Log.v(TAG,"updatePrefs() AlarmThresh = "+intVal);
+	    setDict.addUint16(KEY_ALARM_THRESH,(short)intVal);
+	    
+	    prefStr = SP.getString("AlarmRatioThresh","30");
+	    intVal = (short)Integer.parseInt(prefStr);
+	    Log.v(TAG,"updatePrefs() AlarmRatioThresh = "+intVal);
+	    setDict.addUint16(KEY_ALARM_RATIO_THRESH,(short)intVal);
+	    // Send to Pebble
+	    Log.v(TAG,"updatePrefs() - setDict = "+setDict.toJsonString());
+	    PebbleKit.sendDataToPebble(getApplicationContext(), SD_UUID, setDict);
+	} catch (Exception ex) {
+	    Log.v(TAG,"updatePrefs() - Problem parsing preferences!");
+	    Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!",Toast.LENGTH_SHORT);
+	    toast.show();
+	}
     }
 
 
