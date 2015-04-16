@@ -488,7 +488,7 @@ public class SdClientService extends Service
 		alarmBeep();
 		Intent clientActivityIntent = 
 		    new Intent(this, ClientActivity.class);
-		//clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		clientActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		startActivity(clientActivityIntent);
 	    }
 	    if ((mSdData.pebbleConnected == false) || 
