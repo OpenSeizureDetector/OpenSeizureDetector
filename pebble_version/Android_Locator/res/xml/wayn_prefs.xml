@@ -14,7 +14,7 @@
         android:key="MessageText"
         android:title="Message Text"
         android:summary="Content of SMS Response (to which location is appended)."
-        android:defaultValue="WAYN Response:\n" />
+        android:defaultValue="OsdLocator Response:\n" />
     <CheckBoxPreference
         android:key="UseGPS"
         android:title="Use GPS Location"

@@ -37,7 +37,7 @@ public class SMSReceiver extends BroadcastReceiver
     boolean mActive;
     String mPassword;
     String mMessageText;
-    LocationFinder lf = null;
+    LocationFinder2 lf = null;
     Context mContext = null;
     String smsNumber = null;
     int mTimeOutSec = 60;
@@ -80,13 +80,14 @@ public class SMSReceiver extends BroadcastReceiver
 		if (msg0.toUpperCase().contains(mPassword)) {
 		    // Start the LocationFinder service if it is not running.
 		    if (lf==null) {
-			lf = new LocationFinder(contextArg);
+			lf = new LocationFinder2(contextArg);
 		    }
 		    Log.d(TAG, "onReceive() - Message contains the Password - getting location...");
 		    showToast("WAYN Password found - getting Location....");
 		    // Get the location using the LocationFinder.
 		    smsNumber = msgs[0].getOriginatingAddress();
-		    lf.getLocationLL((LocationReceiver) this,mTimeOutSec,mUseGPS);
+		    //lf.getLocationLL((LocationReceiver) this,mTimeOutSec,mUseGPS);
+		    lf.getLocationLL((LocationReceiver) this);
 		} else if (msg0.toUpperCase().contains("GEO:")) {
 		    Log.d(TAG, "onReceive() - Message contains geo: - displaying location...");
 		    int nPos = msg0.toUpperCase().indexOf("GEO:");
@@ -115,7 +116,7 @@ public class SMSReceiver extends BroadcastReceiver
 	    .getDefaultSharedPreferences(mContext);
 	mActive = SP.getBoolean("RespondToSMS", true);
 	mPassword = SP.getString("Password", "WAYN");
-	mMessageText = SP.getString("MessageText", "WAYN Response:\n");
+	mMessageText = SP.getString("MessageText", "OSDLocator Response:\n");
 	mTimeOutSec = SP.getInt("GPSTimeoutPeriod", 60);
 	mUseGPS = SP.getBoolean("UseGPS",true);
     }
