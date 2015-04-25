@@ -1,0 +1,613 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span>  Pebble_sd - a simple accelerometer based seizure detector that runs on a<a name="line.2"></a>
+<span class="sourceLineNo">003</span>  Pebble smart watch (http://getpebble.com).<a name="line.3"></a>
+<span class="sourceLineNo">004</span>  ClientActivity is a simple UI that runs on a client device and polls the <a name="line.4"></a>
+<span class="sourceLineNo">005</span>  server (Android_SD_Server) to download status information periodically,<a name="line.5"></a>
+<span class="sourceLineNo">006</span>  displays it to the user and raises audible and visual alarms.<a name="line.6"></a>
+<span class="sourceLineNo">007</span><a name="line.7"></a>
+<span class="sourceLineNo">008</span>  See http://openseizuredetector.org for more information.<a name="line.8"></a>
+<span class="sourceLineNo">009</span><a name="line.9"></a>
+<span class="sourceLineNo">010</span>  Copyright Graham Jones, 2015.<a name="line.10"></a>
+<span class="sourceLineNo">011</span><a name="line.11"></a>
+<span class="sourceLineNo">012</span>  This file is part of pebble_sd.<a name="line.12"></a>
+<span class="sourceLineNo">013</span><a name="line.13"></a>
+<span class="sourceLineNo">014</span>  Pebble_sd is free software: you can redistribute it and/or modify<a name="line.14"></a>
+<span class="sourceLineNo">015</span>  it under the terms of the GNU General Public License as published by<a name="line.15"></a>
+<span class="sourceLineNo">016</span>  the Free Software Foundation, either version 3 of the License, or<a name="line.16"></a>
+<span class="sourceLineNo">017</span>  (at your option) any later version.<a name="line.17"></a>
+<span class="sourceLineNo">018</span>  <a name="line.18"></a>
+<span class="sourceLineNo">019</span>  Pebble_sd is distributed in the hope that it will be useful,<a name="line.19"></a>
+<span class="sourceLineNo">020</span>  but WITHOUT ANY WARRANTY; without even the implied warranty of<a name="line.20"></a>
+<span class="sourceLineNo">021</span>  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<a name="line.21"></a>
+<span class="sourceLineNo">022</span>  GNU General Public License for more details.<a name="line.22"></a>
+<span class="sourceLineNo">023</span>  <a name="line.23"></a>
+<span class="sourceLineNo">024</span>  You should have received a copy of the GNU General Public License<a name="line.24"></a>
+<span class="sourceLineNo">025</span>  along with pebble_sd.  If not, see &lt;http://www.gnu.org/licenses/&gt;.<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>*/<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>package uk.org.openseizuredetector.client;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>import android.app.ActionBar;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import android.app.Activity;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import android.app.ActivityManager;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import android.app.ActivityManager.RunningServiceInfo;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import android.app.IntentService;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import android.content.ComponentName;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import android.content.Context;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import android.content.Intent;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import android.content.pm.PackageManager;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import android.content.pm.PackageInfo;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import android.preference.Preference;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import android.content.ServiceConnection;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import android.content.SharedPreferences;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import android.content.Context;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import android.graphics.Color;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import android.media.AudioManager;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import android.media.ToneGenerator;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import android.net.Uri;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import android.net.ConnectivityManager;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import android.net.NetworkInfo;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>//import android.net.wifi.WifiManager;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>//import android.net.wifi.WifiInfo;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>import android.os.AsyncTask;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>import android.os.Bundle;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>import android.os.Handler;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>import android.os.IBinder;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>import android.preference.PreferenceManager;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>import android.util.Log;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>import android.view.Menu;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>import android.view.MenuItem;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>import android.view.View;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>import android.view.ViewConfiguration;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>import android.view.WindowManager;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>import android.widget.LinearLayout;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>import android.widget.TextView;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>import android.widget.Button;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>import android.widget.Toast;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>import java.io.InputStream;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>import java.io.InputStreamReader;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>import java.io.IOException;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>import java.io.Reader;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>import java.io.UnsupportedEncodingException;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>import java.lang.reflect.Field;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>import java.util.ArrayList;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>import java.util.Enumeration;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>import java.util.Timer;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>import java.util.TimerTask;<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>//MPAndroidChart<a name="line.79"></a>
+<span class="sourceLineNo">080</span>import com.github.mikephil.charting.charts.LineChart;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>import com.github.mikephil.charting.components.Legend;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>import com.github.mikephil.charting.components.Legend.LegendForm;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>import com.github.mikephil.charting.components.LimitLine;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>import com.github.mikephil.charting.components.LimitLine.LimitLabelPosition;<a name="line.84"></a>
+<span class="sourceLineNo">085</span>import com.github.mikephil.charting.components.XAxis;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>import com.github.mikephil.charting.components.YAxis;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>import com.github.mikephil.charting.data.DataSet;<a name="line.87"></a>
+<span class="sourceLineNo">088</span>import com.github.mikephil.charting.data.Entry;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>import com.github.mikephil.charting.data.LineData;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>import com.github.mikephil.charting.data.LineDataSet;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>import com.github.mikephil.charting.data.filter.Approximator;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>import com.github.mikephil.charting.data.filter.Approximator.ApproximatorType;<a name="line.92"></a>
+<span class="sourceLineNo">093</span>import com.github.mikephil.charting.listener.OnChartGestureListener;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>import com.github.mikephil.charting.listener.OnChartValueSelectedListener;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>import com.github.mikephil.charting.utils.Highlight;<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>import uk.org.openseizuredetector.SdData;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>public class ClientActivity extends Activity<a name="line.99"></a>
+<span class="sourceLineNo">100</span>{<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    static final String TAG = "ClientActivity";<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    private int okColour = Color.BLUE;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    private int warnColour = Color.MAGENTA;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    private int alarmColour = Color.RED;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    private Menu mOptionsMenu;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    final Handler serverStatusHandler = new Handler();<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    private Timer mUiTimer;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    private Timer mDataTimer;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    SdClientService mSdClientService;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    private boolean mBound = false;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    private int mUiUpdatePeriod = 2000;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    private Intent sdClientServiceIntent;<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /** Called when the activity is first created. */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    @Override<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    public void onCreate(Bundle savedInstanceState)<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        super.onCreate(savedInstanceState);<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>        // Initialise the User Interface<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        setContentView(R.layout.main);<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        // Force the screen to stay on when the app is running<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);<a name="line.123"></a>
+<span class="sourceLineNo">124</span><a name="line.124"></a>
+<span class="sourceLineNo">125</span>        /* Force display of overflow menu - from stackoverflow<a name="line.125"></a>
+<span class="sourceLineNo">126</span>         * "how to force use of..."<a name="line.126"></a>
+<span class="sourceLineNo">127</span>         */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        try {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            ViewConfiguration config = ViewConfiguration.get(this);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            Field menuKeyField =<a name="line.130"></a>
+<span class="sourceLineNo">131</span>                ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            if (menuKeyField!=null) {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>                menuKeyField.setAccessible(true);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>                menuKeyField.setBoolean(config,false);<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            }<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        } catch (Exception e) {<a name="line.136"></a>
+<span class="sourceLineNo">137</span>            Log.v(TAG,"menubar fiddle exception: "+e.toString());<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        }<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>        // Deal with the 'Cancel Audible Button'<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        Button button = (Button) findViewById(R.id.cancelAudibleButton);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        button.setOnClickListener(new View.OnClickListener() {<a name="line.142"></a>
+<span class="sourceLineNo">143</span>                public void onClick(View v) {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>                    Log.v(TAG,"cancelAudibleButton.onClick()");<a name="line.144"></a>
+<span class="sourceLineNo">145</span>                    if (mBound) {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>                        mSdClientService.cancelAudible();<a name="line.146"></a>
+<span class="sourceLineNo">147</span>                    }<a name="line.147"></a>
+<span class="sourceLineNo">148</span>                }<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            });<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>        // Start the background service to monitor the server.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        startServer();<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    /**<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * Create Action Bar<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     */<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    @Override<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    public boolean onCreateOptionsMenu (Menu menu)<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        getMenuInflater().inflate(R.menu.main_activity_actions,menu);<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        mOptionsMenu = menu;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        return true;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    }<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    <a name="line.167"></a>
+<span class="sourceLineNo">168</span>    /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Respond to menu selections (from action bar or menu button)<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    @Override<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    public boolean onOptionsItemSelected(MenuItem item) {<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        Log.v(TAG,"Option "+item.getItemId()+" selected");<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        switch (item.getItemId()) {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        case R.id.action_start_stop:<a name="line.175"></a>
+<span class="sourceLineNo">176</span>            // Respond to the start/stop server menu item.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            Log.v(TAG,"action_sart_stop");<a name="line.177"></a>
+<span class="sourceLineNo">178</span>            if (mBound) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                Log.v(TAG,"Stopping Server");<a name="line.179"></a>
+<span class="sourceLineNo">180</span>                stopServer();<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            } else {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                Log.v(TAG,"Starting Server");<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                startServer();<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            }<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            return true;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        case R.id.action_test_fault_warning_beep:<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            Log.v(TAG,"action_test_fault_warning_beep");<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            if (mBound) {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                mSdClientService.faultWarningBeep();<a name="line.189"></a>
+<span class="sourceLineNo">190</span>            }<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            return true;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        case R.id.action_test_alarm_beep:<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            Log.v(TAG,"action_test_alarm_beep");<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            if (mBound) {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                mSdClientService.alarmBeep();<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            }<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            return true;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        case R.id.action_test_warning_beep:<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            Log.v(TAG,"action_test_warning_beep");<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            if (mBound) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                mSdClientService.warningBeep();<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            }<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            return true;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        case R.id.action_settings:<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            Log.v(TAG,"action_settings");<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            try {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                Intent prefsIntent = new Intent(<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                                                ClientActivity.this,<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                                                PrefActivity.class);<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                this.startActivity(prefsIntent);<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            } catch (Exception ex) {<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                Log.v(TAG,"exception starting settings activity "+ex.toString());<a name="line.212"></a>
+<span class="sourceLineNo">213</span>            }<a name="line.213"></a>
+<span class="sourceLineNo">214</span>            return true;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        default:<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            return super.onOptionsItemSelected(item);<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        }<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    }<a name="line.218"></a>
+<span class="sourceLineNo">219</span><a name="line.219"></a>
+<span class="sourceLineNo">220</span>    @Override<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    protected void onStart() {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        super.onStart();<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        SharedPreferences SP = PreferenceManager<a name="line.223"></a>
+<span class="sourceLineNo">224</span>           .getDefaultSharedPreferences(getBaseContext());<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>        try {<a name="line.226"></a>
+<span class="sourceLineNo">227</span>            String uiUpdatePeriodStr = SP.getString("UiUpdatePeriod","2000");<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            mUiUpdatePeriod = Integer.parseInt(uiUpdatePeriodStr);<a name="line.228"></a>
+<span class="sourceLineNo">229</span>            Log.v(TAG,"onStart() - mUiUpdatePeriod = "+mUiUpdatePeriod);<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        } catch (Exception ex) {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>            Log.v(TAG,"onStart() - Problem parsing preferences!");<a name="line.231"></a>
+<span class="sourceLineNo">232</span>            Toast toast = Toast.makeText(getApplicationContext(),"Problem Parsing Preferences - Something won't work",Toast.LENGTH_SHORT);<a name="line.232"></a>
+<span class="sourceLineNo">233</span>            toast.show();<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        }<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>        // start timer to refresh user interface every 5 seconds.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        if (mUiTimer==null) {<a name="line.237"></a>
+<span class="sourceLineNo">238</span>            Log.v(TAG,"onstart(): starting mUiTimer.");<a name="line.238"></a>
+<span class="sourceLineNo">239</span>            mUiTimer = new Timer();<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            mUiTimer.schedule(new TimerTask() {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                    @Override<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                    public void run() {updateUI();}<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                }, 0, mUiUpdatePeriod); <a name="line.243"></a>
+<span class="sourceLineNo">244</span>            Log.v(TAG,"onStart(): started mUiTimer");<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        } else {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            Log.v(TAG,"onStart(): mUiTimer already running");<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        }<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>        TextView tv;<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        tv = (TextView) findViewById(R.id.versionTv);<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        String versionName = "unknown";<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        // From http://stackoverflow.com/questions/4471025/<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        //         how-can-you-get-the-manifest-version-number-<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        //         from-the-apps-layout-xml-variable<a name="line.255"></a>
+<span class="sourceLineNo">256</span>        final PackageManager packageManager = getPackageManager();<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        if (packageManager != null) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            try {<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                PackageInfo packageInfo = packageManager.getPackageInfo(getPackageName(), 0);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                versionName = packageInfo.versionName;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            } catch (PackageManager.NameNotFoundException e) {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                Log.v(TAG,"failed to find versionName");<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                versionName = null;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            }<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        }<a name="line.265"></a>
+<span class="sourceLineNo">266</span>        tv.setText("OpenSeizureDetector Client Version "+versionName);<a name="line.266"></a>
+<span class="sourceLineNo">267</span><a name="line.267"></a>
+<span class="sourceLineNo">268</span>        startServer();<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>    }<a name="line.270"></a>
+<span class="sourceLineNo">271</span><a name="line.271"></a>
+<span class="sourceLineNo">272</span>    @Override<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    protected void onStop() {<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        super.onStop();<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        // Disconnect from background service.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        if (mBound) {<a name="line.276"></a>
+<span class="sourceLineNo">277</span>            unbindService(mConnection);<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            mBound = false;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        }<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        // Stop the User Interface timer<a name="line.280"></a>
+<span class="sourceLineNo">281</span>            // Stop the status timer<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        if (mUiTimer!=null) {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>            Log.v(TAG,"onStop(): cancelling UI timer");<a name="line.283"></a>
+<span class="sourceLineNo">284</span>                mUiTimer.cancel();<a name="line.284"></a>
+<span class="sourceLineNo">285</span>                mUiTimer.purge();<a name="line.285"></a>
+<span class="sourceLineNo">286</span>                mUiTimer = null;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>            }<a name="line.287"></a>
+<span class="sourceLineNo">288</span><a name="line.288"></a>
+<span class="sourceLineNo">289</span>    }<a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span><a name="line.291"></a>
+<span class="sourceLineNo">292</span>  /** Defines callbacks for service binding, passed to bindService() */<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    private ServiceConnection mConnection = new ServiceConnection() {<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>        @Override<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        public void onServiceConnected(ComponentName className,<a name="line.296"></a>
+<span class="sourceLineNo">297</span>                IBinder service) {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            // We've bound to LocalService, cast the IBinder and get LocalService instance<a name="line.298"></a>
+<span class="sourceLineNo">299</span>            SdClientService.SdBinder binder = (SdClientService.SdBinder) service;<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            mSdClientService = binder.getService();<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            mBound = true;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            if (mSdClientService!=null) {<a name="line.302"></a>
+<span class="sourceLineNo">303</span>                Log.v(TAG,"onServiceConnected() - Asking server to update its settings");<a name="line.303"></a>
+<span class="sourceLineNo">304</span>                mSdClientService.updatePrefs();<a name="line.304"></a>
+<span class="sourceLineNo">305</span>            }<a name="line.305"></a>
+<span class="sourceLineNo">306</span>            else {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>                Log.v(TAG,"onServiceConnected() - mSdClientService is null - this is wrong!");<a name="line.307"></a>
+<span class="sourceLineNo">308</span>            }<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        }<a name="line.309"></a>
+<span class="sourceLineNo">310</span><a name="line.310"></a>
+<span class="sourceLineNo">311</span>        @Override<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        public void onServiceDisconnected(ComponentName arg0) {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>            Log.v(TAG,"onServiceDisonnected()");<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            mBound = false;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        }<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    };<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>    /**<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * Start the SdClientService service<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     */<a name="line.320"></a>
+<span class="sourceLineNo">321</span>    private void startServer() {<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        // Start the server<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        sdClientServiceIntent = new Intent(ClientActivity.this,SdClientService.class);<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        sdClientServiceIntent.setData(Uri.parse("Start"));<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        getApplicationContext().startService(sdClientServiceIntent);<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>        // and bind to it so we can see its data<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        Intent intent = new Intent(this,SdClientService.class);<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        bindService(intent,mConnection, Context.BIND_AUTO_CREATE);<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        <a name="line.330"></a>
+<span class="sourceLineNo">331</span>        // Change the action bar icon to show the option to stop the service.<a name="line.331"></a>
+<span class="sourceLineNo">332</span>        if (mOptionsMenu!=null) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            Log.v(TAG,"Changing menu icons");<a name="line.333"></a>
+<span class="sourceLineNo">334</span>            MenuItem menuItem = mOptionsMenu.findItem(R.id.action_start_stop);<a name="line.334"></a>
+<span class="sourceLineNo">335</span>            menuItem.setIcon(R.drawable.stop_server);<a name="line.335"></a>
+<span class="sourceLineNo">336</span>            menuItem.setTitle("Stop Server");<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        } else {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>            Log.v(TAG,"mOptionsMenu is null - not changing icons!");<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        }<a name="line.339"></a>
+<span class="sourceLineNo">340</span>    }<a name="line.340"></a>
+<span class="sourceLineNo">341</span><a name="line.341"></a>
+<span class="sourceLineNo">342</span>    /**<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * Stop the SdClientService service<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     */<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    private void stopServer() {<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        Log.v(TAG,"stopping Server...");<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        // unbind this activity from the service if it is bound.<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        if (mBound) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>            try {<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                unbindService(mConnection);<a name="line.350"></a>
+<span class="sourceLineNo">351</span>                mBound = false;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            } catch (Exception ex) {<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                Log.e(TAG,"stopServer - error unbinding service - "+ex.toString());<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            }<a name="line.354"></a>
+<span class="sourceLineNo">355</span>        }<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        // then send an Intent to stop the service.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        sdClientServiceIntent = new Intent(ClientActivity.this,SdClientService.class);<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        sdClientServiceIntent.setData(Uri.parse("Stop"));<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        getApplicationContext().stopService(sdClientServiceIntent);<a name="line.359"></a>
+<span class="sourceLineNo">360</span><a name="line.360"></a>
+<span class="sourceLineNo">361</span>        // Change the action bar icon to show the option to start the service.<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        if (mOptionsMenu!=null) {<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            Log.v(TAG,"Changing action bar icons");<a name="line.363"></a>
+<span class="sourceLineNo">364</span>            mOptionsMenu.findItem(R.id.action_start_stop).setIcon(R.drawable.start_server);<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            mOptionsMenu.findItem(R.id.action_start_stop).setTitle("Start Server");<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        } else {<a name="line.366"></a>
+<span class="sourceLineNo">367</span>            Log.v(TAG,"mOptionsMenu is null, not changing icons!");<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        }<a name="line.368"></a>
+<span class="sourceLineNo">369</span><a name="line.369"></a>
+<span class="sourceLineNo">370</span>    }<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span>    /**<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     */<a name="line.374"></a>
+<span class="sourceLineNo">375</span>    public boolean isServerRunning() {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        //Log.v(TAG,"isServerRunning()................");<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        ActivityManager manager = <a name="line.377"></a>
+<span class="sourceLineNo">378</span>            (ActivityManager) getSystemService(ACTIVITY_SERVICE);<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        for (RunningServiceInfo service : <a name="line.379"></a>
+<span class="sourceLineNo">380</span>                 manager.getRunningServices(Integer.MAX_VALUE)) {<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            //Log.v(TAG,"Service: "+service.service.getClassName());<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            if ("uk.org.openseizuredetector.SdClientService"<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                .equals(service.service.getClassName())) {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>                //Log.v(TAG,"Yes!");<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            return true;<a name="line.385"></a>
+<span class="sourceLineNo">386</span>            }<a name="line.386"></a>
+<span class="sourceLineNo">387</span>        }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        //Log.v(TAG,"No!");<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        return false;<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    }<a name="line.390"></a>
+<span class="sourceLineNo">391</span><a name="line.391"></a>
+<span class="sourceLineNo">392</span><a name="line.392"></a>
+<span class="sourceLineNo">393</span><a name="line.393"></a>
+<span class="sourceLineNo">394</span><a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>    /*<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * updateUI - called by the uiTimer timer periodically.<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * requests the ui to be updated by calling serverStatusRunnable.<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     */<a name="line.399"></a>
+<span class="sourceLineNo">400</span>    private void updateUI() {<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        Log.v(TAG,"updateUI()");<a name="line.401"></a>
+<span class="sourceLineNo">402</span>        serverStatusHandler.post(updateUIRunnable);<a name="line.402"></a>
+<span class="sourceLineNo">403</span>    }<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        <a name="line.404"></a>
+<span class="sourceLineNo">405</span>    /*<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * updateUIRunnable - called by updateUI - updates the<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * user interface to reflect the current status received from the server.<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     */<a name="line.408"></a>
+<span class="sourceLineNo">409</span>    final Runnable updateUIRunnable = new Runnable() {<a name="line.409"></a>
+<span class="sourceLineNo">410</span>            public void run() {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                if (mSdClientService!=null) {<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                    TextView tv;<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                    tv = (TextView) findViewById(R.id.textView1);<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                    if (mSdClientService.mSdData.serverOK) {   // was isServerRunning<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                        tv.setText("Server Running OK");<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                        tv.setBackgroundColor(okColour);<a name="line.416"></a>
+<span class="sourceLineNo">417</span>                        tv = (TextView)findViewById(R.id.textView2);<a name="line.417"></a>
+<span class="sourceLineNo">418</span>                        tv.setText("Connecting to Server at http://"<a name="line.418"></a>
+<span class="sourceLineNo">419</span>                                   +mSdClientService.mServerIP+":8080");<a name="line.419"></a>
+<span class="sourceLineNo">420</span>                        tv.setBackgroundColor(okColour);<a name="line.420"></a>
+<span class="sourceLineNo">421</span>                    } else {<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                        tv.setText("***Can Not Access Server***");<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                        tv.setBackgroundColor(alarmColour);<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                    }<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                 <a name="line.425"></a>
+<span class="sourceLineNo">426</span>                    // Deal with Cancel Audible button<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                    Button cancelAudibleButton = <a name="line.427"></a>
+<span class="sourceLineNo">428</span>                        (Button) findViewById(R.id.cancelAudibleButton);<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                    if (mSdClientService.isAudibleCancelled()) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                        cancelAudibleButton.setText("Audible Alarms Cancelled "<a name="line.430"></a>
+<span class="sourceLineNo">431</span>                                                    + "for "<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                                                    + mSdClientService.<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                                                    cancelAudibleTimeRemaining()<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                                                    + " sec."<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                                                    + " Press to re-enable");<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                    } else {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                        if (mSdClientService.mAudibleAlarm) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                            cancelAudibleButton.setText("Cancel Audible Alarms (temporarily)");<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                        } else {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                            cancelAudibleButton.setText("Audible Alarms OFF");<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                        }<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                    }<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                    try {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                        tv = (TextView) findViewById(R.id.alarmTv);<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                        if (mSdClientService.mSdData.alarmState==0) {<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                            tv.setText(mSdClientService.mSdData.alarmPhrase);<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                            tv.setBackgroundColor(okColour);<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                        }<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                        if (mSdClientService.mSdData.alarmState==1) {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                            tv.setText(mSdClientService.mSdData.alarmPhrase);<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                            tv.setBackgroundColor(warnColour);<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                        }<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                        if (mSdClientService.mSdData.alarmState==2) {<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                            tv.setText(mSdClientService.mSdData.alarmPhrase);<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                            tv.setBackgroundColor(alarmColour);<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                        }<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                        tv = (TextView) findViewById(R.id.pebTimeTv);<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                        tv.setText(mSdClientService.mSdData.dataTime.format("%H:%M:%S"));<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                        // Pebble Connected Phrase<a name="line.459"></a>
+<span class="sourceLineNo">460</span>                        tv = (TextView) findViewById(R.id.pebbleTv);<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                        if (mSdClientService.mSdData.pebbleConnected) {<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                            tv.setText("Pebble Watch Connected OK");        <a name="line.462"></a>
+<span class="sourceLineNo">463</span>                            tv.setBackgroundColor(okColour);<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                        } else {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                            tv.setText("** Pebble Watch NOT Connected **");<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                            tv.setBackgroundColor(alarmColour);<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                        }<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                        tv = (TextView) findViewById(R.id.appTv);<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                        if (mSdClientService.mSdData.pebbleAppRunning) {<a name="line.469"></a>
+<span class="sourceLineNo">470</span>                            tv.setText("Pebble App OK");            <a name="line.470"></a>
+<span class="sourceLineNo">471</span>                        tv.setBackgroundColor(okColour);<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                        } else {<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                            tv.setText("** Pebble App NOT Running **");     <a name="line.473"></a>
+<span class="sourceLineNo">474</span>                            tv.setBackgroundColor(alarmColour);<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                        }<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                        tv = (TextView) findViewById(R.id.battTv);<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                        tv.setText("Pebble Battery = "+String.valueOf(mSdClientService.mSdData.batteryPc)+"%");<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                        if (mSdClientService.mSdData.batteryPc&lt;=20)<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                            tv.setBackgroundColor(alarmColour);<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                        if (mSdClientService.mSdData.batteryPc&gt;20)<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                            tv.setBackgroundColor(warnColour);<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                        if (mSdClientService.mSdData.batteryPc&gt;=40)<a name="line.482"></a>
+<span class="sourceLineNo">483</span>                            tv.setBackgroundColor(okColour);<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                        <a name="line.484"></a>
+<span class="sourceLineNo">485</span>                        tv = (TextView) findViewById(R.id.debugTv);<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                        String specStr = "";<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                        for (int i=0;i&lt;10;i++)<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                            specStr = specStr <a name="line.488"></a>
+<span class="sourceLineNo">489</span>                                + mSdClientService.mSdData.simpleSpec[i] <a name="line.489"></a>
+<span class="sourceLineNo">490</span>                                + ", ";<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                        tv.setText("Spec = "+specStr);<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                    } catch (Exception e) {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                        Log.v(TAG,"updateUIRunnable: Exception - "+e.toString());<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                    }<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                    ////////////////////////////////////////////////////////////<a name="line.495"></a>
+<span class="sourceLineNo">496</span>                    // Produce graph<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                    LineChart mChart = (LineChart) findViewById(R.id.chart1);<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                    mChart.setDescription("");<a name="line.498"></a>
+<span class="sourceLineNo">499</span>                    mChart.setNoDataTextDescription("You need to provide data for the chart.");<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                    // X Values<a name="line.500"></a>
+<span class="sourceLineNo">501</span>                    ArrayList&lt;String&gt; xVals = new ArrayList&lt;String&gt;();<a name="line.501"></a>
+<span class="sourceLineNo">502</span>                    for (int i = 0; i &lt; 10; i++) {<a name="line.502"></a>
+<span class="sourceLineNo">503</span>                        xVals.add((i) + "");<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                    }<a name="line.504"></a>
+<span class="sourceLineNo">505</span>                    // Y Values<a name="line.505"></a>
+<span class="sourceLineNo">506</span>                    ArrayList&lt;Entry&gt; yVals = new ArrayList&lt;Entry&gt;();<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                    for (int i = 0; i &lt; 10; i++) {<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                        if (mSdClientService.mSdData!=null)<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                            yVals.add(new Entry(mSdClientService.mSdData.simpleSpec[i], i));<a name="line.509"></a>
+<span class="sourceLineNo">510</span>                        else<a name="line.510"></a>
+<span class="sourceLineNo">511</span>                            yVals.add(new Entry(i, i));<a name="line.511"></a>
+<span class="sourceLineNo">512</span>                    }<a name="line.512"></a>
+<span class="sourceLineNo">513</span>                    <a name="line.513"></a>
+<span class="sourceLineNo">514</span>                    // create a dataset and give it a type<a name="line.514"></a>
+<span class="sourceLineNo">515</span>                    LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");<a name="line.515"></a>
+<span class="sourceLineNo">516</span>                    set1.setColor(Color.BLACK);<a name="line.516"></a>
+<span class="sourceLineNo">517</span>                    set1.setLineWidth(1f);<a name="line.517"></a>
+<span class="sourceLineNo">518</span>                    <a name="line.518"></a>
+<span class="sourceLineNo">519</span>                    ArrayList&lt;LineDataSet&gt; dataSets = new ArrayList&lt;LineDataSet&gt;();<a name="line.519"></a>
+<span class="sourceLineNo">520</span>                    dataSets.add(set1); // add the datasets<a name="line.520"></a>
+<span class="sourceLineNo">521</span>                    LineData data = new LineData(xVals, dataSets);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>                    //data.setValueTextSize(10f);<a name="line.522"></a>
+<span class="sourceLineNo">523</span>                    mChart.setData(data);<a name="line.523"></a>
+<span class="sourceLineNo">524</span>                    mChart.invalidate();<a name="line.524"></a>
+<span class="sourceLineNo">525</span>                } else {<a name="line.525"></a>
+<span class="sourceLineNo">526</span>                    Log.v(TAG,"mSdClientService is null - service not running?");<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                }<a name="line.527"></a>
+<span class="sourceLineNo">528</span>            }<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        };<a name="line.529"></a>
+<span class="sourceLineNo">530</span>    <a name="line.530"></a>
+<span class="sourceLineNo">531</span><a name="line.531"></a>
+<span class="sourceLineNo">532</span>    @Override<a name="line.532"></a>
+<span class="sourceLineNo">533</span>    protected void onPause() {<a name="line.533"></a>
+<span class="sourceLineNo">534</span>        super.onPause();<a name="line.534"></a>
+<span class="sourceLineNo">535</span>    }<a name="line.535"></a>
+<span class="sourceLineNo">536</span>    @Override<a name="line.536"></a>
+<span class="sourceLineNo">537</span>    protected void onResume() {<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        super.onResume();<a name="line.538"></a>
+<span class="sourceLineNo">539</span>    }<a name="line.539"></a>
+<span class="sourceLineNo">540</span><a name="line.540"></a>
+<span class="sourceLineNo">541</span>}<a name="line.541"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

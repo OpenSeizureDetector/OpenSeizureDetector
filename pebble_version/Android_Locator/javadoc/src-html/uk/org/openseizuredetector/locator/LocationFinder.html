@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/**<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * <a name="line.2"></a>
+<span class="sourceLineNo">003</span> */<a name="line.3"></a>
+<span class="sourceLineNo">004</span>package uk.org.openseizuredetector.locator;<a name="line.4"></a>
+<span class="sourceLineNo">005</span><a name="line.5"></a>
+<span class="sourceLineNo">006</span><a name="line.6"></a>
+<span class="sourceLineNo">007</span>import java.util.Iterator;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import java.util.List;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import android.content.Context;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import android.location.GpsSatellite;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import android.location.Location;<a name="line.11"></a>
+<span class="sourceLineNo">012</span>import android.location.LocationListener;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import android.location.LocationManager;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import android.os.Bundle;<a name="line.14"></a>
+<span class="sourceLineNo">015</span>import android.os.Handler;<a name="line.15"></a>
+<span class="sourceLineNo">016</span>import android.util.Log;<a name="line.16"></a>
+<span class="sourceLineNo">017</span>import android.location.GpsStatus;;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>interface LocationReceiver {<a name="line.19"></a>
+<span class="sourceLineNo">020</span>    /** The function to be called once we have found the location */<a name="line.20"></a>
+<span class="sourceLineNo">021</span>    public void onLocationFound(LonLat ll);<a name="line.21"></a>
+<span class="sourceLineNo">022</span>}<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>/**<a name="line.24"></a>
+<span class="sourceLineNo">025</span> * @author Graham Jones<a name="line.25"></a>
+<span class="sourceLineNo">026</span> * Based on various examples from the internet.<a name="line.26"></a>
+<span class="sourceLineNo">027</span> * Call with <a name="line.27"></a>
+<span class="sourceLineNo">028</span> *                      LocationFinder lf = new LocationFinder(this);<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *                      LonLat ll = lf.getLocationLL();<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *<a name="line.30"></a>
+<span class="sourceLineNo">031</span> */<a name="line.31"></a>
+<span class="sourceLineNo">032</span>public class LocationFinder implements LocationListener, Runnable, GpsStatus.Listener {<a name="line.32"></a>
+<span class="sourceLineNo">033</span>    LocationManager locMgr;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>    LocationReceiver lr;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>    String mProvider;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>    long mTimeStart;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>    Context mContext;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>    boolean mTimedOut = false;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>    int timeOutCount = 0;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>    int timeOutSec;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>    Handler mHandler;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>    boolean mUseGPS = true;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>    String TAG = "LocationFinder";<a name="line.43"></a>
+<span class="sourceLineNo">044</span>    <a name="line.44"></a>
+<span class="sourceLineNo">045</span>    public LocationFinder(Context contextArg) {<a name="line.45"></a>
+<span class="sourceLineNo">046</span>        mContext = contextArg;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>        mHandler = new Handler();<a name="line.47"></a>
+<span class="sourceLineNo">048</span>        mUseGPS = false;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>        locMgr = (LocationManager)<a name="line.49"></a>
+<span class="sourceLineNo">050</span>            contextArg.getSystemService(<a name="line.50"></a>
+<span class="sourceLineNo">051</span>                                        Context.LOCATION_SERVICE);<a name="line.51"></a>
+<span class="sourceLineNo">052</span>        <a name="line.52"></a>
+<span class="sourceLineNo">053</span>        if (locMgr==null) {<a name="line.53"></a>
+<span class="sourceLineNo">054</span>            Log.v("LocationFinder","ERROR - locMgr is null - THIS WILL NOT WORK!!!");<a name="line.54"></a>
+<span class="sourceLineNo">055</span>        }<a name="line.55"></a>
+<span class="sourceLineNo">056</span>        <a name="line.56"></a>
+<span class="sourceLineNo">057</span>        // List all providers to log.:<a name="line.57"></a>
+<span class="sourceLineNo">058</span>        List&lt;String&gt; providers = locMgr.getAllProviders();<a name="line.58"></a>
+<span class="sourceLineNo">059</span>        for (String provider : providers) {<a name="line.59"></a>
+<span class="sourceLineNo">060</span>            Log.v("LocationFinder",provider+","+locMgr.getProvider(provider).toString());<a name="line.60"></a>
+<span class="sourceLineNo">061</span>        }<a name="line.61"></a>
+<span class="sourceLineNo">062</span>        <a name="line.62"></a>
+<span class="sourceLineNo">063</span>    }<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    <a name="line.64"></a>
+<span class="sourceLineNo">065</span>    <a name="line.65"></a>
+<span class="sourceLineNo">066</span>    public void getLocationLL(LocationReceiver lr, int timeOutSec, boolean useGPS) {<a name="line.66"></a>
+<span class="sourceLineNo">067</span>        this.timeOutSec = timeOutSec;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        mUseGPS = useGPS;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        if (mUseGPS) {<a name="line.69"></a>
+<span class="sourceLineNo">070</span>            mProvider = LocationManager.GPS_PROVIDER;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        } else {<a name="line.71"></a>
+<span class="sourceLineNo">072</span>            mProvider = LocationManager.NETWORK_PROVIDER;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        }<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        Log.v("mProvider",mProvider);<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        this.lr = lr;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        // Ask for location updates to be sent to the onLocationChanged() method of this class.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        locMgr.requestLocationUpdates(mProvider, 0,0, this);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        // Monitor GPS Status while we are searching for a fix.  this.onGpsStatusChanged()<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        // is called when the GPS Status changes.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        locMgr.addGpsStatusListener(this);<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        <a name="line.81"></a>
+<span class="sourceLineNo">082</span>        // Set a timer running to allow us to give up on getting a GPS fix.  <a name="line.82"></a>
+<span class="sourceLineNo">083</span>        mHandler.removeCallbacks(this);<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        // this.run() is called when the timer times out.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        mHandler.postDelayed(this, timeOutSec*1000);<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    }<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    <a name="line.87"></a>
+<span class="sourceLineNo">088</span>    public void startFixSearch() {<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        locMgr.requestLocationUpdates(mProvider, 36000,10000, this);            <a name="line.89"></a>
+<span class="sourceLineNo">090</span>    }<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    <a name="line.91"></a>
+<span class="sourceLineNo">092</span>    <a name="line.92"></a>
+<span class="sourceLineNo">093</span>    public void onLocationChanged(Location loc) {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        Log.v(TAG,"onLocationChanged");<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        if (loc!=null) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>            Log.v(TAG,"onLocationChanged - mTimedOut ="<a name="line.96"></a>
+<span class="sourceLineNo">097</span>                  +mTimedOut+" Provider="+loc.getProvider());<a name="line.97"></a>
+<span class="sourceLineNo">098</span>            if ((loc.getProvider().equals(mProvider)) || mTimedOut) {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>                locMgr.removeUpdates(this);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>                locMgr.removeGpsStatusListener(this);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>                // Avoid being called again by the timeOut run() function<a name="line.101"></a>
+<span class="sourceLineNo">102</span>                mHandler.removeCallbacks(this); <a name="line.102"></a>
+<span class="sourceLineNo">103</span>                LonLat ll;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>                ll = new LonLat(loc.getLongitude(),<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                                loc.getLatitude(),<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                                loc.getAccuracy(),<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                                loc.getProvider());<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                lr.onLocationFound(ll);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            } else {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>                Log.v(TAG,"Skipping location update by "+loc.getProvider()+" mProvider="+mProvider+".");<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                }<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        } else {<a name="line.112"></a>
+<span class="sourceLineNo">113</span>            Log.v(TAG,"loc==null - waiting...");<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        }<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    }<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    <a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public void onProviderDisabled(String provider) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        // re-register for updates<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        Log.v("locationListener","onProviderDisabled");<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    }<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    <a name="line.121"></a>
+<span class="sourceLineNo">122</span>    public void onProviderEnabled(String provider) {<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        // is provider better than mProvider?<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        // is yes, mProvider = provider<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        Log.v("locationListener","onProviderEnabled");<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    <a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public void onStatusChanged(String provider, int status, Bundle extras) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        Log.v("locationListener","onStatusChanged");<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    <a name="line.131"></a>
+<span class="sourceLineNo">132</span>    // Called by the mHandler timer to signify timeout.  <a name="line.132"></a>
+<span class="sourceLineNo">133</span>    // In which case we give up on GPS and fall back onto NETWORK_PROVIDER.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    // At the moment, if we time out on NETWORK_PROVIDER too, it just<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    // keeps trying over and over - maybe set a count in future to <a name="line.135"></a>
+<span class="sourceLineNo">136</span>    // make it give up altogether eventually?<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    public void run() {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        Log.v("WAYN","timeout runnable.run");<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        mTimedOut = true;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        timeOutCount ++;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        Log.v(TAG,"TimedOut Number "+timeOutCount+<a name="line.141"></a>
+<span class="sourceLineNo">142</span>              "! - using network location instead.");<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        //Location loc = locMgr.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        //onLocationChanged(loc);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        <a name="line.145"></a>
+<span class="sourceLineNo">146</span>        // switch off GPS monitoring to save battery.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        locMgr.removeGpsStatusListener(this);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        locMgr.removeUpdates(this);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        <a name="line.149"></a>
+<span class="sourceLineNo">150</span>        // Re-start search using network rather than GPS.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        mProvider = LocationManager.NETWORK_PROVIDER;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        Log.v("mProvider",mProvider);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        // Ask for location updates to be sent to the onLocationChanged() method of this class.<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        locMgr.requestLocationUpdates(mProvider, 0,0, this);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        <a name="line.155"></a>
+<span class="sourceLineNo">156</span>        // Set a timer running to allow us to give up on getting a fix.  <a name="line.156"></a>
+<span class="sourceLineNo">157</span>        // this.run() is called when the timer times out.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        mHandler.removeCallbacks(this);<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        mHandler.postDelayed(this, timeOutSec*1000);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    }<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    <a name="line.161"></a>
+<span class="sourceLineNo">162</span>    public void onGpsStatusChanged(int eventNo) {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        //if (eventNo == GpsStatus.GPS_EVENT_SATELLITE_STATUS) <a name="line.163"></a>
+<span class="sourceLineNo">164</span>        {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            int nSat = 0;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            GpsStatus gpsStatus = locMgr.getGpsStatus(null);<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            Iterable&lt;GpsSatellite&gt; sats = gpsStatus.getSatellites();<a name="line.167"></a>
+<span class="sourceLineNo">168</span>            Iterator&lt;GpsSatellite&gt; it = sats.iterator();<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            String msg = "Satellites...";<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            while ( it.hasNext() ) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>                nSat++;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>                GpsSatellite oSat = (GpsSatellite) it.next() ; <a name="line.172"></a>
+<span class="sourceLineNo">173</span>                Log.v("TEST","LocationActivity - onGpsStatusChange: Satellites: \n" + <a name="line.173"></a>
+<span class="sourceLineNo">174</span>                      oSat.getSnr() ) ; <a name="line.174"></a>
+<span class="sourceLineNo">175</span>                msg = msg + oSat.getPrn()+ ", "<a name="line.175"></a>
+<span class="sourceLineNo">176</span>                    + oSat.getSnr()+", "<a name="line.176"></a>
+<span class="sourceLineNo">177</span>                    + oSat.hasAlmanac()+","<a name="line.177"></a>
+<span class="sourceLineNo">178</span>                    + oSat.hasEphemeris()+", \n";<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            } <a name="line.179"></a>
+<span class="sourceLineNo">180</span>            msg = msg+" - "+nSat+" in view.";<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            Log.v(TAG,msg);<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        }<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    }<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    <a name="line.184"></a>
+<span class="sourceLineNo">185</span>}<a name="line.185"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
