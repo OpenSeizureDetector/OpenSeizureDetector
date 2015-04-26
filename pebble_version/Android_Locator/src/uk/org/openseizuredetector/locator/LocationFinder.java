@@ -16,10 +16,10 @@ import android.os.Handler;
 import android.util.Log;
 import android.location.GpsStatus;;
 
-interface LocationReceiver {
-    /** The function to be called once we have found the location */
-    public void onLocationFound(LonLat ll);
-}
+//interface LocationReceiver {
+//    /** The function to be called once we have found the location */
+//    public void onLocationFound(LonLat ll);
+//}
 
 /**
  * @author Graham Jones

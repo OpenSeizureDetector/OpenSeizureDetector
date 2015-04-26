@@ -32,10 +32,10 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-interface LocationReceiver2 {
-    /** The function to be called once we have found the location */
-    public void onLocationFound(LonLat ll);
-}
+//interface LocationReceiver2 {
+//    /** The function to be called once we have found the location */
+//    public void onLocationFound(LonLat ll);
+//}
 
 
 /**
@@ -44,7 +44,7 @@ interface LocationReceiver2 {
  * Call with 
  * 			LocationFinder lf = new LocationFinder(this);
  * 			LonLat ll = lf.getLocationLL();
- *
+ * where 'this' must implement the LocationReceiver interface.
  */
 public class LocationFinder2 implements 
 				 ConnectionCallbacks, 
@@ -53,10 +53,14 @@ public class LocationFinder2 implements
 
     LocationReceiver lr;
     Context mContext;
-    protected static final String TAG = "OsmLocator - LocationFinder";
+    protected static final String TAG = "LocationFinder";
     protected GoogleApiClient mGoogleApiClient;
     protected Location mLastLocation;
 
+    /**
+     * Constructor for LocationFinder2 - needs a context so it can use
+     * Toast notifications.
+     */
     public LocationFinder2(Context contextArg) {
 	mContext = contextArg;
         Log.i(TAG, "Creating connection to Google API");
@@ -126,8 +130,7 @@ public class LocationFinder2 implements
         Log.i(TAG, "onLocationChanged() - location found.");
         if (loc != null) {
 	    Log.i(TAG, "OnLocationChanged() - returning Location ("
-			   +loc.getLatitude()+","
-			   +loc.getLongitude()+")"
+		  +loc.toString()+")"
 		  );
 	    Toast.makeText(mContext,"Location is ("
 			   +loc.getLatitude()+","
