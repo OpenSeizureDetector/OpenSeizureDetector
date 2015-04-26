@@ -28,6 +28,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 interface LocationReceiver2 {
@@ -45,16 +47,19 @@ interface LocationReceiver2 {
  *
  */
 public class LocationFinder2 implements 
-        ConnectionCallbacks, OnConnectionFailedListener {
+				 ConnectionCallbacks, 
+				 OnConnectionFailedListener,
+				 LocationListener {
 
     LocationReceiver lr;
     Context mContext;
-    protected static final String TAG = "LocationFinder";
+    protected static final String TAG = "OsmLocator - LocationFinder";
     protected GoogleApiClient mGoogleApiClient;
     protected Location mLastLocation;
 
     public LocationFinder2(Context contextArg) {
 	mContext = contextArg;
+        Log.i(TAG, "Creating connection to Google API");
         mGoogleApiClient = new GoogleApiClient.Builder(mContext)
 	    .addConnectionCallbacks(this)
 	    .addOnConnectionFailedListener(this)
@@ -63,14 +68,16 @@ public class LocationFinder2 implements
     }
 
     public void destructor() {
+        Log.i(TAG, "destructor() - disconnecting from Google API.");
         if (mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
     }
 
     public void getLocationLL(LocationReceiver lr) {
-        mGoogleApiClient.connect();
+	Log.i(TAG, "getLocationLL - connecting to Google API.");
 	this.lr = lr;
+        mGoogleApiClient.connect();
     }
 
     /**
@@ -78,23 +85,23 @@ public class LocationFinder2 implements
      */
     @Override
     public void onConnected(Bundle connectionHint) {
-	Location loc;
-        loc = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (loc != null) {
-	    Toast.makeText(mContext,"Location is ("
-			   +loc.getLatitude()+","
-			   +loc.getLongitude()+")",
-			   Toast.LENGTH_LONG);
-	    LonLat ll;
-	    ll = new LonLat(loc.getLongitude(),
-				loc.getLatitude(),
-				loc.getAccuracy(),
-				loc.getProvider());
-	    lr.onLocationFound(ll);
-        } else {
-            Toast.makeText(mContext, "No Location Detected", Toast.LENGTH_LONG).show();
-	    lr.onLocationFound(null);
-        }
+	Log.i(TAG, "onConnected() - connected to Google API.");
+	// set the parameters for our location determination.
+	LocationRequest locRequest;
+	locRequest = LocationRequest.create();
+	locRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+	// These intervals should not really matter because we stop the 
+	// request after we receive the first result in onLocationChanged()
+	locRequest.setInterval(10*1000); // 10 seconds.
+	locRequest.setFastestInterval(1*1000); // 1 second
+	// Request location updates - on LocationChanged is called each time
+	// we get a new location notification.
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+			      			 mGoogleApiClient,
+						 locRequest,
+						 this);	
+        Log.i(TAG, "onConnected() - requesting location updates");
+	Toast.makeText(mContext, "Requesting Location....", Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -108,4 +115,41 @@ public class LocationFinder2 implements
         Log.i(TAG, "Connection suspended");
         mGoogleApiClient.connect();
     }
+
+
+    /**
+     * Called each time we receive a new location notification.
+     * - sends the location back to the LocationReceiver that requested the
+     * location.
+     */ 
+    public void onLocationChanged(Location loc) {
+        Log.i(TAG, "onLocationChanged() - location found.");
+        if (loc != null) {
+	    Log.i(TAG, "OnLocationChanged() - returning Location ("
+			   +loc.getLatitude()+","
+			   +loc.getLongitude()+")"
+		  );
+	    Toast.makeText(mContext,"Location is ("
+			   +loc.getLatitude()+","
+			   +loc.getLongitude()+")",
+			   Toast.LENGTH_LONG);
+	    LonLat ll;
+	    ll = new LonLat(loc.getLongitude(),
+			    loc.getLatitude(),
+			    loc.getAccuracy(),
+			    loc.getProvider());
+	    // Now we have a location, unsubscribe from location updates.
+	    LocationServices.FusedLocationApi.removeLocationUpdates(
+						 mGoogleApiClient,
+						 this);	
+	    // And retrn the location to the requesting process.
+	    lr.onLocationFound(ll);
+        } else {
+	    Log.i(TAG, "onLocationChanged() - Location is null????");
+            Toast.makeText(mContext, "No Location Detected", Toast.LENGTH_LONG).show();
+	    lr.onLocationFound(null);
+        }
+    }
+
+
 }
