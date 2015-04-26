@@ -4,6 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content" >
 
+
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
@@ -12,27 +13,22 @@
         android:focusableInTouchMode="true"
         android:orientation="vertical" >
 
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="OpenSeizureDetector Locator\n" />
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="OpenSeizureDetector Locator will send a GeoSMS Text message containing the location of the phone when requested by someone sending a SMS Message containing a special password.   \n\nThe password is set using the 'Settings' button below.\n\nIt is also possible to disable the SMS responder in the settings screen.\n\nIf the phone receives a special GeoSMS text message it will display it on a map.  I recommend using OsmAnd as this works without an internet connection (unlike Google Maps).   \n\nFor further information please see http://openseizuredetector.org.uk or contact graham@openseizuredetector.org.uk\n\n" />
-
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" >
-          <Button
-              android:id="@+id/prefsButton"
-              android:layout_width="fill_parent"
-              android:layout_height="wrap_content"
-              android:layout_weight="1"
-              android:text="Settings" />
-        </LinearLayout>
-
+      <TextView
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:text="OpenSeizureDetector Locator\n" />
+      <Button
+          android:id="@+id/prefsButton"
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Settings" />
+      <TextView
+          android:layout_width="fill_parent"
+          android:layout_height="wrap_content"
+          android:text="OpenSeizureDetector Locator will send a GeoSMS Text message containing the location of the phone when requested by someone sending a SMS Message containing a special password.   \n\nThe password is set using the 'Settings' button above.\n\n\nIf the phone receives a special GeoSMS text message it will display it on a map.  I recommend using OsmAnd as this works without an internet connection (unlike Google Maps).   \n\nBoth of these features can be disabled in the settings screen if requred\n\nFor further information please see http://openseizuredetector.org.uk or contact graham@openseizuredetector.org.uk\n\n" />
+      
+      
     </LinearLayout>
 
 </ScrollView>
