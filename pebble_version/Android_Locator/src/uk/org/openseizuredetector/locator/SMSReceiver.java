@@ -134,7 +134,10 @@ public class SMSReceiver extends BroadcastReceiver
 	Log.d(TAG, "onLocationFound.");
 	String resultStr;
 	if (ll != null) {
-	    resultStr = mMessageText+"\n"+ll.toGeoUri();
+	    resultStr = mMessageText+"\n"
+		+ll.toGeoUri()+"\n"
+		+ll.date()
+		;
 	    Log.d(TAG, "resultStr=" + resultStr);
 	    Log.d(TAG, "onLocationFound() - Replying resultStr="+resultStr);
 	    

@@ -21,6 +21,7 @@ package uk.org.openseizuredetector.locator;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
+import java.util.Date;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -140,7 +141,8 @@ public class LocationFinder2 implements
 	    ll = new LonLat(loc.getLongitude(),
 			    loc.getLatitude(),
 			    loc.getAccuracy(),
-			    loc.getProvider());
+			    loc.getProvider(),
+			    new Date(loc.getTime()));
 	    // Now we have a location, unsubscribe from location updates.
 	    LocationServices.FusedLocationApi.removeLocationUpdates(
 						 mGoogleApiClient,
