@@ -34,14 +34,18 @@ import android.widget.Toast;
 public class SMSReceiver extends BroadcastReceiver 
     implements LocationReceiver 
 {    
+    /** is the SMS Responder active? */
     boolean mActive;
+    /** is the GeoSMS dispaly function active? */
+    boolean mGeoSMS;
+    /** Password required for location response */
     String mPassword;
+    /** Base text of location response message */
     String mMessageText;
+
     LocationFinder2 lf = null;
     Context mContext = null;
     String smsNumber = null;
-    int mTimeOutSec = 60;
-    boolean mUseGPS = true;
     String TAG = "SMSReceiver";
     
     /*
@@ -56,57 +60,57 @@ public class SMSReceiver extends BroadcastReceiver
 	Bundle bundle = intentArg.getExtras();        
 	SmsMessage[] msgs = null;
 	mContext = contextArg;
+	// retrieve settings
 	getPrefs(contextArg);
 	Log.d(TAG, "onReceive()");
 	if (bundle == null) {
 	    //showToast("Empty SMS Message Received - Ignoring");
 	    Log.d(TAG, "onReceive() - Empty SMS Message - Ignoring");
 	} else {
-	    if (mActive) {
-		Log.d(TAG, "onReceive() - mActive, so processing...");
-		//---retrieve the SMS message received---
-		Object[] pdus = (Object[]) bundle.get("pdus");
-		msgs = new SmsMessage[pdus.length];            
-		for (int i=0; i<msgs.length; i++){
-		    String str = "";
-		    msgs[i] = SmsMessage.createFromPdu((byte[])pdus[i]);                
-		    str += "SMS from " + msgs[i].getOriginatingAddress();                     
-		    str += " :";
-		    str += msgs[i].getMessageBody().toString();
-		    str += "\n";        
-		    Log.d(TAG, "onReceive() - msg = "+str);
+	    //---retrieve the SMS message received---
+	    Object[] pdus = (Object[]) bundle.get("pdus");
+	    msgs = new SmsMessage[pdus.length];            
+	    for (int i=0; i<msgs.length; i++){
+		String str = "";
+		msgs[i] = SmsMessage.createFromPdu((byte[])pdus[i]);
+		str += "SMS from " + msgs[i].getOriginatingAddress();
+		str += " :";
+		str += msgs[i].getMessageBody().toString();
+		str += "\n";        
+		Log.d(TAG, "onReceive() - msg = "+str);
+	    }
+	    String msg0 = msgs[0].getMessageBody().toString();
+	    // Check if it is a location request.
+	    if (mActive && msg0.toUpperCase().contains(mPassword)) {
+		// Start the LocationFinder service if it is not running.
+		if (lf==null) {
+		    lf = new LocationFinder2(contextArg);
 		}
-		String msg0 = msgs[0].getMessageBody().toString();
-		if (msg0.toUpperCase().contains(mPassword)) {
-		    // Start the LocationFinder service if it is not running.
-		    if (lf==null) {
-			lf = new LocationFinder2(contextArg);
-		    }
-		    Log.d(TAG, "onReceive() - Message contains the Password - getting location...");
-		    showToast("WAYN Password found - getting Location....");
-		    // Get the location using the LocationFinder.
-		    smsNumber = msgs[0].getOriginatingAddress();
-		    //lf.getLocationLL((LocationReceiver) this,mTimeOutSec,mUseGPS);
-		    lf.getLocationLL((LocationReceiver) this);
-		} else if (msg0.toUpperCase().contains("GEO:")) {
-		    Log.d(TAG, "onReceive() - Message contains geo: - displaying location...");
-		    int nPos = msg0.toUpperCase().indexOf("GEO:");
-		    String uriStr = msg0.substring(nPos);
-		    Log.d(TAG,"onReceive() - uriStr = "+uriStr);
-		    showToast("GeoSMS Received - displaying on Map\n("+uriStr+")");
-		    Uri uri = Uri.parse(uriStr);
-		    Intent intent = new Intent(
-			 android.content.Intent.ACTION_VIEW, uri);
-		    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		    mContext.startActivity(intent);
-		} else {
-		    Log.d(TAG, "onReceive() - Message does not contain Password or geo: - Ignoring");
-
-		    //showToast("Message does not contain WAYN Password or geo: - ignoring");
-		}
+		Log.d(TAG, "onReceive() - Message contains the Password - getting location...");
+		showToast("WAYN Password found - getting Location....");
+		// Get the location using the LocationFinder.
+		smsNumber = msgs[0].getOriginatingAddress();
+		lf.getLocationLL((LocationReceiver) this);
 	    } else {
-		Log.d(TAG, "onReceive() - mActive False - Ignoring");
-		//showToast("WAYN Disabled - Ignoring");
+		Log.d(TAG, "onReceive() - inactive, or Message does "
+		      +"not contain Password - Ignoring");
+	    }
+	    // Check if it is a GeoSMS message
+	    if (mGeoSMS && msg0.toUpperCase().contains("GEO:")) {
+		Log.d(TAG, "onReceive() - Message contains geo: "
+		      +"- displaying location...");
+		int nPos = msg0.toUpperCase().indexOf("GEO:");
+		String uriStr = msg0.substring(nPos);
+		Log.d(TAG,"onReceive() - uriStr = "+uriStr);
+		showToast("GeoSMS Received - displaying on Map\n("+uriStr+")");
+		Uri uri = Uri.parse(uriStr);
+		Intent intent = new Intent(
+			android.content.Intent.ACTION_VIEW, uri);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		mContext.startActivity(intent);
+	    } else {
+		Log.d(TAG, "onReceive() - GeoSMS Inactive or Message "
+		      +"does not contain geo: - Ignoring");
 	    }
 	}
     }
@@ -115,10 +119,9 @@ public class SMSReceiver extends BroadcastReceiver
 	SharedPreferences SP = PreferenceManager
 	    .getDefaultSharedPreferences(mContext);
 	mActive = SP.getBoolean("RespondToSMS", true);
+	mGeoSMS = SP.getBoolean("DisplayGeoSMS", true);
 	mPassword = SP.getString("Password", "WAYN");
 	mMessageText = SP.getString("MessageText", "OSDLocator Response:\n");
-	mTimeOutSec = SP.getInt("GPSTimeoutPeriod", 60);
-	mUseGPS = SP.getBoolean("UseGPS",true);
     }
     
 

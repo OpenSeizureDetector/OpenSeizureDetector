@@ -3,7 +3,12 @@
     <CheckBoxPreference
         android:key="RespondToSMS"
         android:title="Respond to SMS Messages Automatically"
-        android:summary="Respond to SMS messages containing the password given below automatically (also displays location of any sms containing 'geo:'"
+        android:summary="Respond to SMS messages containing the password given below automatically"
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="DisplayGeoSMS"
+        android:title="Display GeoSMS locations on a map automatically."
+        android:summary="If an incoming SMS message contains geo:... it will be treated as a GeoSMS and the location displayed on a map."
         android:defaultValue="true" />
     <EditTextPreference
         android:key="Password"
@@ -15,15 +20,4 @@
         android:title="Message Text"
         android:summary="Content of SMS Response (to which location is appended)."
         android:defaultValue="OsdLocator Response:\n" />
-    <CheckBoxPreference
-        android:key="UseGPS"
-        android:title="Use GPS Location"
-        android:summary="Use GPS Receiver to determine location (more accurate)"
-        android:defaultValue="true" />
-    <EditTextPreference
-        android:key="GpsTimeoutPeriod"
-        android:title="Timeout Period (in seconds) for GPS Fix"
-        android:summary="Maximum time we wait for a GPS fix before giving up and falling back on network location."
-	android:numeric="integer"
-        android:defaultValue="30" />
 </PreferenceScreen>
