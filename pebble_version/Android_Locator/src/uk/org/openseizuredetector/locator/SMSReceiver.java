@@ -81,7 +81,7 @@ public class SMSReceiver extends BroadcastReceiver
 	    }
 	    String msg0 = msgs[0].getMessageBody().toString();
 	    // Check if it is a location request.
-	    if (mActive && msg0.toUpperCase().contains(mPassword)) {
+	    if (mActive && msg0.toUpperCase().contains(mPassword.toUpperCase())) {
 		// Start the LocationFinder service if it is not running.
 		if (lf==null) {
 		    lf = new LocationFinder2(contextArg);
