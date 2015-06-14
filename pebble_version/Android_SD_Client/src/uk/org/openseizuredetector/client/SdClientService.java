@@ -456,7 +456,7 @@ public class SdClientService extends Service
 	    toast.show();
 	}
 
-	// Parse the CancelAudible period setting.
+	// Parse the faultTimer period setting.
 	try {
 	    String faultTimerPeriodStr = SP.getString("FaultTimerPeriod","30");
 	    mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);

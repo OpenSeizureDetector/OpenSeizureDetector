@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
-        android:key="AudibleFaultWarning"
-        android:title="Enable Audible System FaultWarnings"
-        android:summary="Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble)."
-        android:defaultValue="true" />
-    <CheckBoxPreference
         android:key="AudibleAlarm"
         android:title="Enable Audible Alarm"
         android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
@@ -30,6 +25,12 @@
         android:title="SMS Message"
         android:summary="Message to be Sent by SMS when a Seizure is Detected."
         android:defaultValue="**SEIZURE DETECTED**" />
+
+    <CheckBoxPreference
+        android:key="AudibleFaultWarning"
+        android:title="Enable Audible System FaultWarnings"
+        android:summary="Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble)."
+        android:defaultValue="true" />
 
     <CheckBoxPreference
         android:key="LogAlarms"
@@ -83,5 +84,18 @@
         android:summary="Alarm Ratio Threshold (Default = 30)"
         android:defaultValue="30" />
 
+
+    <EditTextPreference
+        android:key="AppRestartTimeout"
+        android:title="Period (sec) we wait for data before restarting watch app."
+        android:summary="Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it."
+        android:numeric="integer"
+        android:defaultValue="10" />
+    <EditTextPreference
+        android:key="FaultTimerPeriod"
+        android:title="Fault Timer Duration (sec)"
+        android:summary="Duration that fault alarms are muted before initiating."
+        android:numeric="integer"
+        android:defaultValue="30" />
 
 </PreferenceScreen>

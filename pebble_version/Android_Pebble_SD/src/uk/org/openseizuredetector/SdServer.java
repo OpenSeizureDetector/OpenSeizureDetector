@@ -48,6 +48,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Binder;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
@@ -127,6 +128,8 @@ public class SdServer extends Service
     public Time mPebbleStatusTime;
     private boolean mPebbleAppRunningCheck = false;
     private Timer statusTimer = null;
+    private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
+	private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec).
     private Timer settingsTimer = null;
     private Timer dataLogTimer = null;
     private HandlerThread thread;
@@ -277,7 +280,7 @@ public class SdServer extends Service
 	    mWakeLock.release();
 	    Log.v(TAG,"Released Wake Lock to allow device to sleep.");
 	} else {
-	    Log.d(TAG,"mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
+	    Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
 	}
 
 	try {
@@ -334,6 +337,7 @@ public class SdServer extends Service
     }
 
 
+
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
     /**
      * beep for duration miliseconds, but only if mAudibleAlarm is set.
@@ -347,18 +351,18 @@ public class SdServer extends Service
     /*
      * beep, provided mAudibleAlarm is set
      */
-    public void faultWarningBeep() {
-	if (mCancelAudible) {
-	    Log.v(TAG,"faultWarningBeep() - CancelAudible Active - silent beep...");
-	} else {
-	    if (mAudibleFaultWarning) {
-		beep(10);
-		Log.v(TAG,"faultWarningBeep()");
-	    } else {
-		Log.v(TAG,"faultWarningBeep() - silent...");
-	    }
+	public void faultWarningBeep() {
+		if (mCancelAudible) {
+			Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
+		} else {
+			if (mAudibleFaultWarning) {
+				beep(10);
+				Log.v(TAG, "faultWarningBeep()");
+			} else {
+				Log.v(TAG, "faultWarningBeep() - silent...");
+			}
+		}
 	}
-    }
 
 
 
@@ -422,71 +426,72 @@ public class SdServer extends Service
      * Set this server to receive pebble data by registering it as
      * A PebbleDataReceiver
      */
-    private void startPebbleServer() {
-	Log.v(TAG,"StartPebbleServer()");
-	final Handler handler = new Handler();
-	msgDataHandler = new PebbleKit.PebbleDataReceiver(SD_UUID) {
-		@Override
-		public void receiveData(final Context context,
-					final int transactionId,
-					final PebbleDictionary data) {
-		    Log.v(TAG,"Received message from Pebble - data type="
-			  +data.getUnsignedIntegerAsLong(KEY_DATA_TYPE));
-		    // If we have a message, the app must be running
-		    mPebbleAppRunningCheck = true;  
-		    PebbleKit.sendAckToPebble(context,transactionId);
-		    //Log.v(TAG,"Message is: "+data.toJsonString());
-		    if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
-			==DATA_TYPE_RESULTS) {
-			Log.v(TAG,"DATA_TYPE = Results");
-			sdData.dataTime.setToNow();
-			Log.v(TAG,"sdData.dataTime="+sdData.dataTime);
+	private void startPebbleServer() {
+		Log.v(TAG, "StartPebbleServer()");
+		final Handler handler = new Handler();
+		msgDataHandler = new PebbleKit.PebbleDataReceiver(SD_UUID) {
+			@Override
+			public void receiveData(final Context context,
+									final int transactionId,
+									final PebbleDictionary data) {
+				Log.v(TAG, "Received message from Pebble - data type="
+						+ data.getUnsignedIntegerAsLong(KEY_DATA_TYPE));
+				// If we ha ve a message, the app must be running
+				mPebbleAppRunningCheck = true;
+				PebbleKit.sendAckToPebble(context, transactionId);
+				//Log.v(TAG,"Message is: "+data.toJsonString());
+				if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
+						== DATA_TYPE_RESULTS) {
+					Log.v(TAG, "DATA_TYPE = Results");
+					sdData.dataTime.setToNow();
+					Log.v(TAG, "sdData.dataTime=" + sdData.dataTime);
 
-			sdData.alarmState = data.getUnsignedIntegerAsLong(
-								   KEY_ALARMSTATE);
-			sdData.maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
-			sdData.maxFreq = data.getUnsignedIntegerAsLong(KEY_MAXFREQ);
-			sdData.specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
-			sdData.roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
-			sdData.alarmPhrase = "Unknown";
-			if (sdData.alarmState==0) {
-			    sdData.alarmPhrase="OK";
-			}
-			if (sdData.alarmState==1) {
-			    sdData.alarmPhrase="WARNING";
-			    if (mLogAlarms) {
-				Log.v(TAG,"WARNING - Loggin to SD Card");
-				writeAlarmToSD();
-				logData();
-			    } else {
-				Log.v(TAG,"WARNING");
-			    }
-			    warningBeep();
-			}
-			if (sdData.alarmState==2) {
-			    sdData.alarmPhrase="ALARM";
-			    if (mLogAlarms) {
-				Log.v(TAG,"***ALARM*** - Loggin to SD Card");
-				writeAlarmToSD();
-				logData();
-			    } else {
-				Log.v(TAG,"***ALARM***");
-			    }
-			    // Make alarm beep tone
-			    alarmBeep();
-			    // Send SMS Alarm.
-			    if (mSMSAlarm) {
-				Time tnow = new Time(Time.getCurrentTimezone());
-				tnow.setToNow();
-				// limit SMS alarms to one per minute
-				if  ((tnow.toMillis(false) 
-				      - mSMSTime.toMillis(false)) 
-				     > 60000) {
-				sendSMSAlarm();
-				mSMSTime = tnow;
-				}
-			    }
-			}
+					sdData.alarmState = data.getUnsignedIntegerAsLong(
+							KEY_ALARMSTATE);
+					sdData.maxVal = data.getUnsignedIntegerAsLong(KEY_MAXVAL);
+					sdData.maxFreq = data.getUnsignedIntegerAsLong(KEY_MAXFREQ);
+					sdData.specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
+					sdData.roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
+					sdData.alarmPhrase = "Unknown";
+					if (sdData.alarmState == 0) {
+						sdData.alarmPhrase = "OK";
+					}
+					if (sdData.alarmState == 1) {
+						sdData.alarmPhrase = "WARNING";
+						if (mLogAlarms) {
+							Log.v(TAG, "WARNING - Loggin to SD Card");
+							writeAlarmToSD();
+							logData();
+						} else {
+							Log.v(TAG, "WARNING");
+						}
+						warningBeep();
+					}
+					if (sdData.alarmState == 2) {
+						sdData.alarmPhrase = "ALARM";
+						if (mLogAlarms) {
+							Log.v(TAG, "***ALARM*** - Loggin to SD Card");
+							writeAlarmToSD();
+							logData();
+						} else {
+							Log.v(TAG, "***ALARM***");
+						}
+						// Make alarm beep tone
+						alarmBeep();
+						// Send SMS Alarm.
+						if (mSMSAlarm) {
+							Time tnow = new Time(Time.getCurrentTimezone());
+							tnow.setToNow();
+							// limit SMS alarms to one per minute
+							if ((tnow.toMillis(false)
+									- mSMSTime.toMillis(false))
+									> 60000) {
+								sendSMSAlarm();
+								mSMSTime = tnow;
+							}
+						}
+					}
+
 
 			// Read the data that has been sent, and convert it into
 			// an integer array.
@@ -600,41 +605,48 @@ public class SdServer extends Service
      * and sets class variables for use by other functions.
      * If the watch app is not running, it attempts to re-start it.
      */
-    public void getPebbleStatus() {
-	Time tnow = new Time(Time.getCurrentTimezone());
-	tnow.setToNow();
-	// Check we are actually connected to the pebble.
-	sdData.pebbleConnected = PebbleKit.isWatchConnected(this);
-	// And is the pebble_sd app running?
-	// set mPebbleAppRunningCheck has been false for more than 10 seconds
-	// the app is not talking to us
-	// mPebbleAppRunningCheck is set to true in the receiveData handler. 
-	if (!mPebbleAppRunningCheck && 
-	    ((tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)) > 10000)) {
-	    Log.v(TAG,"tdiff = "+(tnow.toMillis(false) - mPebbleStatusTime.toMillis(false)));
-	    sdData.pebbleAppRunning = false;
-	    Log.v(TAG,"Pebble App Not Running - Attempting to Re-Start");
-	    startWatchApp();
-	    getPebbleSdSettings();
-	    if (mAudibleFaultWarning) {
-		faultWarningBeep();
-	    }
-	} else {
-	    sdData.pebbleAppRunning = true;
-	}
+	public void getPebbleStatus() {
+		Time tnow = new Time(Time.getCurrentTimezone());
+		long tdiff;
+		tnow.setToNow();
+		tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
+		// Check we are actually connected to the pebble.
+		sdData.pebbleConnected = PebbleKit.isWatchConnected(this);
+		// And is the pebble_sd app running?
+		// set mPebbleAppRunningCheck has been false for more than 10 seconds
+		// the app is not talking to us
+		// mPebbleAppRunningCheck is set to true in the receiveData handler.
+		if (!mPebbleAppRunningCheck &&
+				(tdiff > mAppRestartTimeout * 1000)) {
+			Log.v(TAG, "getPebbleStatus() - tdiff = " + tdiff);
+			sdData.pebbleAppRunning = false;
+			Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
+			startWatchApp();
+			getPebbleSdSettings();
+			// Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
+			if ((tdiff > mFaultTimerPeriod * 1000)
+					&& (mAudibleFaultWarning)
+					) {
+				faultWarningBeep();
+			} else {
+				Log.v(TAG, "getPebbleStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
+			}
+		} else {
+			sdData.pebbleAppRunning = true;
+		}
 
-	// if we have confirmation that the app is running, reset the
-	// status time to now and initiate another check.
-	if (mPebbleAppRunningCheck) {
-	    mPebbleAppRunningCheck = false;
-	    mPebbleStatusTime.setToNow();
-	}
+		// if we have confirmation that the app is running, reset the
+		// status time to now and initiate another check.
+		if (mPebbleAppRunningCheck) {
+			mPebbleAppRunningCheck = false;
+			mPebbleStatusTime.setToNow();
+		}
 
-	if (!sdData.haveSettings) {
-	    Log.v(TAG,"getPebbleStatus() - no settings received yet - requesting");
-	    getPebbleSdSettings();
+		if (!sdData.haveSettings) {
+			Log.v(TAG, "getPebbleStatus() - no settings received yet - requesting");
+			getPebbleSdSettings();
+		}
 	}
-    }
 
     /**
      * Request Pebble App to send us its latest settings.
@@ -677,7 +689,31 @@ public class SdServer extends Service
 	    Log.v(TAG,"updatePrefs() - mLogAlarms = "+mLogAlarms);
 	    mLogData = SP.getBoolean("LogData",false);
 	    Log.v(TAG,"updatePrefs() - mLogData = "+mLogData);
-	    
+
+		// Parse the AppRestartTimeout period setting.
+		try {
+			String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "10");
+			mAppRestartTimeout = Integer.parseInt(appRestartTimeoutStr);
+			Log.v(TAG, "onStart() - mAppRestartTimeout = " + mAppRestartTimeout);
+		} catch (Exception ex) {
+			Log.v(TAG, "onStart() - Problem with AppRestartTimeout preference!");
+			Toast toast = Toast.makeText(getApplicationContext(), "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
+			toast.show();
+		}
+
+
+	    // Parse the FaultTimer period setting.
+		try {
+			String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
+			mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
+			Log.v(TAG, "onStart() - mFaultTimerPeriod = " + mFaultTimerPeriod);
+		} catch (Exception ex) {
+			Log.v(TAG, "onStart() - Problem with FaultTimerPeriod preference!");
+			Toast toast = Toast.makeText(getApplicationContext(), "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+			toast.show();
+		}
+
+
 	    // Watch Settings 
 	    PebbleDictionary setDict = new PebbleDictionary();
 	    short intVal;
