@@ -1,0 +1,52 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+  <item android:id="@+id/action_launch_pebble_app"
+	android:icon="@drawable/stop_server"
+	android:title="Launch Pebble App"
+	android:showAsAction="never|withText"
+	/>
+
+  <item android:id="@+id/action_start_stop"
+	android:icon="@drawable/stop_server"
+	android:title="Stop Server"
+	android:showAsAction="never|withText"
+	/>
+
+ <item android:id="@+id/action_test_fault_beep"
+	android:icon="@drawable/stop_server"
+	android:title="Test Fault Beep"
+	android:showAsAction="never|withText"
+	/>
+
+ <item android:id="@+id/action_test_alarm_beep"
+	android:icon="@drawable/stop_server"
+	android:title="Test Alarm Beep"
+	android:showAsAction="never|withText"
+	/>
+
+  <item android:id="@+id/action_test_warning_beep"
+	android:icon="@drawable/stop_server"
+	android:title="Test Warning Beep"
+	android:showAsAction="never|withText"
+	/>
+
+  <item android:id="@+id/action_test_sms_alarm"
+	android:icon="@drawable/stop_server"
+	android:title="Test SMS Alarm Notification"
+	android:showAsAction="never|withText"
+	/>
+
+
+  <item android:id="@+id/action_settings"
+	android:icon="@drawable/ic_action_settings"
+	android:title="Settings"
+	android:showAsAction="never|withText"
+	/>
+
+<!--
+  <item android:id="@+id/action_watch_settings"
+	android:icon="@drawable/ic_action_settings"
+	android:title="Watch Settings"
+	android:showAsAction="never|withText"
+	/>
+  -->
+</menu>

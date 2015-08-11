@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:key="AudibleAlarm"
+        android:title="Enable Audible Alarm"
+        android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="AudibleWarning"
+        android:title="Enable Audible Warnings"
+        android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="SMSAlarm"
+        android:title="Enable SMS Alarm"
+        android:summary="Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition."
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="SMSNumbers"
+        android:title="SMS Alarm numbers"
+        android:summary="Telephone number(s) to notify by SMS of Alarm (comma separated)."
+        android:defaultValue="" />
+    <EditTextPreference
+        android:key="SMSMsg"
+        android:title="SMS Message"
+        android:summary="Message to be Sent by SMS when a Seizure is Detected."
+        android:defaultValue="**SEIZURE DETECTED**" />
+
+    <CheckBoxPreference
+        android:key="AudibleFaultWarning"
+        android:title="Enable Audible System FaultWarnings"
+        android:summary="Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble)."
+        android:defaultValue="true" />
+
+    <CheckBoxPreference
+        android:key="LogAlarms"
+        android:title="Log Alarm events to SD Card"
+        android:summary="Log Alarm events to SD Card"
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="LogData"
+        android:title="Log Data to SD Card"
+        android:summary="Log Data to SD Card Regularly"
+        android:defaultValue="false" />
+<!--    <CheckBoxPreference
+        android:key="PreventSleep"
+        android:title="Prevent the screen from blanking."
+        android:summary="Prevent the screen from blanking while the application is running."
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="UpdatePeriod"
+        android:title="Display Update Period (ms)."
+        android:summary="Display update period in miliseconds."
+        android:defaultValue="1000" />
+-->
+    <EditTextPreference
+        android:key="AlarmFreqMin"
+        android:title="AlarmFreqMin (Hz)"
+        android:summary="Minimum Frequency of ROI (Hz) (Default = 5 Hz)"
+        android:defaultValue="5" />
+    <EditTextPreference
+        android:key="AlarmFreqMax"
+        android:title="AlarmFreqMax (Hz)"
+        android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
+        android:defaultValue="10" />
+    <EditTextPreference
+        android:key="WarnTime"
+        android:title="WarnTime (sec)"
+        android:summary="Time to wait before initiating warning (Default = 5 sec)"
+        android:defaultValue="5" />
+    <EditTextPreference
+        android:key="AlarmTime"
+        android:title="AlarmTime (sec)"
+        android:summary="Time to wait before initiating alarm (Default = 10 sec)"
+        android:defaultValue="10" />
+    <EditTextPreference
+        android:key="AlarmThresh"
+        android:title="AlarmThresh"
+        android:summary="Alarm Threshold (Default = 100)"
+        android:defaultValue="100" />
+    <EditTextPreference
+        android:key="AlarmRatioThresh"
+        android:title="AlarmRatioThresh"
+        android:summary="Alarm Ratio Threshold (Default = 30)"
+        android:defaultValue="30" />
+
+
+    <EditTextPreference
+        android:key="AppRestartTimeout"
+        android:title="Period (sec) we wait for data before restarting watch app."
+        android:summary="Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it."
+        android:numeric="integer"
+        android:defaultValue="10" />
+    <EditTextPreference
+        android:key="FaultTimerPeriod"
+        android:title="Fault Timer Duration (sec)"
+        android:summary="Duration that fault alarms are muted before initiating."
+        android:numeric="integer"
+        android:defaultValue="30" />
+
+</PreferenceScreen>

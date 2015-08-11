@@ -1,0 +1,99 @@
+<html>
+  
+  <head>
+    <title>Ben's Pebble Watch Seizure Detector</title>
+    <script src="js/jquery.js"></script>
+    <script src="js/jBeep.js"></script>
+    <script src="js/Chart.min.js"></script>
+    <script src="js/jquery.mobile-1.4.5.min.js"></script>
+    <script src="js/osd_main.js"></script>
+    <script src="js/osd_logs.js"></script>
+    <link rel="stylesheet" href="css/osd.css" />
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css" />
+  </head>
+  
+  <body>
+    <div data-role="page" id="home">
+      <div id="header" data-role="header">
+	<img src="img/icon_48x48.png" alt="logo"/>
+	<h1>Open Seizure Detector</h1>
+      </div>
+      <div role="main" class="ui-content">
+	<div id="benStat">
+	  OK
+	</div>
+	<div style="clear:both">
+	  <div id="pebStat1">
+	    <font size="7">Pebble Watch Connected</font>
+	  </div>
+	  <div id="pebStat2">
+	    <font size="7">Pebble App Running</font>
+	  </div>
+	  <div id="pebStat3">
+	    Pebble Battery
+	  </div>
+	</div>
+	
+	<div id="chartsDiv">
+	  <canvas id="specChart1" width="400" height="300"></canvas>
+	  <canvas id="specChart2" width="400" height="300"></canvas>
+	</div>
+	
+	<div id="dataDiv">
+	  <h2>Seizure Detector Data</h2>
+	  <div id="maxFreq">
+	    Maximum Frequency:
+	  </div>
+	  <div id="maxVal">
+	    Maximum Value:
+	  </div>
+	  <div id="specPow">
+	    Spectrum Power:
+	  </div>
+	  <div id="roiPow">
+	    Region Of Interest Power:
+	  </div>
+	  <div id="alarmState">
+	    Alarm Status:
+	  </div>
+	  <div id="alarmPhrase">
+	    Alarm Phrase:
+	  </div>
+	</div>
+	<div id="settingsDiv">
+	  <h2>Seizure Detector Settings</h2>
+	  <button id="muteButton">Mute Alarm</button>
+	  <div id="sdSettings">
+	    SD Settings
+	  </div>
+	</div>
+	<div style="clear:both">
+	  <p>
+	    For details see 
+	    <a href="http://openseizuredetector.org.uk">
+	      OpenSeizureDetector.org.uk
+	    </a>
+	  </p>
+	</div>
+      </div> <!-- content -->
+      <div data-role="footer">
+	<a href="#logs">Logs</a>
+	<div id="debugInfo"></div>
+      </div> <!--footer-->
+    </div> <!--page -->
+    
+    <div data-role="page" id="logs">
+      <div data-role="header">
+	<img src="img/icon_48x48.png" alt="logo"/>
+	<h1>Open Seizure Detector - Logs</h1>
+      </div>
+      <div role="main" class="ui-content">
+	<div id="logfilelist"> </div>
+      </div>
+      <div data-role="footer">
+	<a href="#home">Home</a>
+      </div>
+    </div>
+  </body>
+  
+</html>
