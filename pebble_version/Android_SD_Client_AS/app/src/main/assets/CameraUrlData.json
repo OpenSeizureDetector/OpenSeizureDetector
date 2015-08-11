@@ -1,0 +1,30 @@
+{
+  "urlArr":[
+    {
+      "id":0,
+      "desc":"Wansview MJPEG Camera",
+      "userVar":"user",
+      "passwdVar":"pwd",
+      "img":"/snapshot.cgi",
+      "moveBase":"/decoder_control.cgi",
+      "moveUp":"up",
+      "moveDown":"down",
+      "moveLeft":"left",
+      "moveRight":"right",
+      "moveExtra":"onestep=1"
+    },
+    {
+      "id":1,
+      "desc":"Wansview H.264 Camera",
+      "userVar":"usr",
+      "passwdVar":"pwd",
+      "img":"/tmpfs/auto.jpg",
+      "moveBase":"/decoder_control.cgi",
+      "moveUp":"up",
+      "moveDown":"down",
+      "moveLeft":"left",
+      "moveRight":"right",
+      "moveExtra":"onestep=1"
+    }
+]
+}

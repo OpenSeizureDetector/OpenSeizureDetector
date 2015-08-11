@@ -40,7 +40,7 @@ public class CameraActivity extends Activity implements IpCamListener {
         super.onStart();
         updatePrefs();
         Log.v(TAG, "onStart - mCmdSet = " + mCmdSet);
-        mIpCamController = new IpCamController(mCameraIp, mCameraUname, mCameraPasswd, mCmdSet, this);
+        mIpCamController = new IpCamController(getApplicationContext(),mCameraIp, mCameraUname, mCameraPasswd, mCmdSet, this);
         // start timer to refresh user interface every 5 seconds
         mUiTimer.schedule(new TimerTask() {
             @Override

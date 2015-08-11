@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector.client;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -14,8 +15,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -36,6 +41,7 @@ interface IpCamListener {
  * Created by graham on 04/08/15.
  */
 public class IpCamController {
+    private Context mContext;
     private String mIpAddr;  // ip address of camera
     private String mUname;   // camera user name
     private String mPasswd;   // camera password
@@ -45,6 +51,7 @@ public class IpCamController {
     private byte[] mResult;
     private String mMsg;
     private ImageDownloader mImageDownloader;
+    private JSONObject mUrlData = null;
 
     /**
      * Create an instance of IpCamController with specified ip adress, username, password and command set.
@@ -58,7 +65,8 @@ public class IpCamController {
      * @TODO Implement cmdSet to use different iP Cameras.
      * @TODO Extend class to do more with the IP camera - move a pan/tilt camera etc.
      */
-    public IpCamController(String ipAddr, String uname, String passwd, int cmdSet, IpCamListener listener) {
+    public IpCamController(Context context, String ipAddr, String uname, String passwd, int cmdSet, IpCamListener listener) {
+        mContext = context;
         mIpAddr = ipAddr;
         mUname = uname;
         mPasswd = passwd;
@@ -66,6 +74,7 @@ public class IpCamController {
         mIpCamListener = listener;
         mResult = null;
         mMsg = "";
+        mUrlData = getUrlData();
     }
 
     /**
@@ -82,22 +91,49 @@ public class IpCamController {
         imageDownloader.execute(url);
     }
 
+    /**
+     * getImgUrl - return the url to obtain a snapshot image from the camera - uses data stored in mUrlData,
+     * which will have been read from CameraUrlData.json.
+     * @param ipAddr - IP Addrss of Camera
+     * @param uname - Username
+     * @param passwd - Password
+     * @param cmdSet - Command Set for camera (an integer - the id in CameraUrlData.json
+     * @return
+     */
     public String getImgUrl(String ipAddr, String uname, String passwd, int cmdSet) {
+        int id = -1;
+        String imgCmd = "";
+        String userCmd = "";
+        String pwdCmd = "";
         Log.v(TAG, "getImgUrl() - cmdSet = " + cmdSet);
         String url = "";
-        switch (cmdSet) {
-            case 0:  // mjpeg camera
-                Log.v(TAG, "cmdSet 0 - mjpeg");
-                url = "http://" + ipAddr + "/snapshot.cgi?user=" + mUname + "&pwd=" + mPasswd;
-                break;
-            case 1:  // h.264 camera
-                Log.v(TAG, "cmdSet 1 = H264");
-                url = "http://" + ipAddr + "/tmpfs/auto.jpg?usr=" + mUname + "&pwd=" + mPasswd;
-                break;
-            default:
-                url = "";
-                //mIpCamListener.onGotImage(null,"Unrecognised Camera Type "+cmdSet);
+
+        try {
+            JSONArray urlDataArray = mUrlData.getJSONArray("urlArr");
+            id=-1;
+            int i = 0;
+            while (i<urlDataArray.length()) {
+                JSONObject urlData = urlDataArray.getJSONObject(i);
+                id = urlData.getInt("id");
+                Log.v(TAG,"getImgUrl - id="+id);
+                imgCmd = urlData.getString("img");
+                userCmd = urlData.getString("userVar");
+                pwdCmd = urlData.getString("passwdVar");
+                if (id==cmdSet) {
+                    Log.v(TAG, "found cmdSet");
+                    break;
+                }
+                i++;
+            }
+        } catch (JSONException e) {
+            Log.e(TAG,"getImgUrl() - ERROR interpreting mUrlData");
+            e.printStackTrace();
+
         }
+        Log.v(TAG,"getImgUrl - id="+id);
+
+        url = "http://" + ipAddr +imgCmd+"?"+userCmd+"="+mUname+"&"+pwdCmd+"="+mPasswd;
+
         Log.v(TAG, "getImgUrl() - returning " + url);
         return url;
     }
@@ -110,6 +146,7 @@ public class IpCamController {
     public void moveCamera(int dir) {
 
     }
+
 
     /**
      * Scan the local network for a device that responds to our camera URL, and return the IP address of the responding device.
@@ -155,6 +192,38 @@ public class IpCamController {
         }
         return null;
     }
+
+
+    /**
+     * Read the data to construct camera control URLs from the "CameraUrlData.json" file in the assets folder.
+     * Returns a JSONObject containing the data.
+     *
+     * @return JSONObject containing data read from the CameraUrlData.json file in assets.
+     */
+    private JSONObject getUrlData() {
+        String jsonStr = null;
+        try {
+            InputStream is = mContext.getAssets().open("CameraUrlData.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            jsonStr = new String(buffer,"UTF-8");
+            Log.v(TAG,"Read JSON from file:"+jsonStr);
+            JSONObject jsonObject = new JSONObject(jsonStr);
+            Log.v(TAG,"Returning JSONObject");
+            return jsonObject;
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.v(TAG, "getUrlData(): Error Reading CameraUrlData.json");
+            return null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.v(TAG, "getUrlData(): Error Parsing JSON data.");
+            return null;
+        }
+    }
+
 
     /**
      * imageDownloader - based on http://javatechig.com/android/download-image-using-asynctask-in-android
