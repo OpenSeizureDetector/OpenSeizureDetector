@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="uk.org.openseizuredetector.client"
+    android:versionCode="5"
+    android:versionName="1.4" >
+
+    <uses-sdk android:minSdkVersion="11" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <android:uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <android:uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <android:uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <application
+        android:icon="@drawable/star_of_life_48x48_green"
+        android:label="@string/app_name" >
+        <activity
+            android:name=".ClientActivity"
+            android:icon="@drawable/star_of_life_48x48_green"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".PrefActivity"
+            android:icon="@drawable/star_of_life_48x48_green"
+            android:label="OpenSeizureDetector Preferences" >
+        </activity>
+
+        <service
+            android:name=".SdClientService"
+            android:exported="false" />
+
+        <activity
+            android:name=".CameraActivity"
+            android:label="@string/title_activity_camera"
+            android:parentActivityName=".ClientActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="uk.org.openseizuredetector.client.ClientActivity" />
+        </activity>
+    </application>
+
+</manifest><!--  	      android:uiOptions="splitActionBarWhenNarrow" -->

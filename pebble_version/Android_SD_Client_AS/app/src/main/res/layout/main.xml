@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	      android:orientation="vertical"
+	      android:layout_width="fill_parent"
+	      android:layout_height="fill_parent"
+	      >
+  <TextView  
+      android:id="@+id/versionTv"
+      android:layout_width="wrap_content" 
+      android:layout_height="wrap_content" 
+      android:text="Android OpenSeizureDetector Version x.xx"
+      />
+  
+  
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		>
+    <TextView  
+	android:id="@+id/textView1"
+	android:layout_width="0dp" 
+	android:layout_height="wrap_content"
+	android:layout_weight="0.5"
+	android:text="textView1"
+	/>
+    <TextView  
+	android:id="@+id/textView2"
+	android:layout_width="0dp" 
+	android:layout_height="wrap_content" 
+	android:layout_weight="0.5"
+	android:text="textView2"
+	/>
+  </LinearLayout>
+
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		  android:orientation="vertical"
+		  android:layout_width="0dp"
+		  android:layout_height="wrap_content"
+		  android:layout_weight="0.5"
+		  >
+      <TextView  
+	  android:id="@+id/alarmTv"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="wrap_content"
+	  android:text="alarmTv"
+	  android:textSize="32sp"
+	  />
+      <TextView  
+	  android:id="@+id/pebTimeTv"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="wrap_content"
+	  android:text="pebTimeTv"
+	  />
+    </LinearLayout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		  android:orientation="vertical"
+		  android:layout_width="0dp"
+		  android:layout_height="wrap_content"
+		  android:layout_weight="0.5"
+		  >
+
+      <TextView  
+	  android:id="@+id/pebbleTv"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="wrap_content" 
+	  android:text="pebbleTv"
+	  />
+      <TextView  
+	  android:id="@+id/appTv"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="wrap_content" 
+	  android:text="appTv"
+	  />
+      <TextView  
+	  android:id="@+id/battTv"
+	  android:layout_width="wrap_content" 
+	  android:layout_height="wrap_content" 
+	  android:text="battTv"
+	  />
+    </LinearLayout>
+  </LinearLayout>
+
+  <Button
+      android:id="@+id/cancelAudibleButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="Cancel Audible"
+      />
+  <TextView  
+      android:id="@+id/debugTv"
+      android:layout_width="wrap_content" 
+      android:layout_height="wrap_content" 
+      android:text="battTv"
+      />
+
+ <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chart1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/seekBar1" />
+</LinearLayout>
+

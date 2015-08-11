@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:key="AudibleFaultWarning"
+        android:title="Enable Audible Fault Warning"
+        android:summary="Issue an audible warning if the system detects a fault condition."
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="AudibleAlarm"
+        android:title="Enable Audible Alarm"
+        android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
+        android:defaultValue="true" />
+    <CheckBoxPreference
+        android:key="AudibleWarning"
+        android:title="Enable Audible Warnings"
+        android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
+        android:defaultValue="true" />
+    <EditTextPreference
+        android:key="CancelAudiblePeriod"
+        android:title="Cancel Audible Duration (min)"
+        android:summary="Duration that Audible Alarms are muted when 'Cancel Audible' button is pressed."
+	android:numeric="integer"
+        android:defaultValue="5" />
+    <EditTextPreference
+        android:key="FaultTimerPeriod"
+        android:title="Fault Timer Duration (sec)"
+        android:summary="Duration that fault alarms are muted before initiating."
+	android:numeric="integer"
+        android:defaultValue="30" />
+    <EditTextPreference
+        android:key="ServerIP"
+        android:title="Server IP Address."
+        android:summary="IP Address of OpenSeizureDetector Server (e.g. 192.168.1.175)."
+        android:defaultValue="192.168.1.175" />
+    <CheckBoxPreference
+        android:key="UseIpCamera"
+        android:title="Use IP Camera to show images"
+        android:summary=""
+        android:defaultValue="true" />
+    <EditTextPreference
+        android:key="CameraIp"
+        android:title="Camera IP Address."
+        android:summary="IP Address of the IP Camera (e.g. 192.168.1.175)."
+        android:defaultValue="192.168.1.25" />
+    <EditTextPreference
+        android:key="CameraCmdSet"
+        android:title="Camera Command Set Number"
+        android:summary="Camera Command Set Number (0=mjpeg,1=h264)"
+        android:numeric="integer"
+        android:defaultValue="0"
+       />
+    <EditTextPreference
+        android:key="CameraUname"
+        android:title="Camera User Name"
+        android:summary=""
+        android:defaultValue="guest" />
+    <EditTextPreference
+        android:key="CameraPasswd"
+        android:title="Camera User Password"
+        android:summary=""
+        android:defaultValue="guest" />
+    <EditTextPreference
+        android:key="UiUpdatePeriod"
+        android:title="UI Update Period (ms)"
+        android:summary="Update period for User Interface in miliseconds."
+	android:numeric="integer"
+        android:defaultValue="2000" />
+    <EditTextPreference
+        android:key="DataUpdatePeriod"
+        android:title="Data Update Period (ms)"
+        android:summary="Period between server data requests in miliseconds."
+	android:numeric="integer"
+        android:defaultValue="2000" />
+
+<!--    <CheckBoxPreference
+        android:key="PreventSleep"
+        android:title="Prevent the screen from blanking."
+        android:summary="Prevent the screen from blanking while the application is running."
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="UpdatePeriod"
+        android:title="Display Update Period (ms)."
+        android:summary="Display update period in miliseconds."
+        android:defaultValue="1000" />
+-->
+</PreferenceScreen>

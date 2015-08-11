@@ -1,0 +1,36 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_show_camera"
+        android:showAsAction="always|withText"
+        android:title="View Camera" />
+
+    <item
+        android:id="@+id/action_start_stop"
+        android:icon="@drawable/stop_server"
+        android:showAsAction="never|withText"
+        android:title="Stop Server" />
+
+    <item
+        android:id="@+id/action_test_fault_warning_beep"
+        android:icon="@drawable/stop_server"
+        android:showAsAction="never|withText"
+        android:title="Test Fault Warning Beep" />
+
+    <item
+        android:id="@+id/action_test_alarm_beep"
+        android:icon="@drawable/stop_server"
+        android:showAsAction="never|withText"
+        android:title="Test Alarm Beep" />
+
+    <item
+        android:id="@+id/action_test_warning_beep"
+        android:icon="@drawable/stop_server"
+        android:showAsAction="never|withText"
+        android:title="Test Warning Beep" />
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never|withText"
+        android:title="Settings" />
+</menu>

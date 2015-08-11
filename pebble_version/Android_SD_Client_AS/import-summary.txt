@@ -1,0 +1,103 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* CHANGELOG.txt
+* ant.properties
+* build.properties
+* build.xml
+* javadoc/
+* javadoc/allclasses-frame.html
+* javadoc/allclasses-noframe.html
+* javadoc/constant-values.html
+* javadoc/deprecated-list.html
+* javadoc/help-doc.html
+* javadoc/index-all.html
+* javadoc/index.html
+* javadoc/overview-frame.html
+* javadoc/overview-summary.html
+* javadoc/overview-tree.html
+* javadoc/package-list
+* javadoc/resources/
+* javadoc/resources/background.gif
+* javadoc/resources/tab.gif
+* javadoc/resources/titlebar.gif
+* javadoc/resources/titlebar_end.gif
+* javadoc/src-html/
+* javadoc/src-html/uk/
+* javadoc/src-html/uk/org/
+* javadoc/src-html/uk/org/openseizuredetector/
+* javadoc/src-html/uk/org/openseizuredetector/SdData.html
+* javadoc/src-html/uk/org/openseizuredetector/client/
+* javadoc/src-html/uk/org/openseizuredetector/client/ClientActivity.html
+* javadoc/src-html/uk/org/openseizuredetector/client/PrefActivity.html
+* javadoc/src-html/uk/org/openseizuredetector/client/SdClientService.CancelAudibleTimer.html
+* javadoc/src-html/uk/org/openseizuredetector/client/SdClientService.DownloadSdDataTask.html
+* javadoc/src-html/uk/org/openseizuredetector/client/SdClientService.FaultTimer.html
+* javadoc/src-html/uk/org/openseizuredetector/client/SdClientService.SdBinder.html
+* javadoc/src-html/uk/org/openseizuredetector/client/SdClientService.html
+* javadoc/stylesheet.css
+* javadoc/uk/
+* javadoc/uk/org/
+* javadoc/uk/org/openseizuredetector/
+* javadoc/uk/org/openseizuredetector/SdData.html
+* javadoc/uk/org/openseizuredetector/class-use/
+* javadoc/uk/org/openseizuredetector/class-use/SdData.html
+* javadoc/uk/org/openseizuredetector/client/
+* javadoc/uk/org/openseizuredetector/client/ClientActivity.html
+* javadoc/uk/org/openseizuredetector/client/PrefActivity.html
+* javadoc/uk/org/openseizuredetector/client/SdClientService.CancelAudibleTimer.html
+* javadoc/uk/org/openseizuredetector/client/SdClientService.DownloadSdDataTask.html
+* javadoc/uk/org/openseizuredetector/client/SdClientService.FaultTimer.html
+* javadoc/uk/org/openseizuredetector/client/SdClientService.SdBinder.html
+* javadoc/uk/org/openseizuredetector/client/SdClientService.html
+* javadoc/uk/org/openseizuredetector/client/class-use/
+* javadoc/uk/org/openseizuredetector/client/class-use/ClientActivity.html
+* javadoc/uk/org/openseizuredetector/client/class-use/PrefActivity.html
+* javadoc/uk/org/openseizuredetector/client/class-use/SdClientService.CancelAudibleTimer.html
+* javadoc/uk/org/openseizuredetector/client/class-use/SdClientService.DownloadSdDataTask.html
+* javadoc/uk/org/openseizuredetector/client/class-use/SdClientService.FaultTimer.html
+* javadoc/uk/org/openseizuredetector/client/class-use/SdClientService.SdBinder.html
+* javadoc/uk/org/openseizuredetector/client/class-use/SdClientService.html
+* javadoc/uk/org/openseizuredetector/client/package-frame.html
+* javadoc/uk/org/openseizuredetector/client/package-summary.html
+* javadoc/uk/org/openseizuredetector/client/package-tree.html
+* javadoc/uk/org/openseizuredetector/client/package-use.html
+* javadoc/uk/org/openseizuredetector/package-frame.html
+* javadoc/uk/org/openseizuredetector/package-summary.html
+* javadoc/uk/org/openseizuredetector/package-tree.html
+* javadoc/uk/org/openseizuredetector/package-use.html
+* proguard-project.txt
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => app/src/main/AndroidManifest.xml
+* assets/ => app/src/main/assets/
+* libs/mpandroidchartlibrary-2-0-7.jar => app/libs/mpandroidchartlibrary-2-0-7.jar
+* libs/pebblekit-2.6.0-eclipse.jar => app/libs/pebblekit-2.6.0-eclipse.jar
+* res/ => app/src/main/res/
+* src/ => app/src/main/java/
+* src/uk/org/openseizuredetector/README.txt => app/src/main/resources/uk/org/openseizuredetector/README.txt
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

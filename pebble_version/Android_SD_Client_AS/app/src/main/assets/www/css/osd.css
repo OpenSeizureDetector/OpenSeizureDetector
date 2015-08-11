@@ -1,0 +1,71 @@
+#header {
+   padding: 1px;
+   margin:0px;
+   background-color:#a0a0ff;
+}
+#header img {
+   height:36px;
+   width:36px;
+   float:left;
+}
+#header h1 {
+   position:relative;
+   top:00px;
+   left:10px;
+}
+h2 {
+  margin:0px;
+  padding: 5px;
+  background-color:#a0a0ff;
+}
+#benStat {
+   background-color:blue;
+   color:white;
+   text-align:center;
+   font-size:24pt;
+   font-weight:bold;
+   height:55px;
+}
+#pebStat1 {
+   clear:both;
+   background-color:blue;
+   color:white;
+   text-align:center;
+   font-size:18pt;
+   height:55px;
+}
+#pebStat2 {
+   clear:both;
+   background-color:blue;
+   color:white;
+   text-align:center;
+   font-size:18pt;
+   height:55px;
+}
+#pebStat3 {
+   clear:both;
+   background-color:blue;
+   color:white;
+   text-align:center;
+   font-size:18pt;
+   height:55px;
+}
+#chartsDiv {
+   float:left;
+}
+#dataDiv {
+   float:left;
+   background-color:#f0f0f0;
+   color:black;
+   text-align:left;
+   font-size:12pt;
+   width: 400px;
+}
+#settingsDiv {
+   float:left;
+   background-color:#e0e0e0;
+   color:black;
+   text-align:left;
+   font-size:12pt;
+   width: 400px;
+}
