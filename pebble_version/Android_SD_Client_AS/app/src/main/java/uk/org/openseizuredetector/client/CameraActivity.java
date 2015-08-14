@@ -10,13 +10,15 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class CameraActivity extends Activity implements IpCamListener {
+public class CameraActivity extends Activity implements IpCamListener, View.OnClickListener {
     private String TAG = "CameraActivity";
     private boolean mUseIpCamera = false;
     private String mCameraIp = null;
@@ -33,6 +35,11 @@ public class CameraActivity extends Activity implements IpCamListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
         mUiTimer = new Timer();
+
+        findViewById(R.id.leftButton).setOnClickListener(this);
+        findViewById(R.id.upButton).setOnClickListener(this);
+        findViewById(R.id.downButton).setOnClickListener(this);
+        findViewById(R.id.rightButton).setOnClickListener(this);
     }
 
     @Override
@@ -95,10 +102,36 @@ public class CameraActivity extends Activity implements IpCamListener {
                     Log.v(TAG, "exception starting settings activity " + ex.toString());
                 }
                 return true;
+            case R.id.action_find_camera:
+                Log.v(TAG, "action_find_camera");
+                mIpCamController.findCamera();
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    public void onClick(View v) {
+
+        switch (v.getId()) {
+            case R.id.leftButton:
+                mIpCamController.moveCamera(0);
+                break;
+            case R.id.upButton:
+                mIpCamController.moveCamera(1);
+                break;
+            case R.id.downButton:
+                mIpCamController.moveCamera(2);
+                break;
+            case R.id.rightButton:
+                mIpCamController.moveCamera(3);
+                break;
+            case R.id.centreButton:
+                mIpCamController.moveCamera(4);
+                break;
+        }
+        mIpCamController.getImage();
+    }
+
 
     @Override
     public void onGotImage(byte[] img, String msg) {
@@ -119,7 +152,10 @@ public class CameraActivity extends Activity implements IpCamListener {
 
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
-        mUiTimerPeriod = SP.getInt("uiTimerPeriod", 5000);
+        String prefStr;
+        prefStr = SP.getString("UiUpdatePeriod", "5000");
+        mUiTimerPeriod = Integer.parseInt(prefStr);
+        Log.v(TAG, "updatePrefs() - setting mUiTimerPeriod to " + mUiTimerPeriod);
         mUseIpCamera = SP.getBoolean("UseIpCamera", true);
         mCameraIp = SP.getString("CameraIp", "192.168.1.25");
         mCameraUname = SP.getString("CameraUname", "guest");

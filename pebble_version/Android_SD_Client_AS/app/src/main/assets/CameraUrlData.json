@@ -6,11 +6,12 @@
       "userVar":"user",
       "passwdVar":"pwd",
       "img":"/snapshot.cgi",
-      "moveBase":"/decoder_control.cgi",
-      "moveUp":"up",
-      "moveDown":"down",
-      "moveLeft":"left",
-      "moveRight":"right",
+      "moveBase": "/decoder_control.cgi?command=",
+      "moveUp": "2",
+      "moveDown": "0",
+      "moveLeft": "6",
+      "moveRight": "4",
+      "moveCentre": "25",
       "moveExtra":"onestep=1"
     },
     {
@@ -19,12 +20,13 @@
       "userVar":"usr",
       "passwdVar":"pwd",
       "img":"/tmpfs/auto.jpg",
-      "moveBase":"/decoder_control.cgi",
-      "moveUp":"up",
-      "moveDown":"down",
-      "moveLeft":"left",
-      "moveRight":"right",
-      "moveExtra":"onestep=1"
+      "moveBase": "/cgi-bin/hi3510/",
+      "moveUp": "ytup.cgi?",
+      "moveDown": "ytdown.cgi?",
+      "moveLeft": "ytleft.cgi?",
+      "moveRight": "ytright.cgi?",
+      "moveCentre": "25?",
+      "moveExtra": "dummy=dummy"
     }
-]
+  ]
 }

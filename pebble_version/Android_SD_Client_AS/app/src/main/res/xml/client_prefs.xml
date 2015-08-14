@@ -63,13 +63,25 @@
         android:key="UiUpdatePeriod"
         android:title="UI Update Period (ms)"
         android:summary="Update period for User Interface in miliseconds."
-	android:numeric="integer"
+        android:numeric="integer"
         android:defaultValue="2000" />
     <EditTextPreference
         android:key="DataUpdatePeriod"
         android:title="Data Update Period (ms)"
         android:summary="Period between server data requests in miliseconds."
-	android:numeric="integer"
+        android:numeric="integer"
+        android:defaultValue="2000" />
+    <EditTextPreference
+        android:key="ConnTimeout"
+        android:title="Connection Timeout (ms)"
+        android:summary=""
+        android:numeric="integer"
+        android:defaultValue="2000" />
+    <EditTextPreference
+        android:key="SoTimeout"
+        android:title="So Timeout (ms)"
+        android:summary=""
+        android:numeric="integer"
         android:defaultValue="2000" />
 
 <!--    <CheckBoxPreference

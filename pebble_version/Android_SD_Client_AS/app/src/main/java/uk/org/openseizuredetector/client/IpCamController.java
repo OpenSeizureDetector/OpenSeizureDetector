@@ -1,9 +1,11 @@
 package uk.org.openseizuredetector.client;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.apache.http.HttpEntity;
@@ -75,7 +77,9 @@ public class IpCamController {
         mResult = null;
         mMsg = "";
         mUrlData = getUrlData();
+        if (mUrlData == null) Log.e(TAG, "IpCamController - error reading urldata");
     }
+
 
     /**
      * grab a still image from the camera.  Returns a JPEG image as a byte array.
@@ -83,13 +87,39 @@ public class IpCamController {
      * @return the image data as a byte array.
      */
     public void getImage() {
-        Log.v(TAG, "getImage() - mIpAddr = " + mIpAddr);
+        //Log.v(TAG, "getImage() - mIpAddr = " + mIpAddr);
         mMsg = "";
         ImageDownloader imageDownloader = new ImageDownloader();
         String url = getImgUrl(mIpAddr, mUname, mPasswd, mCmdSet);
         Log.v(TAG, "getImage = url=" + url);
         imageDownloader.execute(url);
     }
+
+    /**
+     * Move the camera in specified direction 0->left 1->up 2->down 3->right.
+     *
+     * @param dir
+     */
+    public void moveCamera(int dir) {
+        Log.v(TAG, "moveCamera() - dir = " + dir);
+        mMsg = "";
+        CameraMover cameraMover = new CameraMover();
+        cameraMover.execute(mIpAddr, dir);
+    }
+
+
+    /**
+     * Scan the local network for a device that responds to our camera URL, and return the IP address of the responding device.
+     */
+    public void findCamera() {
+        Log.v(TAG, "findCamera()");
+        mMsg = "";
+        CameraFinder cameraFinder = new CameraFinder();
+        cameraFinder.execute(new String[]{"/snapshot.cgi?user=" + mUname + "&pwd=" + mPasswd});
+
+
+    }
+
 
     /**
      * getImgUrl - return the url to obtain a snapshot image from the camera - uses data stored in mUrlData,
@@ -105,7 +135,7 @@ public class IpCamController {
         String imgCmd = "";
         String userCmd = "";
         String pwdCmd = "";
-        Log.v(TAG, "getImgUrl() - cmdSet = " + cmdSet);
+        //Log.v(TAG, "getImgUrl() - cmdSet = " + cmdSet);
         String url = "";
 
         try {
@@ -115,12 +145,12 @@ public class IpCamController {
             while (i<urlDataArray.length()) {
                 JSONObject urlData = urlDataArray.getJSONObject(i);
                 id = urlData.getInt("id");
-                Log.v(TAG,"getImgUrl - id="+id);
+                //Log.v(TAG,"getImgUrl - id="+id);
                 imgCmd = urlData.getString("img");
                 userCmd = urlData.getString("userVar");
                 pwdCmd = urlData.getString("passwdVar");
                 if (id==cmdSet) {
-                    Log.v(TAG, "found cmdSet");
+                    //Log.v(TAG, "found cmdSet");
                     break;
                 }
                 i++;
@@ -130,35 +160,97 @@ public class IpCamController {
             e.printStackTrace();
 
         }
-        Log.v(TAG,"getImgUrl - id="+id);
+        //Log.v(TAG,"getImgUrl - id="+id);
 
         url = "http://" + ipAddr +imgCmd+"?"+userCmd+"="+mUname+"&"+pwdCmd+"="+mPasswd;
 
-        Log.v(TAG, "getImgUrl() - returning " + url);
+        //Log.v(TAG, "getImgUrl() - returning " + url);
         return url;
     }
 
     /**
-     * Move the camera in specified direction 0->left 1->up 2->down 3->right.
-     *
-     * @param dir
+     * getMoveUrl - return the url to move the camera - uses data stored in mUrlData,
+     * which will have been read from CameraUrlData.json.
+     * @param ipAddr - IP Addrss of Camera
+     * @param uname - Username
+     * @param passwd - Password
+     * @param cmdSet - Command Set for camera (an integer - the id in CameraUrlData.json
+     * @param direction - direction to move 0=left,1=up, 2=down, 3=right
+     * @return
      */
-    public void moveCamera(int dir) {
+    public String getMoveUrl(String ipAddr, String uname, String passwd, int cmdSet, int direction) {
+        int id = -1;
+        String moveBase = "";
+        String moveLeft = "";
+        String moveUp = "";
+        String moveDown = "";
+        String moveRight = "";
+        String moveCentre = "";
+        String moveExtra = "";
+        String userCmd = "";
+        String pwdCmd = "";
+        //Log.v(TAG, "getMoveUrl() - cmdSet = " + cmdSet);
+        String url = "";
 
+        try {
+            JSONArray urlDataArray = mUrlData.getJSONArray("urlArr");
+            id = -1;
+            int i = 0;
+            while (i < urlDataArray.length()) {
+                JSONObject urlData = urlDataArray.getJSONObject(i);
+                id = urlData.getInt("id");
+                //Log.v(TAG,"getMoveUrl - id="+id);
+                moveBase = urlData.getString("moveBase");
+                moveLeft = urlData.getString("moveLeft");
+                moveUp = urlData.getString("moveUp");
+                moveDown = urlData.getString("moveDown");
+                moveRight = urlData.getString("moveRight");
+                moveCentre = urlData.getString("moveCentre");
+                moveExtra = urlData.getString("moveExtra");
+                userCmd = urlData.getString("userVar");
+                pwdCmd = urlData.getString("passwdVar");
+                if (id == cmdSet) {
+                    //Log.v(TAG, "found cmdSet");
+                    break;
+                }
+                i++;
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "getMoveUrl() - ERROR interpreting mUrlData");
+            e.printStackTrace();
+
+        }
+        //Log.v(TAG,"getMoveUrl - id="+id);
+
+        // Get the correct direction string.
+        String dirStr;
+        switch (direction) {
+            case 0:
+                dirStr = moveLeft;
+                break;
+            case 1:
+                dirStr = moveUp;
+                break;
+            case 2:
+                dirStr = moveDown;
+                break;
+            case 3:
+                dirStr = moveRight;
+                break;
+            case 4:
+                dirStr = moveCentre;
+                break;
+            default:
+                Log.e(TAG, "getMoveUrl() - unrecognised direction " + direction);
+                dirStr = "";
+        }
+
+        url = "http://" + ipAddr + moveBase + dirStr + "&" + moveExtra + "&" + userCmd + "=" + mUname + "&" + pwdCmd + "=" + mPasswd;
+
+        Log.v(TAG, "getMoveUrl() - returning " + url);
+        return url;
     }
 
-
-    /**
-     * Scan the local network for a device that responds to our camera URL, and return the IP address of the responding device.
-     */
-    public void findCamera() {
-        Log.v(TAG, "findCamera()");
-        mMsg = "";
-        CameraFinder cameraFinder = new CameraFinder();
-        cameraFinder.execute(new String[]{"/snapshot.cgi?user=" + mUname + "&pwd=" + mPasswd});
-
-
-    }
 
     /**
      * get the ip address of the phone.
@@ -231,21 +323,21 @@ public class IpCamController {
     private class ImageDownloader extends AsyncTask<String, Void, Bitmap> {
         @Override
         protected Bitmap doInBackground(String... params) {
-            Log.v(TAG, "doInBackground - calling downloadImage(" + params[0] + ")");
+            //Log.v(TAG, "doInBackground - calling downloadImage(" + params[0] + ")");
             //try {Thread.sleep(10000);} catch(Exception e) {Log.v(TAG,"Exception during sleep - "+e.toString());}
             Bitmap bitmap = (Bitmap) downloadImage((String) params[0]);
-            Log.v(TAG, "doInBackground - returned from downloadImage()");
+            //Log.v(TAG, "doInBackground - returned from downloadImage()");
             return bitmap;
         }
 
         @Override
         protected void onPreExecute() {
-            Log.v(TAG, "onPreExecute()");
+            //Log.v(TAG, "onPreExecute()");
         }
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            Log.v(TAG, "onPostExecute()");
+            //Log.v(TAG, "onPostExecute()");
             super.onPostExecute(bitmap);
             byte[] data;
             Log.v(TAG, "onPostExecute() - converting bitmap to byte array...");
@@ -287,10 +379,8 @@ public class IpCamController {
                 if (entity != null) {
                     InputStream inputStream = null;
                     try {
-                        Log.v(TAG, "entity=" + entity.toString());
                         // getting contents from the stream
                         inputStream = entity.getContent();
-                        Log.v(TAG, "inputStrem=" + inputStream.toString());
                         // decoding stream data back into image Bitmap that android understands
                         final Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
                         Log.v(TAG, "downloadImage() - Returning Bitmap");
@@ -330,19 +420,19 @@ public class IpCamController {
 
         @Override
         protected void onPreExecute() {
-            Log.v(TAG, "onPreExecute()");
+            //Log.v(TAG, "onPreExecute()");
         }
 
         @Override
         protected void onPostExecute(Boolean retVal) {
-            Log.v(TAG, "onPostExecute()");
+            //Log.v(TAG, "onPostExecute()");
             super.onPostExecute(retVal);
             mIpCamListener.onGotImage(null, mMsg);
         }
 
 
         private boolean moveCamera(String ipAddress, int direction) {
-            String url = "http://" + ipAddress + "?decoder_control.cgi";
+            String url = getMoveUrl(ipAddress, mUname, mPasswd, mCmdSet, direction);
             byte[] result = null;
             final DefaultHttpClient client = new DefaultHttpClient();
             final HttpGet getRequest = new HttpGet(url);
@@ -370,41 +460,79 @@ public class IpCamController {
     /**
      * cameraFinder - scan the local network for an IP camera, and return the IP address of the camera by calling onCameraFound().
      */
-    private class CameraFinder extends AsyncTask<String, Void, String> {
+    private class CameraFinder extends AsyncTask<String, Void, Boolean> {
         @Override
-        protected String doInBackground(String... params) {
+        protected Boolean doInBackground(String... params) {
             String cameraIpAddr = null;
+            int cameraCmdSet = 0;
+
+            // find local network ip address
             String phoneIpAddr = getLocalIpAddress();
             Log.v(TAG, "doInBackground() - phone IP Address = " + phoneIpAddr);
             String[] ipParts = phoneIpAddr.split("\\.");
             String networkIpBase = ipParts[0] + "." + ipParts[1] + "." + ipParts[2] + ".";
             Log.v(TAG, "doInBackground() - network Base = " + networkIpBase);
 
-            for (int i = 1; i <= 255; i++) {
-                String testIpAddr = networkIpBase + i;
-                Log.v(TAG, "doInBackground() - testing " + testIpAddr);
-                if (isCamera(testIpAddr)) {
-                    Log.d(TAG, "doInBackground() - found Camera at " + testIpAddr);
-                    cameraIpAddr = testIpAddr;
-                }
+            // Get timeouts from shared preferences.
+            SharedPreferences SP = PreferenceManager
+                    .getDefaultSharedPreferences(mContext);
+            String prefStr;
+            prefStr = SP.getString("ConnTimeout", "1000");
+            int connTimeout = Integer.parseInt(prefStr);
+            Log.v(TAG, "doInBackground() - connTimeout = " + connTimeout);
+            prefStr = SP.getString("SoTimeout", "1000");
+            int soTimeout = Integer.parseInt(prefStr);
+            Log.v(TAG, "doInBackground() - soTimeout = " + soTimeout);
+
+            JSONArray urlDataArray;
+            try {
+                urlDataArray = mUrlData.getJSONArray("urlArr");
+            } catch (Exception e) {
+                Log.v(TAG, "Error Accessing mUrlData");
+                urlDataArray = null;
             }
 
-            return cameraIpAddr;
+
+            if (urlDataArray != null) {
+                ipLoop:
+                for (int i = 1; i <= 255; i++) {
+                    String testIpAddr = networkIpBase + i;
+                    Log.v(TAG, "doInBackground() - testing " + testIpAddr + " with " + urlDataArray.length() + " command sets");
+                    for (int cmdSet = 0; cmdSet < urlDataArray.length(); cmdSet++) {
+                        if (isCamera(testIpAddr, cmdSet, mUname, mPasswd, connTimeout, soTimeout)) {
+                            Log.d(TAG, "doInBackground() - found Camera at " + testIpAddr);
+                            cameraIpAddr = testIpAddr;
+                            cameraCmdSet = cmdSet;
+                            break ipLoop;
+                        }
+                    }
+                }
+            }
+            if (cameraIpAddr != null) {
+                mIpAddr = cameraIpAddr;
+                mCmdSet = cameraCmdSet;
+                Log.d(TAG, "doInBackground() - setting camera to be " + mIpAddr + " using command set " + mCmdSet);
+                return true;
+            } else {
+                Log.d(TAG, "failed to find camera - not doing anything");
+                return false;
+            }
         }
 
         @Override
-        protected void onPostExecute(String s) {
+        protected void onPostExecute(Boolean s) {
             super.onPostExecute(s);
-            Log.v(TAG, "onPostExecute() - Camera IP Address = " + s);
-            mIpCamListener.onGotImage(null, s);
+            //Log.v(TAG, "onPostExecute() - Camera IP Address = " + s);
+            mIpCamListener.onGotImage(null, "");
         }
 
-        private boolean isCamera(String ipAddr) {
-            String url = "http://" + ipAddr + "/snapshot.cgi?user=guest&pwd=guest";
+        private boolean isCamera(String ipAddr, int cmdSet, String uname, String passwd, int connTimeout, int soTimeout) {
+            //String url = "http://" + ipAddr + "/snapshot.cgi?user=guest&pwd=guest";
+            String url = getImgUrl(ipAddr, uname, passwd, cmdSet);
             Log.v(TAG, "isCamera() - url = " + url);
             HttpParams httpParams = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(httpParams, 3000);
-            HttpConnectionParams.setSoTimeout(httpParams, 3000);
+            HttpConnectionParams.setConnectionTimeout(httpParams, connTimeout);
+            HttpConnectionParams.setSoTimeout(httpParams, soTimeout);
             final DefaultHttpClient client = new DefaultHttpClient(httpParams);
             final HttpGet getRequest = new HttpGet(url);
             try {
