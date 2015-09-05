@@ -1,3 +1,5 @@
+.gradle
+.idea
 config.ini
 *~
 *.py[cod]
