@@ -1,3 +1,12 @@
+/**
+ * Based on example at http://ijoshsmith.com/2014/01/25/video-streaming-from-an-ip-camera-to-an-android-phone/
+ *
+ *
+ * Note:  This does not work - gives a mediaplayer error E/MediaPlayer: Error (1,-2147483648).
+ *
+ * 
+ */
+
 package uk.org.openseizuredetector.bentv;
 
 import android.content.Context;
@@ -6,6 +15,7 @@ import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.Window;
@@ -15,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPreparedListener, SurfaceHolder.Callback {
+    final static String TAG = "MainActivity";
     final static String USERNAME = "guest";
     final static String PASSWORD = "guest";
     final static String RTSP_URL = "rtsp://guest:guest@192.168.1.25/12";
@@ -76,7 +87,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
             _mediaPlayer.setOnPreparedListener(this);
             _mediaPlayer.prepareAsync();
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+            Log.e(TAG,"Error - "+e.toString());
+        }
 
     }
 
