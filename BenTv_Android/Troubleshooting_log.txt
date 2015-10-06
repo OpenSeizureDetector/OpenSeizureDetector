@@ -1,0 +1,55 @@
+Troubleshooting Video Playback on Android from Wansview H264 IP Camera
+
+RTSP URL is rtsp://guest:guest@192.168.1.25/12
+
+Camera Web Interface
+====================
+Camera Settings:
+Resolution: 640x360
+Bit Rate 512 kbps
+Frame Rate 25 fps
+Audio G.711
+
+VLC on Ubuntu
+=============
+Plays ok with VLC on Ubuntu using
+      vlc rtsp://guest:guest@192.168.1.25/12
+
+VLC reports codec information as
+    Stream 0 (Video)
+    	   Codec: H264 - MPEG-4 AVC (part 10) (h264)
+	   Resolution: 640x354
+	   Display Resolution 640x352
+	   Frame Rate: 30
+    Stream 1 (Audio)
+    	   Codec: PCM ALAW (alaw)
+	   Channels: Mono
+	   Sample Rate: 8000 Hz
+	   Bits per sample: 16
+
+Android
+=======
+Android app attempting to authenticate using both headers, and username and password in URL (https://github.com/jones139/OpenSeizureDetector/tree/master/BenTv_Android)
+10-05 15:22:02.311 13664-13664/uk.org.openseizuredetector.bentv D/MediaPlayer: Couldn't open file on client side, trying server side
+10-05 15:22:02.341 13664-13677/uk.org.openseizuredetector.bentv W/MediaPlayer: info/warning (701, 0)
+10-05 15:22:02.471 13664-13675/uk.org.openseizuredetector.bentv E/MediaPlayer: error (1, -2147483648)
+10-05 15:22:02.551 13664-13664/uk.org.openseizuredetector.bentv E/MediaPlayer: Error (1,-2147483648)
+
+I think the 701 warning is a temprorary pause to buffer data, so does not sond worrying on start-up.
+Unfortunately the Error means an Unspecified Media Player error, which is not helpful!!!
+
+Change some things to see if we can narrow down the problem
+===========================================================
+* Check if it is an audio or video problem causing the error - disable audio on camera.
+  VLC still reports the audio stream as existing, but no mention of channels, and only 8 bits per sample (rather than 16).
+  Android gave same errors as initial case.
+
+* Try different Audio Codec - change to G.726 codec and enable audio.
+  VLC reports audio codec as G.726 APCM Audio (g726).
+  Android gave same errors as initial case.
+
+  So maybe it is not the audio causing the trouble - android should support PCM (but maybe not g726 APCM?) (http://developer.android.com/guide/appendix/media-formats.html).
+
+
+
+
