@@ -9,6 +9,7 @@
 
 package uk.org.openseizuredetector.bentv;
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -20,9 +21,14 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
+
+import com.gst_sdk_tutorials.rtspviewersf.PlayerConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.freedesktop.gstreamer.GStreamer;
+
 
 public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPreparedListener,
                                                                 MediaPlayer.OnInfoListener,
@@ -41,6 +47,33 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
 
     private MediaPlayer _mediaPlayer;
     private SurfaceHolder _surfaceHolder;
+
+
+    private native long nativePlayerCreate();        // Initialize native code, build pipeline, etc
+    private native void nativePlayerFinalize(long data);   // Destroy pipeline and shutdown native code
+    private native void nativeSetUri(long data, String uri, String user, String pass); // Set the URI of the media to play
+    private native void nativePlay(long data);       // Set pipeline to PLAYING
+    private native void nativeSetPosition(long data, int milliseconds); // Seek to the indicated position, in milliseconds
+    private native void nativePause(long data);      // Set pipeline to PAUSED
+    private native void nativeReady(long data);      // Set pipeline to READY
+    private static native boolean nativeLayerInit(); // Initialize native class: cache Method IDs for callbacks
+    private native void nativeSurfaceInit(long data, Object surface); // A new surface is available
+    private native void nativeSurfaceFinalize(long data); // Surface about to be destroyed
+
+    private long native_custom_data;      // Native code will store the player here
+
+    private boolean is_playing_desired;   // Whether the user asked to go to PLAYING
+    private int position;                 // Current position, reported by native code
+    private int duration;                 // Current clip duration, reported by native code
+    private int desired_position;         // Position where the users wants to seek to
+    private PlayerConfiguration playerConfig = new PlayerConfiguration();              // URI of the clip being played
+    private String state;
+    private boolean is_full_screen;
+
+
+    public MainActivity() {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
 
         // Configure the view that renders live video.
         SurfaceView surfaceView =
-                (SurfaceView) findViewById(R.id.surfaceView);
+                (SurfaceView) findViewById(R.id.surfaceView1);
         _surfaceHolder = surfaceView.getHolder();
         _surfaceHolder.addCallback(this);
         Log.v(TAG, "original size = " + _surfaceHolder.getSurfaceFrame().toString());
@@ -71,8 +104,29 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
 
         Log.v(TAG, "onCreate() 2");
 
+        // And configure the native (Gstreamer) video view.
 
+        // Initialize GStreamer and warn if it fails
+        try {
+            GStreamer.init(this);
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            finish();
+            return;
         }
+
+        SurfaceView sv = (SurfaceView)findViewById(R.id.surfaceView2);
+        SurfaceHolder sh = sv.getHolder();
+        sh.addCallback(this);
+
+
+        native_custom_data = nativePlayerCreate();
+        nativeSetUri (native_custom_data, RTSP_URL, USERNAME, PASSWORD);
+
+        nativePlay(native_custom_data);
+
+
+    }
 
     @Override
     public void onPrepared(MediaPlayer mp) {
@@ -90,40 +144,48 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.v(TAG, "surfaceCreated() 1");
-        _mediaPlayer = new MediaPlayer();
-        _mediaPlayer.setOnErrorListener(this);
-        _mediaPlayer.setOnInfoListener(this);
-        Log.v(TAG,"surfaceCreated() 2");
-        _mediaPlayer.setDisplay(_surfaceHolder);
-        Log.v(TAG, "surfaceCreated() 3");
+        if (holder==((SurfaceView)findViewById(R.id.surfaceView1)).getHolder()) {
+            Log.v(TAG, "surfaceCreated()  - SurfaceView 1");
+            _mediaPlayer = new MediaPlayer();
+            _mediaPlayer.setOnErrorListener(this);
+            _mediaPlayer.setOnInfoListener(this);
+            Log.v(TAG, "surfaceCreated() 2");
+            _mediaPlayer.setDisplay(_surfaceHolder);
+            Log.v(TAG, "surfaceCreated() 3");
 
-        Context context = getApplicationContext();
-        Map<String, String> headers = getRtspHeaders();
-        Log.v(TAG, "surfaceCreated() 4 - Headers = " + headers.toString());
-        Uri source = Uri.parse(RTSP_URL);
-        Log.v(TAG,"surfaceCreated() 4 - Uri = "+source.toString());
+            Context context = getApplicationContext();
+            Map<String, String> headers = getRtspHeaders();
+            Log.v(TAG, "surfaceCreated() 4 - Headers = " + headers.toString());
+            Uri source = Uri.parse(RTSP_URL);
+            Log.v(TAG, "surfaceCreated() 4 - Uri = " + source.toString());
 
-        try {
-            // Specify the IP camera's URL and auth headers.
-            _mediaPlayer.setDataSource(context, source, headers);
-            //_mediaPlayer.setDataSource(RTSP_URL);
-            //_mediaPlayer.setDataSource(context, source);
-            //_mediaPlayer = MediaPlayer.create(this,R.raw.stream_12);
-            //_mediaPlayer.start();
-            Log.v(TAG, "surfaceCreated() 5");
+            try {
+                // Specify the IP camera's URL and auth headers.
+                _mediaPlayer.setDataSource(context, source, headers);
+                //_mediaPlayer.setDataSource(RTSP_URL);
+                //_mediaPlayer.setDataSource(context, source);
+                //_mediaPlayer = MediaPlayer.create(this,R.raw.stream_12);
+                //_mediaPlayer.start();
+                Log.v(TAG, "surfaceCreated() 5");
 
-            // Begin the process of setting up a video stream.
-            _mediaPlayer.setOnPreparedListener(this);
-            Log.v(TAG, "surfaceCreated() 6");
-            _mediaPlayer.prepareAsync();
-            Log.v(TAG, "surfaceCreated() 7");
-
+                // Begin the process of setting up a video stream.
+                _mediaPlayer.setOnPreparedListener(this);
+                Log.v(TAG, "surfaceCreated() 6");
+                _mediaPlayer.prepareAsync();
+                Log.v(TAG, "surfaceCreated() 7");
+            } catch (Exception e) {
+                Log.e(TAG, "Error - " + e.toString());
+            }
         }
-        catch (Exception e) {
-            Log.e(TAG,"Error - "+e.toString());
+        else if (holder==((SurfaceView)findViewById(R.id.surfaceView2)).getHolder()) {
+            Log.v(TAG, "surfaceCreated() - SurfaceView 2");
+            nativeSurfaceInit (native_custom_data, holder.getSurface());
+            Log.i (TAG, "GStreamer initialized:");
+            nativeSetUri (native_custom_data, RTSP_URL, USERNAME, PASSWORD);
+            nativeSetPosition (native_custom_data, 0);
+            nativePlay(native_custom_data);
+            Log.v(TAG,"native player playing...");
         }
-
     }
 
     @Override

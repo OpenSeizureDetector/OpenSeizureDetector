@@ -17,6 +17,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    /**
+     * Prevents gradle from trying to compile the native code - use native_build.sh instead
+     */
+    sourceSets {
+        main {
+            jni.srcDirs = []
+        }
+    }
 }
 
 dependencies {

@@ -1,0 +1,5 @@
+Acknowlegements
+===============
+
+This app is based very very heavily on RtspViewer (https://github.com/otonchev/rtspviewersf) for the gstreamer implementation - I had failed to make it work using the standard Android MediaPlayer class, so I am very grateful for the author for publishing the source code for that app.
+

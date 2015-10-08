@@ -1,3 +1,5 @@
+.#*
+#*
 .gradle
 /local.properties
 /.idea/workspace.xml
@@ -5,3 +7,10 @@
 .DS_Store
 /build
 /captures
+# The following are generated from the ndk-build process so do not need to
+#   be in the git repository.
+/app/src/main/gst-build-armeabi
+/app/src/main/jniLibs
+/app/src/main/obj
+/app/src/main/src
+/app/src/main/assets
