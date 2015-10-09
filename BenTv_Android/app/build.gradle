@@ -38,12 +38,14 @@ tasks.withType(Exec) {
     def gstDir = localProperties.getProperty('gst.dir')
 
     environment = [:]
-    environment['PATH'] = System.getenv("PATH")+ ":/usr/local/bin"
+    environment['PATH'] = System.getenv("PATH") + ":/usr/local/bin"
     environment['GSTREAMER_SDK_ROOT'] = gstDir
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
+    compile project(':mediaplayergs')
 }

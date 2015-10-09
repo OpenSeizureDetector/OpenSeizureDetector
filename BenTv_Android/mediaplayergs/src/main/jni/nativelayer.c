@@ -433,7 +433,7 @@ JNI_OnLoad (JavaVM * vm, void *reserved)
     return 0;
   }
   jclass klass = (*env)->FindClass (env,
-      "uk/org/openseizuredetector/bentv/MediaPlayerGs");
+      "uk/org/openseizuredetector/bentv/mediaplayergs/MediaPlayerGs");
   (*env)->RegisterNatives (env, klass, native_methods,
       G_N_ELEMENTS (native_methods));
 

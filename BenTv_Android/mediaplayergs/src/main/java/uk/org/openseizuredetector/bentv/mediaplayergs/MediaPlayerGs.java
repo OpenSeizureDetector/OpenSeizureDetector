@@ -1,4 +1,4 @@
-package uk.org.openseizuredetector.mediaplayergs;
+package uk.org.openseizuredetector.bentv.mediaplayergs;
 
 import android.content.Context;
 import android.util.Log;
@@ -57,10 +57,10 @@ public class MediaPlayerGs {
 
     private String TAG = "MediaPlayerGs";
     private boolean is_playing_desired;   // Whether the user asked to go to PLAYING
-    private int position;                 // Current position, reported by native code
-    private int duration;                 // Current clip duration, reported by native code
+    private int mPosition;                 // Current position, reported by native code
+    private int mDuration;                 // Current clip duration, reported by native code
     private int desired_position;         // Position where the users wants to seek to
-    private String state;
+    private String mState;
     private boolean is_full_screen;
 
 
@@ -163,4 +163,35 @@ public class MediaPlayerGs {
     public void seekTo(int msec) {
         nativeSetPosition (mNativePlayerHandle, msec);
     }
+
+
+    // Called from native code.
+    private void nativeStateChanged(long data, final String state) {
+        final String message;
+        this.mState = state;
+        Log.i(TAG,"nativeStateChanged() - state="+state);
+    }
+
+    // Called from native code.
+    private void nativeErrorOccured(long data, String message) {
+        final String ui_message;
+        ui_message = "nativeErrorOccurred() " + ":" + message;
+        Log.e(TAG,ui_message);
+    }
+
+    // Called from native code
+    private void nativePositionUpdated(long data, final int position, final int duration) {
+        Log.v(TAG,"nativePositionUpdate()");
+        this.mPosition = position;
+        this.mDuration = duration;
+    }
+
+    // Called from native code when the size of the media changes or is first detected.
+    // Inform the video surface about the new size and recalculate the layout.
+    private void nativeMediaSizeChanged (long data, int width, int height) {
+        Log.i (TAG, "nativeMediaSizeChanged() - Media size changed to " + width + "x" + height);
+
+    }
+
+
 }

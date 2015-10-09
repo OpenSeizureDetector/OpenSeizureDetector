@@ -23,4 +23,5 @@
     <string name="manageentry_user">Username</string>
     <string name="manageentry_pass">Password</string>
     <string name="manageentry_uri_hint">rtsp URL rtsp[t|h]://IP/path[?options]</string>
+    <string name="title_activity_main">MainActivity</string>
 </resources>
