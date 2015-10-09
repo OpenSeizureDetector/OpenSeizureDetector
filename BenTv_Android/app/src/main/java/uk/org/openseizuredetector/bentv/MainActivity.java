@@ -21,9 +21,13 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.gst_sdk_tutorials.rtspviewersf.GStreamerSurfaceView;
 import com.gst_sdk_tutorials.rtspviewersf.PlayerConfiguration;
+import com.gst_sdk_tutorials.rtspviewersf.RTSPViewerSF;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,10 +42,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
     final static String TAG = "MainActivity";
     final static String USERNAME = "guest";
     final static String PASSWORD = "guest";
-    //final static String RTSP_URL = "rtsp://guest:guest@192.168.1.25/11";
+    final static String RTSP_URL = "rtsp://guest:guest@192.168.1.25/12";
     //final static String RTSP_URL = "rtsp://guest:guest@192.168.1.26:88/videoSub";
     // NOTE:  setting username and password in header does not work - has to be in URL.
-    final static String RTSP_URL = "rtsp://guest:guest@192.168.1.18/live_mpeg4.sdp";
+    //final static String RTSP_URL = "rtsp://guest:guest@192.168.1.18/live_mpeg4.sdp";
     //final static String RTSP_URL = "rtsp://192.168.1.18/live_mpeg4.sdp";
     //final static String RTSP_URL = "rtsp://192.168.1.18/live_3gpp.sdp";
 
@@ -71,38 +75,22 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
     private boolean is_full_screen;
 
 
+    static {
+        System.loadLibrary("gstreamer_android");
+        System.loadLibrary("mediaplayer");
+    }
+
     public MainActivity() {
 
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v(TAG,"onCreate() 1");
+        Log.v(TAG, "onCreate() 1");
         super.onCreate(savedInstanceState);
-
-        // Set up a full-screen black window.
-       /* requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Window window = getWindow();
-        window.setFlags(
-                WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        window.setBackgroundDrawableResource(android.R.color.black);
-        */
 
         setContentView(R.layout.activity_main);
 
-
-        // Configure the view that renders live video.
-        SurfaceView surfaceView =
-                (SurfaceView) findViewById(R.id.surfaceView1);
-        _surfaceHolder = surfaceView.getHolder();
-        _surfaceHolder.addCallback(this);
-        Log.v(TAG, "original size = " + _surfaceHolder.getSurfaceFrame().toString());
-        //_surfaceHolder.setFixedSize(320, 240);
-        _surfaceHolder.setFixedSize(650,360);
-        Log.v(TAG, "new size = " + _surfaceHolder.getSurfaceFrame().toString());
-
-        Log.v(TAG, "onCreate() 2");
 
         // And configure the native (Gstreamer) video view.
 
@@ -114,11 +102,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
             finish();
             return;
         }
+        Log.i(TAG,"Gstreamer Initialised OK");
+        Toast.makeText(this, "Gstreamer Initialised ok!!", Toast.LENGTH_LONG).show();
 
         SurfaceView sv = (SurfaceView)findViewById(R.id.surfaceView2);
         SurfaceHolder sh = sv.getHolder();
         sh.addCallback(this);
 
+        if (!nativeLayerInit())
+            throw new RuntimeException("Failed to initialize Native layer(not all necessary interface methods implemeted?)");
 
         native_custom_data = nativePlayerCreate();
         nativeSetUri (native_custom_data, RTSP_URL, USERNAME, PASSWORD);
@@ -137,8 +129,8 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.v(TAG,"surfaceChanged() - w="+width+" h="+height);
-        Log.v(TAG, "holder surfaceFrame size = " + _surfaceHolder.getSurfaceFrame().toString());
+        Log.v(TAG, "surfaceChanged() - w=" + width + " h=" + height);
+        Log.v(TAG, "holder surfaceFrame size = " + holder.getSurfaceFrame().toString());
 
     }
 
@@ -251,4 +243,64 @@ public class MainActivity extends AppCompatActivity implements MediaPlayer.OnPre
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
         Log.v(TAG,"onVideoSizeChanged - w="+width+" h="+height);
     }
+
+    // Called from native code.
+    private void nativeStateChanged(long data, final String state) {
+        final TextView tv;
+        final String message;
+        int player_id = 0;
+
+        this.state = state;
+
+
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Log.i(TAG,"nativeStateChanged() - state="+state);
+                Toast.makeText(getApplicationContext(), "state=" + state, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Called from native code.
+    private void nativeErrorOccured(long data, String message) {
+        final String ui_message;
+        int player_id = 0;
+
+        ui_message = "Player " + player_id + ":" + message;
+
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Log.e(TAG,ui_message);
+                Toast.makeText(getApplicationContext(), ui_message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Called from native code
+    private void nativePositionUpdated(long data, final int position, final int duration) {
+
+        Log.v(TAG,"nativePositionUpdate()");
+        this.position = position;
+        this.duration = duration;
+    }
+
+    // Called from native code when the size of the media changes or is first detected.
+    // Inform the video surface about the new size and recalculate the layout.
+    private void nativeMediaSizeChanged (long data, int width, int height) {
+        int player_id = 0;
+
+        Log.i ("GStreamer", "Media size changed to " + width + "x" + height);
+
+        final GStreamerSurfaceView gsv = (GStreamerSurfaceView) findViewById(R.id.surfaceView2);
+        gsv.media_width = width;
+        gsv.media_height = height;
+        runOnUiThread(new Runnable() {
+            public void run() {
+                gsv.requestLayout();
+            }
+        });
+    }
+
+
 }

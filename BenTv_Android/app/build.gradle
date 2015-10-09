@@ -19,13 +19,27 @@ android {
     }
 
     /**
-     * Prevents gradle from trying to compile the native code - use native_build.sh instead
+     * Sort out native compilation.
      */
     sourceSets {
         main {
             jni.srcDirs = []
+            jniLibs.srcDir 'src/main/libs'
+            java.srcDirs += 'src/main/jni/src'
         }
     }
+
+}
+
+tasks.withType(Exec) {
+
+    def localProperties = new Properties()
+    localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def gstDir = localProperties.getProperty('gst.dir')
+
+    environment = [:]
+    environment['PATH'] = System.getenv("PATH")+ ":/usr/local/bin"
+    environment['GSTREAMER_SDK_ROOT'] = gstDir
 }
 
 dependencies {
