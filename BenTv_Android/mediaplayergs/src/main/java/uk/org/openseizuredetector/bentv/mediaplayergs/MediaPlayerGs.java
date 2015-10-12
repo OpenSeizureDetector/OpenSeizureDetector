@@ -31,7 +31,16 @@ import org.freedesktop.gstreamer.GStreamer;
  * along with MediaPlayerGs.  If not, see <http://www.gnu.org/licenses/>.
  */
 public class MediaPlayerGs {
+    public interface MediaPlayerGsCallback {
+        void onMediaPlayerGsError(long handle, String msg);
+        void onMediaPlayerGsStateChanged(long handle, String state);
+        void onMediaPlayerGsMediaSizeChanged(long handle, int width, int height);
+        void onMediaPlayerGsPositionUpdated(long handle, int position, int duration);
+    }
 
+    /**
+     * Declarations for functions defined in native code (in nativelayer.c)
+     */
     private native long nativePlayerCreate();        // Initialize native code, build pipeline, etc
 
     private native void nativePlayerFinalize(long data);   // Destroy pipeline and shutdown native code
@@ -62,6 +71,7 @@ public class MediaPlayerGs {
     private int desired_position;         // Position where the users wants to seek to
     private String mState;
     private boolean is_full_screen;
+    private MediaPlayerGsCallback mCallback = null;
 
 
     static {
@@ -99,6 +109,7 @@ public class MediaPlayerGs {
      */
     public void release() {
         stop();
+        Log.i(TAG,"release() - releasing player handle "+mNativePlayerHandle);
         nativePlayerFinalize(mNativePlayerHandle);
 
     }
@@ -109,7 +120,7 @@ public class MediaPlayerGs {
      * @param path - media path (e.g. rtsp://guest:guest@192.168.1.6/play2.sdp)
      */
     public void setDataSource(String path) {
-        nativeSetUri (mNativePlayerHandle, path, null,null);
+        nativeSetUri(mNativePlayerHandle, path, null, null);
     }
 
     /**
@@ -120,7 +131,7 @@ public class MediaPlayerGs {
      * @param passwd - password
      */
     public void setDataSource(String path, String uname, String passwd) {
-        nativeSetUri (mNativePlayerHandle, path, uname,passwd);
+        nativeSetUri(mNativePlayerHandle, path, uname, passwd);
     }
 
 
@@ -161,15 +172,31 @@ public class MediaPlayerGs {
      * @param msec - new position (ms)
      */
     public void seekTo(int msec) {
-        nativeSetPosition (mNativePlayerHandle, msec);
+        nativeSetPosition(mNativePlayerHandle, msec);
     }
 
+    public void setCallback(MediaPlayerGsCallback callback) {
+        Log.i(TAG,"Setting Callback()");
+        mCallback = callback;
+    }
+
+    /**
+     * Return the handle of the media player (pointer to native structure)
+     * @return long handle
+     */
+    public long getHandle() {
+        return mNativePlayerHandle;
+    }
 
     // Called from native code.
     private void nativeStateChanged(long data, final String state) {
         final String message;
         this.mState = state;
         Log.i(TAG,"nativeStateChanged() - state="+state);
+        if (mCallback!=null) {
+            Log.i(TAG,"nativeStateChanged() - calling onMediaPlayerGsStateChanged()");
+            mCallback.onMediaPlayerGsStateChanged(mNativePlayerHandle, state);
+        }
     }
 
     // Called from native code.
@@ -177,19 +204,33 @@ public class MediaPlayerGs {
         final String ui_message;
         ui_message = "nativeErrorOccurred() " + ":" + message;
         Log.e(TAG,ui_message);
+        if (mCallback!=null) {
+            Log.i(TAG,"nativeErrorOccurred() - calling onMediaPlayerGsError()");
+            mCallback.onMediaPlayerGsError(mNativePlayerHandle, message);
+        }
+
     }
 
     // Called from native code
     private void nativePositionUpdated(long data, final int position, final int duration) {
-        Log.v(TAG,"nativePositionUpdate()");
+        //Log.v(TAG,"nativePositionUpdate()");
         this.mPosition = position;
         this.mDuration = duration;
+        if (mCallback!=null) {
+            Log.v(TAG,"nativePositionUpdated() - calling onMediaPlayerGsPositionUpdated()");
+            mCallback.onMediaPlayerGsPositionUpdated(mNativePlayerHandle, position, duration);
+        }
+
     }
 
     // Called from native code when the size of the media changes or is first detected.
     // Inform the video surface about the new size and recalculate the layout.
     private void nativeMediaSizeChanged (long data, int width, int height) {
         Log.i (TAG, "nativeMediaSizeChanged() - Media size changed to " + width + "x" + height);
+        if (mCallback!=null) {
+            Log.i(TAG,"nativeMediaSizeChanged() - calling onMediaPlayerGsMediaSizeChanged()");
+            mCallback.onMediaPlayerGsMediaSizeChanged(mNativePlayerHandle,width,height);
+        }
 
     }
 

@@ -7,15 +7,20 @@
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity"
     android:orientation="vertical">
 
-    <TextView android:text="BenTV - portrait"
-        android:layout_width="wrap_content"
+    <TextView android:text="BenTV - landscape" android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal"
+        >
     <SurfaceView
         android:id="@+id/surfaceView1"
-        android:layout_width="fill_parent"
-        android:layout_height="190dp" />
+        android:layout_width="300dp"
+        android:layout_height="wrap_content" />
     <SurfaceView
         android:id="@+id/surfaceView2"
-        android:layout_width="fill_parent"
-        android:layout_height="201dp" />
+        android:layout_width="300dp"
+        android:layout_height="wrap_content" />
+    </LinearLayout>
 </LinearLayout>

@@ -36,3 +36,20 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.0.1'
 }
+
+task fatJar(type: Jar, dependsOn: 'compileJava') {
+    from {
+        sourceSets.main.output.classesDir
+    }
+
+    // Add all dependencies except for android.jar to the fat jar
+    from {
+        configurations.compile.findAll {
+            it.getName() != 'android.jar'
+        }.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+
+    archiveName = 'fatJar.jar'
+}
