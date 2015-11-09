@@ -3,8 +3,8 @@
   "shortName": "pebble_sd",
   "longName": "pebble_sd",
   "companyName": "OpenSeizureDetector",
-  "versionCode": 2,
-  "versionLabel": "1.1",
+  "versionCode": 3,
+  "versionLabel": "1.2",
   "watchapp": {
     "watchface": false
   },
@@ -13,5 +13,11 @@
   },
   "resources": {
     "media": []
-  }
+  },
+  "targetPlatforms": [
+    "aplite",
+    "basalt",
+    "chalk"
+  ],
+  "sdkVersion": "3"
 }
