@@ -120,7 +120,41 @@ void accel_handler(AccelData *data, uint32_t num_samples) {
 }
 
 /****************************************************************
- * Carry out analysis of acceleration time series.
+ * Simple threshold analysis to chech for fall.
+ * Called from clock_tick_handler()
+ */
+void check_fall() {
+  int i,j;
+  int minAcc, maxAcc;
+  int fallWindowSamp = (fallWindow*SAMP_FREQ)/1000; // Convert ms to samples.
+  APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - fallWindowSamp=%d",
+	  fallWindowSamp);
+  // Move window through sample buffer, checking for fall.
+  fallDetected = 0;
+  for (i=0;i<NSAMP-fallWindowSamp;i++) {  // i = window start point
+    // Find max and min acceleration within window.
+    minAcc = accData[i];
+    maxAcc = accData[i];
+    for (j=0;j<fallWindowSamp;j++) {  // j = position within window
+      if (accData[i+j]<minAcc) minAcc = accData[i+j];
+      if (accData[i+j]>maxAcc) maxAcc = accData[i+j];
+    }
+    if ((minAcc<fallThreshMin) && (maxAcc>fallThreshMax)) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - minAcc=%d, maxAcc=%d",
+	      minAcc,maxAcc);
+      APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - ****FALL DETECTED****");
+      fallDetected = 1;
+      return;
+    }
+  }
+  //APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - minAcc=%d, maxAcc=%d",
+  //	  minAcc,maxAcc);
+
+}
+
+
+/****************************************************************
+ * Carry out analysis of acceleration time series to check for seizures
  * Called from clock_tick_handler().
  */
 void do_analysis() {

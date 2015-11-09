@@ -32,7 +32,7 @@ void sendFftSpec();
  *************************************************************/
 void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
- // Get the first pair
+  // Get the first pair
   Tuple *t = dict_read_first(iterator);
 
   // Process all pairs present
@@ -72,6 +72,18 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
     case KEY_ALARM_RATIO_THRESH:
       APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_RATIO_THRESH to %d",
 	      alarmRatioThresh = (int)t->value->int16);
+      break;
+    case KEY_FALL_THRESH_MIN:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting FALL_THRESH_MIN to %d",
+	      fallThreshMin = (int)t->value->int16);
+      break;
+    case KEY_FALL_THRESH_MAX:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting FALL_THRESH_MAX to %d",
+	      fallThreshMax = (int)t->value->int16);
+      break;
+    case KEY_FALL_WINDOW:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting FALL_WINDOW to %d",
+	      fallWindow = (int)t->value->int16);
       break;
     }
     // Get next pair, if any
@@ -132,6 +144,10 @@ void sendSettings() {
   dict_write_uint32(iter,KEY_ALARM_RATIO_THRESH,(uint32_t)alarmRatioThresh);
   BatteryChargeState charge_state = battery_state_service_peek();
   dict_write_uint8(iter,KEY_BATTERY_PC,(uint8_t)charge_state.charge_percent);
+  dict_write_uint32(iter,KEY_FALL_THRESH_MIN,(uint32_t)fallThreshMin);
+  dict_write_uint32(iter,KEY_FALL_THRESH_MAX,(uint32_t)fallThreshMax);
+  dict_write_uint32(iter,KEY_FALL_WINDOW,(uint32_t)fallWindow);
+
   app_message_outbox_send();
 
 }

@@ -38,6 +38,11 @@ int alarmRatioThresh;
 int nMax = 0;
 int nMin = 0;
 
+int fallThreshMin;  // fall detection minimum (lower) threshold (milli-g)
+int fallThreshMax;  // fall detection maximum (upper) threshold (milli-g)
+int fallWindow;     // fall detection window (milli-seconds).
+int fallDetected;   // flag to say if fall is detected (<>0 is fall)
+
 
 Window *window;
 TextLayer *text_layer;
@@ -79,8 +84,14 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     // Do FFT analysis
     if (accDataFull) {
       do_analysis();
+      check_fall();  // sets fallDetected global variable.
       // Check the alarm state, and set the global alarmState variable.
       alarm_check();
+
+      // If no seizure detected, modify alarmState to reflect potential fall
+      // detection
+      if ((alarmState == 0) && (fallDetected==1)) alarmState = 3;
+
       //  Display alarm message on screen.
       if (alarmState == 0) {
 	text_layer_set_text(alarm_layer, "OK");
@@ -92,6 +103,10 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
       if (alarmState == 2) {
 	//vibes_long_pulse();
 	text_layer_set_text(alarm_layer, "** ALARM **");
+      }
+      if (alarmState == 3) {
+	//vibes_long_pulse();
+	text_layer_set_text(alarm_layer, "** FALL **");
       }
       // Send data to phone
       sendSdData();
@@ -253,6 +268,17 @@ static void init(void) {
   if (persist_exists(KEY_ALARM_RATIO_THRESH))
     alarmRatioThresh = persist_read_int(KEY_ALARM_RATIO_THRESH);
 
+  // Fall detection settings
+  fallThreshMin = FALL_THRESH_MIN_DEFAULT;
+  if (persist_exists(KEY_FALL_THRESH_MIN))
+    fallThreshMin = persist_read_int(KEY_FALL_THRESH_MIN);
+  fallThreshMax = FALL_THRESH_MAX_DEFAULT;
+  if (persist_exists(KEY_FALL_THRESH_MAX))
+    fallThreshMax = persist_read_int(KEY_FALL_THRESH_MAX);
+  fallWindow = FALL_WINDOW_DEFAULT;
+  if (persist_exists(KEY_FALL_WINDOW))
+    fallWindow = persist_read_int(KEY_FALL_WINDOW);
+  
   // Create Window for display.
   APP_LOG(APP_LOG_LEVEL_DEBUG,"Creating Window....");
   window = window_create();
@@ -289,6 +315,10 @@ static void deinit(void) {
   persist_write_int(KEY_ALARM_THRESH,alarmThresh);
   persist_write_int(KEY_ALARM_RATIO_THRESH,alarmRatioThresh);
 
+  persist_write_int(KEY_FALL_THRESH_MIN,fallThreshMin);
+  persist_write_int(KEY_FALL_THRESH_MAX,fallThreshMax);
+  persist_write_int(KEY_FALL_WINDOW,fallWindow);
+  
   // destroy the window
   window_destroy(window);
 }

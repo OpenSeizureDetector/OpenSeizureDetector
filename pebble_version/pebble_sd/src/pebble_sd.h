@@ -33,7 +33,7 @@
 #define FFT_BITS 9        // 'bits' parameter to fft_forward.
 #define ANALYSIS_PERIOD 3  // number of seconds between fft analysis and screen updates.
 
-// default values of settings
+// default values of seizure detector settings
 #define ALARM_FREQ_MIN_DEFAULT 5  // Hz
 #define ALARM_FREQ_MAX_DEFAULT 10 // Hz
 #define WARN_TIME_DEFAULT      5 // sec
@@ -44,6 +44,11 @@
 #define ALARM_RATIO_THRESH_DEFAULT 30 // 10 x ROI power must be this value times
 // the overall spectrum power (to filter out general movement from frequency
 // specific movement.
+
+// default values of fall detector settings
+#define FALL_THRESH_MIN_DEFAULT 200 // milli-g
+#define FALL_THRESH_MAX_DEFAULT 800 // milli-g
+#define FALL_WINDOW_DEFAULT     1500 // milli-secs
 
 /* Display Configuration */
 #define CLOCK_SIZE 30  // pixels.
@@ -74,6 +79,9 @@
 #define KEY_ALARM_RATIO_THRESH 18
 #define KEY_BATTERY_PC 19
 #define KEY_SET_SETTINGS 20  // Phone is asking us to update watch app settings.
+#define KEY_FALL_THRESH_MIN 21
+#define KEY_FALL_THRESH_MAX 22
+#define KEY_FALL_WINDOW 23
 
 // Values of the KEY_DATA_TYPE entry in a message
 #define DATA_TYPE_RESULTS 1   // Analysis Results
@@ -105,7 +113,12 @@ extern long roiPower;    // Average power of spectrum in region of interest
 extern int roiRatio;     // ratio of roiPower to specPower (x10)
 extern int freqRes;      // Actually 1000 x frequency resolution
 
-extern int alarmState;    // 0 = OK, 1 = WARNING, 2 = ALARM
+extern int fallThreshMin; // fall detection minimum (lower) threshold (milli-g)
+extern int fallThreshMax; // fall detection maximum (upper) threshold (milli-g)
+extern int fallWindow;    // fall detection window (milli-seconds).
+extern int fallDetected;  // flag to say if fall is detected (<>0 is fall)
+
+extern int alarmState;    // 0 = OK, 1 = WARNING, 2 = ALARM, 3 = FALL
 extern int alarmCount;    // number of seconds that we have been in an alarm state.
 
 
@@ -124,4 +137,5 @@ void analysis_init();
 int alarm_check();
 void accel_handler(AccelData *data, uint32_t num_samples);
 void do_analysis();
+void check_fall();
 int getAmpl(int nBin);
