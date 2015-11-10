@@ -46,6 +46,7 @@
 // specific movement.
 
 // default values of fall detector settings
+#define FALL_ACTIVE_DEFAULT 0  // 0 = fall detection inactive.
 #define FALL_THRESH_MIN_DEFAULT 200 // milli-g
 #define FALL_THRESH_MAX_DEFAULT 800 // milli-g
 #define FALL_WINDOW_DEFAULT     1500 // milli-secs
@@ -82,6 +83,7 @@
 #define KEY_FALL_THRESH_MIN 21
 #define KEY_FALL_THRESH_MAX 22
 #define KEY_FALL_WINDOW 23
+#define KEY_FALL_ACTIVE 24
 
 // Values of the KEY_DATA_TYPE entry in a message
 #define DATA_TYPE_RESULTS 1   // Analysis Results
@@ -113,6 +115,7 @@ extern long roiPower;    // Average power of spectrum in region of interest
 extern int roiRatio;     // ratio of roiPower to specPower (x10)
 extern int freqRes;      // Actually 1000 x frequency resolution
 
+extern int fallActive;    // fall detection active (0=inactive)
 extern int fallThreshMin; // fall detection minimum (lower) threshold (milli-g)
 extern int fallThreshMax; // fall detection maximum (upper) threshold (milli-g)
 extern int fallWindow;    // fall detection window (milli-seconds).

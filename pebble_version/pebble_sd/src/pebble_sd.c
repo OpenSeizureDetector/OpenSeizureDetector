@@ -38,10 +38,11 @@ int alarmRatioThresh;
 int nMax = 0;
 int nMin = 0;
 
-int fallThreshMin;  // fall detection minimum (lower) threshold (milli-g)
-int fallThreshMax;  // fall detection maximum (upper) threshold (milli-g)
-int fallWindow;     // fall detection window (milli-seconds).
-int fallDetected;   // flag to say if fall is detected (<>0 is fall)
+int fallActive = 0;     // fall detection active (0=inactive)
+int fallThreshMin = 0;  // fall detection minimum (lower) threshold (milli-g)
+int fallThreshMax = 0;  // fall detection maximum (upper) threshold (milli-g)
+int fallWindow = 0;     // fall detection window (milli-seconds).
+int fallDetected = 0;   // flag to say if fall is detected (<>0 is fall)
 
 
 Window *window;
@@ -84,7 +85,7 @@ static void clock_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     // Do FFT analysis
     if (accDataFull) {
       do_analysis();
-      check_fall();  // sets fallDetected global variable.
+      if (fallActive) check_fall();  // sets fallDetected global variable.
       // Check the alarm state, and set the global alarmState variable.
       alarm_check();
 
@@ -269,6 +270,9 @@ static void init(void) {
     alarmRatioThresh = persist_read_int(KEY_ALARM_RATIO_THRESH);
 
   // Fall detection settings
+  fallActive = FALL_ACTIVE_DEFAULT;
+  if (persist_exists(KEY_FALL_ACTIVE))
+    fallActive = persist_read_int(KEY_FALL_ACTIVE);
   fallThreshMin = FALL_THRESH_MIN_DEFAULT;
   if (persist_exists(KEY_FALL_THRESH_MIN))
     fallThreshMin = persist_read_int(KEY_FALL_THRESH_MIN);
@@ -315,6 +319,7 @@ static void deinit(void) {
   persist_write_int(KEY_ALARM_THRESH,alarmThresh);
   persist_write_int(KEY_ALARM_RATIO_THRESH,alarmRatioThresh);
 
+  persist_write_int(KEY_FALL_ACTIVE,fallActive);
   persist_write_int(KEY_FALL_THRESH_MIN,fallThreshMin);
   persist_write_int(KEY_FALL_THRESH_MAX,fallThreshMax);
   persist_write_int(KEY_FALL_WINDOW,fallWindow);

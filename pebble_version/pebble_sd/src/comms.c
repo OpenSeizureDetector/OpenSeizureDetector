@@ -73,6 +73,10 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
       APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting ALARM_RATIO_THRESH to %d",
 	      alarmRatioThresh = (int)t->value->int16);
       break;
+    case KEY_FALL_ACTIVE:
+      APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting FALL_ACTIVE to %d",
+	      fallActive = (int)t->value->int16);
+      break;
     case KEY_FALL_THRESH_MIN:
       APP_LOG(APP_LOG_LEVEL_INFO,"Phone Setting FALL_THRESH_MIN to %d",
 	      fallThreshMin = (int)t->value->int16);
@@ -144,6 +148,7 @@ void sendSettings() {
   dict_write_uint32(iter,KEY_ALARM_RATIO_THRESH,(uint32_t)alarmRatioThresh);
   BatteryChargeState charge_state = battery_state_service_peek();
   dict_write_uint8(iter,KEY_BATTERY_PC,(uint8_t)charge_state.charge_percent);
+  dict_write_uint32(iter,KEY_FALL_ACTIVE,(uint32_t)fallActive);
   dict_write_uint32(iter,KEY_FALL_THRESH_MIN,(uint32_t)fallThreshMin);
   dict_write_uint32(iter,KEY_FALL_THRESH_MAX,(uint32_t)fallThreshMax);
   dict_write_uint32(iter,KEY_FALL_WINDOW,(uint32_t)fallWindow);
