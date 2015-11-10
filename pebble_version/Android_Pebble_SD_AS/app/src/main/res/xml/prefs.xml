@@ -84,6 +84,28 @@
         android:summary="Alarm Ratio Threshold (Default = 30)"
         android:defaultValue="30" />
 
+    <CheckBoxPreference
+        android:key="FallActive"
+        android:title="Activate Fall Detection Function"
+        android:summary=""
+        android:defaultValue="false" />
+    <EditTextPreference
+        android:key="FallThreshMin"
+        android:title="Fall Detection Lower Threshold (milli-g)"
+        android:summary=""
+        android:defaultValue="200" />
+    <EditTextPreference
+        android:key="FallThreshMax"
+        android:title="Fall Detection Upper Threshold (milli-g)"
+        android:summary=""
+        android:defaultValue="1200" />
+    <EditTextPreference
+        android:key="FallWindow"
+        android:title="Fall Detection Window (milli-seconds)"
+        android:summary=""
+        android:defaultValue="1500" />
+
+
 
     <EditTextPreference
         android:key="AppRestartTimeout"

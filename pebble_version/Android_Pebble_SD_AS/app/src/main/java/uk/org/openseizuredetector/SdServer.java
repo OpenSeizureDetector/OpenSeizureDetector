@@ -111,6 +111,11 @@ public class SdServer extends Service
     private int KEY_NMAX = 17;
     private int KEY_ALARM_RATIO_THRESH = 18;
     private int KEY_BATTERY_PC = 19;
+    //private int KEY_SET_SETTINGS =20;  // Phone is asking us to update watch app settings.
+    private int KEY_FALL_THRESH_MIN = 21;
+    private int KEY_FALL_THRESH_MAX = 22;
+    private int KEY_FALL_WINDOW = 23;
+    private int KEY_FALL_ACTIVE =24;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
@@ -470,7 +475,7 @@ public class SdServer extends Service
 					if (sdData.alarmState == 2) {
 						sdData.alarmPhrase = "ALARM";
 						if (mLogAlarms) {
-							Log.v(TAG, "***ALARM*** - Loggin to SD Card");
+							Log.v(TAG, "***ALARM*** - Logging to SD Card");
 							writeAlarmToSD();
 							logData();
 						} else {
@@ -491,6 +496,30 @@ public class SdServer extends Service
 							}
 						}
 					}
+                    if (sdData.alarmState == 3) {
+                        sdData.alarmPhrase = "FALL";
+                        if (mLogAlarms) {
+                            Log.v(TAG, "***FALL*** - Logging to SD Card");
+                            writeAlarmToSD();
+                            logData();
+                        } else {
+                            Log.v(TAG, "***FALL***");
+                        }
+                        // Make alarm beep tone
+                        alarmBeep();
+                        // Send SMS Alarm.
+                        if (mSMSAlarm) {
+                            Time tnow = new Time(Time.getCurrentTimezone());
+                            tnow.setToNow();
+                            // limit SMS alarms to one per minute
+                            if ((tnow.toMillis(false)
+                                    - mSMSTime.toMillis(false))
+                                    > 60000) {
+                                sendSMSAlarm();
+                                mSMSTime = tnow;
+                            }
+                        }
+                    }
 
 
 			// Read the data that has been sent, and convert it into
@@ -720,34 +749,58 @@ public class SdServer extends Service
 	    String prefStr;
 	    prefStr = SP.getString("AlarmFreqMin","5");
 	    intVal = (short)Integer.parseInt(prefStr);
-	    Log.v(TAG,"updatePrefs() AlarmFreqMin = "+intVal);
+	    Log.v(TAG, "updatePrefs() AlarmFreqMin = " + intVal);
 	    setDict.addInt16(KEY_ALARM_FREQ_MIN,intVal);
 	    
 	    prefStr = SP.getString("AlarmFreqMax","10");
 	    intVal = (short)Integer.parseInt(prefStr);
-	    Log.v(TAG,"updatePrefs() AlarmFreqMax = "+intVal);
-	    setDict.addUint16(KEY_ALARM_FREQ_MAX,(short)intVal);
+	    Log.v(TAG, "updatePrefs() AlarmFreqMax = " + intVal);
+	    setDict.addUint16(KEY_ALARM_FREQ_MAX, (short) intVal);
 
 	    prefStr = SP.getString("WarnTime","5");
 	    intVal = (short)Integer.parseInt(prefStr);
-	    Log.v(TAG,"updatePrefs() WarnTime = "+intVal);
+	    Log.v(TAG, "updatePrefs() WarnTime = " + intVal);
 	    setDict.addUint16(KEY_WARN_TIME,(short)intVal);
 	    
 	    prefStr = SP.getString("AlarmTime","10");
 	    intVal = (short)Integer.parseInt(prefStr);
-	    Log.v(TAG,"updatePrefs() AlarmTime = "+intVal);
+	    Log.v(TAG, "updatePrefs() AlarmTime = " + intVal);
 	    setDict.addUint16(KEY_ALARM_TIME,(short)intVal);
 	    
 	    prefStr = SP.getString("AlarmThresh","100");
 	    intVal = (short)Integer.parseInt(prefStr);
-	    Log.v(TAG,"updatePrefs() AlarmThresh = "+intVal);
+	    Log.v(TAG, "updatePrefs() AlarmThresh = " + intVal);
 	    setDict.addUint16(KEY_ALARM_THRESH,(short)intVal);
 	    
 	    prefStr = SP.getString("AlarmRatioThresh","30");
 	    intVal = (short)Integer.parseInt(prefStr);
-	    Log.v(TAG,"updatePrefs() AlarmRatioThresh = "+intVal);
-	    setDict.addUint16(KEY_ALARM_RATIO_THRESH,(short)intVal);
-	    // Send to Pebble
+	    Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + intVal);
+	    setDict.addUint16(KEY_ALARM_RATIO_THRESH, (short) intVal);
+
+        boolean fallActiveBool = SP.getBoolean("FallActive",false);
+        Log.v(TAG, "updatePrefs() FallActive = " + fallActiveBool);
+        if (fallActiveBool)
+            setDict.addUint16(KEY_FALL_ACTIVE,(short)1);
+        else
+            setDict.addUint16(KEY_FALL_ACTIVE,(short)0);
+
+        prefStr = SP.getString("FallThreshMin","200");
+        intVal = (short)Integer.parseInt(prefStr);
+        Log.v(TAG,"updatePrefs() FallThreshMin = "+intVal);
+        setDict.addUint16(KEY_FALL_THRESH_MIN,(short)intVal);
+
+        prefStr = SP.getString("FallThreshMax","1200");
+        intVal = (short)Integer.parseInt(prefStr);
+        Log.v(TAG,"updatePrefs() FallThreshMax = "+intVal);
+        setDict.addUint16(KEY_FALL_THRESH_MAX,(short)intVal);
+
+        prefStr = SP.getString("FallWindow","1500");
+        intVal = (short)Integer.parseInt(prefStr);
+        Log.v(TAG,"updatePrefs() FallWindow = "+intVal);
+        setDict.addUint16(KEY_FALL_WINDOW,(short)intVal);
+
+
+        // Send Watch Settings to Pebble
 	    Log.v(TAG,"updatePrefs() - setDict = "+setDict.toJsonString());
 	    PebbleKit.sendDataToPebble(getApplicationContext(), SD_UUID, setDict);
 	} catch (Exception ex) {
