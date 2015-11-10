@@ -53,6 +53,8 @@ public class SdData implements Parcelable {
     /* Analysis results */
     public Time dataTime;
     public long alarmState;
+ 	public boolean alarmStanding = false;
+    public boolean fallAlarmStanding = false;
     public long maxVal;
     public long maxFreq;
     public long specPower;

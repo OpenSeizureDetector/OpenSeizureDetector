@@ -165,6 +165,13 @@ public class MainActivity extends Activity
 		Log.v(TAG,"exception starting pebble App "+ex.toString());
 	    }
 	    return true;
+
+    case R.id.action_accept_alarm:
+        Log.v(TAG,"action_accept_alarm");
+        if (mBound)      {
+            mSdServer.acceptAlarm();
+        }
+        return true;
 	case R.id.action_start_stop:
 	    // Respond to the start/stop server menu item.
 	    Log.v(TAG,"action_sart_stop");
@@ -243,7 +250,7 @@ public class MainActivity extends Activity
 		versionName = null;
 	    }
 	}
-	tv.setText("OpenSeizureDetector Server Version "+versionName);
+	tv.setText("OpenSeizureDetector Server Version " + versionName);
 
 	if (!isServerRunning()) {
 	    Log.v(TAG,"Server not Running - Starting Server");
@@ -445,18 +452,26 @@ public class MainActivity extends Activity
 		try {
 		    if (mBound) {
 			tv = (TextView) findViewById(R.id.alarmTv);
-			if (mSdServer.sdData.alarmState==0) {
-			    tv.setText(mSdServer.sdData.alarmPhrase);
+			if ((mSdServer.sdData.alarmState==0)
+                    && !mSdServer.sdData.alarmStanding
+                    && !mSdServer.sdData.fallAlarmStanding) {
+			    tv.setText("OK");
 			    tv.setBackgroundColor(okColour);
 			}
-			if (mSdServer.sdData.alarmState==1) {
-			    tv.setText(mSdServer.sdData.alarmPhrase);
+			if ((mSdServer.sdData.alarmState==1)
+                    && !mSdServer.sdData.alarmStanding
+                    && !mSdServer.sdData.fallAlarmStanding) {
+			    tv.setText("WARNING");
 			    tv.setBackgroundColor(warnColour);
 			}
-			if (mSdServer.sdData.alarmState==2) {
-			    tv.setText(mSdServer.sdData.alarmPhrase);
+			if (mSdServer.sdData.alarmStanding) {
+			    tv.setText("**ALARM**");
 			    tv.setBackgroundColor(alarmColour);
 			}
+                if (mSdServer.sdData.fallAlarmStanding) {
+                    tv.setText("**FALL**");
+                    tv.setBackgroundColor(alarmColour);
+                }
 			tv = (TextView) findViewById(R.id.pebTimeTv);
 			tv.setText(mSdServer.mPebbleStatusTime.format("%H:%M:%S"));
 			// Pebble Connected Phrase

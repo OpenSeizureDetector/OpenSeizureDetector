@@ -141,6 +141,7 @@ public class SdServer extends Service
     private WakeLock mWakeLock = null;
     public SdData sdData;
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
+    private boolean mLatchAlarms = false;
     private boolean mCancelAudible = false;
     private boolean mAudibleAlarm = false;
     private boolean mAudibleWarning = false;
@@ -459,12 +460,24 @@ public class SdServer extends Service
 					sdData.roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
 					sdData.alarmPhrase = "Unknown";
 					if (sdData.alarmState == 0) {
-						sdData.alarmPhrase = "OK";
-					}
+                        if ((!mLatchAlarms) ||
+                            (mLatchAlarms &&
+                                        (!sdData.alarmStanding && !sdData.fallAlarmStanding))) {
+                            sdData.alarmPhrase = "OK";
+                            sdData.alarmStanding = false;
+                            sdData.fallAlarmStanding = false;
+                        }
+                    }
 					if (sdData.alarmState == 1) {
-						sdData.alarmPhrase = "WARNING";
+                        if ((!mLatchAlarms) ||
+                                (mLatchAlarms &&
+                                        (!sdData.alarmStanding && !sdData.fallAlarmStanding))) {
+                            sdData.alarmPhrase = "WARNING";
+                            sdData.alarmStanding = false;
+                            sdData.fallAlarmStanding = false;
+                        }
 						if (mLogAlarms) {
-							Log.v(TAG, "WARNING - Loggin to SD Card");
+							Log.v(TAG, "WARNING - Logging to SD Card");
 							writeAlarmToSD();
 							logData();
 						} else {
@@ -472,8 +485,9 @@ public class SdServer extends Service
 						}
 						warningBeep();
 					}
-					if (sdData.alarmState == 2) {
+					if ((sdData.alarmState == 2) || (sdData.alarmStanding)) {
 						sdData.alarmPhrase = "ALARM";
+						sdData.alarmStanding = true;
 						if (mLogAlarms) {
 							Log.v(TAG, "***ALARM*** - Logging to SD Card");
 							writeAlarmToSD();
@@ -496,8 +510,9 @@ public class SdServer extends Service
 							}
 						}
 					}
-                    if (sdData.alarmState == 3) {
+                    if ((sdData.alarmState == 3) || (sdData.fallAlarmStanding)) {
                         sdData.alarmPhrase = "FALL";
+						sdData.fallAlarmStanding = true;
                         if (mLogAlarms) {
                             Log.v(TAG, "***FALL*** - Logging to SD Card");
                             writeAlarmToSD();
@@ -553,6 +568,15 @@ public class SdServer extends Service
 		}
 	    };
 	PebbleKit.registerReceivedDataHandler(this,msgDataHandler);
+    }
+
+    /**
+     * set the alarm standing flags to false to allow alarm phase to reset to current value.
+     */
+    public void acceptAlarm() {
+        Log.v(TAG,"acceptAlarm()");
+        sdData.alarmStanding = false;
+        sdData.fallAlarmStanding = false;
     }
 
     /**
@@ -701,6 +725,8 @@ public class SdServer extends Service
 	SharedPreferences SP = PreferenceManager
 	    .getDefaultSharedPreferences(getBaseContext());
 	try {
+        mLatchAlarms = SP.getBoolean("LatchAlarms",false);
+        Log.v(TAG,"updatePrefs() - mLatchAlarms = "+mLatchAlarms);
 	    mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning",true);
 	    Log.v(TAG,"updatePrefs() - mAuidbleFaultWarning = "+mAudibleFaultWarning);
 	    mAudibleAlarm = SP.getBoolean("AudibleAlarm",true);

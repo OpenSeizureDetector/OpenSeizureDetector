@@ -1,4 +1,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
+	<item android:id="@+id/action_accept_alarm"
+		android:title="Accept Alarm"
+		android:showAsAction="never|withText"
+		/>
+
+
   <item android:id="@+id/action_launch_pebble_app"
 	android:icon="@drawable/stop_server"
 	android:title="Launch Pebble App"
