@@ -57,6 +57,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Button;
@@ -130,6 +131,19 @@ public class MainActivity extends Activity
 	    Log.v(TAG,"menubar fiddle exception: "+e.toString());
 	}
 
+        // Force the screen to stay on when the app is running
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+		// Deal with the 'AcceptAlarm Button'
+		Button button = (Button) findViewById(R.id.acceptAlarmButton);
+		button.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				Log.v(TAG, "acceptAlarmButton.onClick()");
+				if (mBound) {
+					mSdServer.acceptAlarm();
+				}
+			}
+		});
 
 	// start timer to refresh user interface every second.
 	Timer uiTimer = new Timer();

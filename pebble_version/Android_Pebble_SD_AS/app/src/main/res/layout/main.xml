@@ -94,7 +94,13 @@
       android:text="battTv"
       />
 
- <com.github.mikephil.charting.charts.LineChart
+	<Button
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Accept Alarm"
+		android:id="@+id/acceptAlarmButton" />
+
+	<com.github.mikephil.charting.charts.LineChart
         android:id="@+id/chart1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
