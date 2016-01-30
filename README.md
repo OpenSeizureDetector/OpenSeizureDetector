@@ -15,6 +15,10 @@ Pebble Smart Watch Seizure Detector
 ===================================
 See http://openseizuredetector.org.uk
 
+Note that there are separate github repositories for the smart watch seizure detector app (https://github.com/OpenSeizureDetector/Pebble_SD), and the Android Companion App that raises alarms in response to detected seizures (https://github.com/OpenSeizureDetector/Android_Pebble_SD).
+
+Those of you watching this repository for changes to the Pebble Seizure detector should watch the above repositories too, or you will not see updates.
+
 Acceleration Detection
 ======================
 It is based on an accelerometer monitoring movement.  It uses a fourier
