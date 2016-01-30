@@ -9,6 +9,13 @@ write code for it on the manufacturers (web site)[http://developer.getpebble.com
 So it sounds like an ideal platform for an accelerometer based seizure detector
 similar to the Arduino based one I made in 2013.
 
+Source Code
+===========
+The source code is located in separate git repositories:
+Pebble Watch App: [https://github.com/OpenSeizureDetector/Pebble_SD]
+Andriod App: [https://github.com/OpenSeizureDetector/Android_Pebble_SD]
+
+
 Principle of Operation
 ======================
 It is based on an accelerometer monitoring movement.  It uses a fourier
