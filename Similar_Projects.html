@@ -1,0 +1,156 @@
+<html>
+<head>
+<meta property="og:image" content="http://www.openseizuredetector.org.uk/wp-content/uploads/2015/02/icon_48x48.png" />
+<style>
+body {background-color: powderblue;}
+h1   {color: blue;}
+p    {color: blue;}
+table, th, td {
+   border-collapse: collapse;
+   border: 1px solid black;
+   text-align: center;
+}
+ul {
+  text-align: left;
+}
+</style>
+</head>
+<body>
+<h1><a href="http://www.openseizuredetector.org.uk"><img src="http://www.openseizuredetector.org.uk/wp-content/uploads/2015/02/icon_48x48.png" width=50/></a>Seizure Detection and Alarm Systems</h1>
+<p>There are a few other projects that have <a href="http://www.openseizuredetector.org.uk/?page_id=15">similar goals to OpenSeizureDetector</a> that have started up while I have been working on this, which readers may like to look into.  In the table below I have tried to link to the project web page, and also places I have found where user feedback is presented.  I have also included any information I can find on how they work and how much they cost.   There may well be mistakes there because the commercial products do not publish information on how they work, and I have done the cost calculations very approximately without careful exchange rate conversions.   If anyone spots an error that should be fixed, or would like me to add another project, please email graham@openseizuredetector.org.uk.</p>
+
+<table>
+	<thead>
+		<tr>
+			<th>id</th>
+			<th>Name</th>
+			<th>User Feedback</th>
+			<th>Hardware</th>
+			<th>Detection Technology</th>
+			<th>Alarm Technology</th>
+			<th>Remote Fault Detection</th>
+			<th>Up Front Cost (approx)</th>
+			<th>Monthly Subscription (approx)</th>
+			<th>Cost for 3 Years (approx)</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>1</td>
+			<td><a href="http://www.openseizuredetector.org.uk/?page_id=415">OpenSeizureDetector (Pebble Watch Version)<br/><img src="http://www.openseizuredetector.org.uk/wp-content/uploads/2015/02/icon_48x48.png" width=50/></a><br/><a href="https://github.com/openseizuredetector">Open Source</a></td>
+			<td><a href="https://play.google.com/store/apps/details?id=uk.org.openseizuredetector"><img src="https://www.androidpolice.com/wp-content/uploads/2017/05/nexus2cee_ic_launcher_play_store_new-1.png" width=48/></a><a href="https://www.facebook.com/openseizuredetector"><img src="https://en.facebookbrand.com/wp-content/uploads/2016/05/FB-fLogo-Blue-broadcast-2.png" width=48/></a></td>
+			<td><a href="https://www.amazon.co.uk/Pebble-Time-Smartwatch-Smartphone-Black/dp/B0106IS5XY/">Pebble Watch</a></td>
+			<td>Acceleration - <a href="http://www.openseizuredetector.org.uk/?page_id=455">Fourier analysis</a></td>
+			<td><ul><li>Local Audible Alarm (via Bluetooth - up to 10m range)</li><li>Wifi </li><li>SMS (using phone service)</li></ul></td>
+			<td>Yes - monitors for comms from watch.</td>
+			<td>&pound;50</td>
+			<td>0</td>
+			<td>&pound;50</td>
+		</tr>
+		<tr>
+			<td>2</td>
+			<td><a href="https://github.com/PebbleSeizureDetect/PebbleSeizureDetect">Pebble Seizure Detect</a><br/><a href="https://github.com/PebbleSeizureDetect/PebbleSeizureDetect">Open Source</a></td>
+			<td><a href="https://github.com/PebbleSeizureDetect/PebbleSeizureDetect/issues"><img src="https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png" width=50/></a></td>
+			<td><a href="https://www.amazon.co.uk/Pebble-Time-Smartwatch-Smartphone-Black/dp/B0106IS5XY/">Pebble Watch</a></td>
+			<td>Acceleration - <a href="https://github.com/PebbleSeizureDetect/PebbleSeizureDetect/blob/master/main.c#L59">band pass filter</a></td>
+			<td><ul><li>SMS (via Twilio internet service)</li></ul></td>
+			<td>No</td>
+			<td>&pound;50</td>
+			<td>&pound;1 (for Twilio SMS service)</td>
+			<td>&pound;86</td>
+		</tr>
+		<tr>
+			<td>3</td>
+			<td><a href="https://www.neutun.com/">Neutun<br/><img src="https://www.neutun.com/public/img/logo-trimmed-transparent.png" width=100/></a></td>
+			<td><a href="https://play.google.com/store/apps/details?id=com.neutun.web"><img src="https://www.androidpolice.com/wp-content/uploads/2017/05/nexus2cee_ic_launcher_play_store_new-1.png" width=48/></a><a href="https://www.facebook.com/search/top/?q=neutun%20labs"><img src="https://en.facebookbrand.com/wp-content/uploads/2016/05/FB-fLogo-Blue-broadcast-2.png" width=48/></a></td>
+			<td><a href="https://www.amazon.co.uk/Pebble-Time-Smartwatch-Smartphone-Black/dp/B0106IS5XY/">Pebble Watch</a></td>
+			<td>Acceleration (detail unknown)</td>
+			<td><ul><li>SMS </li><li>Email (via internet connection)</li></ul></td>
+			<td>No</td>
+			<td>&pound;50</td>
+			<td>0</td>
+			<td>&pound;50</td>
+		</tr>
+		<tr>
+			<td>4</td>
+			<td><a href="https://www.empatica.com/product-embrace">Embrace<br/><img src="https://cdn-images-1.medium.com/fit/c/60/60/0*Ww6Cf8wRuwm-6Bps.png" width=50/></a></td>
+			<td><a href="https://play.google.com/store/apps/details?id=com.empatica.embrace.alert"><img src="https://www.androidpolice.com/wp-content/uploads/2017/05/nexus2cee_ic_launcher_play_store_new-1.png" width=48/></a><a href="https://www.facebook.com/search/top/?q=empatica%20embrace%20watch%20owners"><img src="https://en.facebookbrand.com/wp-content/uploads/2016/05/FB-fLogo-Blue-broadcast-2.png" width=48/></a></td>
+			<td><a href="https://www.empatica.com/product-embrace">Proprietery (Embrace Watch)</a></td>
+			<td>Acceleration and skin conductivity - <a href="https://support.empatica.com/hc/en-us/articles/115000183706-How-accurate-is-Embrace-s-seizure-detection-algorithm-">machine learning (SVM) detection</a></td>
+			<td><ul><li>Phone Call and SMS (via internet connection)</li></ul></td>
+			<td>No</td>
+			<td><a href="https://store.empatica.com/products/embrace-watch?variant=26362578243">&pound;249</a></td>
+			<td><a href="https://support.empatica.com/hc/en-us/articles/115002572646-Which-subscription-plans-are-available">&pound;10 - &pound;20</a></td>
+			<td>&pound;609 - &pound;969</td>
+		</tr>
+		<tr>
+			<td>5</td>
+			<td><a href="http://epilepsysolutions.co.uk/smart-watch-pt/">Smart Monitor<br/><img src="http://epilepsysolutions.co.uk/wp-content/uploads/2012/11/logo-250x34.png" width=100/></a></td>
+			<td></td>
+			<td>Appears to be a Pebble watch</td>
+			<td>Acceleration (probably - detail unknown)</td>
+			<td><ul><li>Phone Call and SMS (via internet connection)</li></ul></td>
+			<td>unknown</td>
+			<td><a href="http://epilepsysolutions.co.uk/pricing/">&pound;265</a></td>
+			<td><a href="http://epilepsysolutions.co.uk/pricing/">&pound;15 - &pound;20</a></td>
+			<td>&pound;805 - &pound;985</td>
+		</tr>
+		<tr>
+			<td>6</td>
+			<td><a href="https://www.epilepsyalarms.co.uk/brio/">Brio Watch<br/><img src="https://www.epilepsyalarms.co.uk/wp-content/uploads/2016/12/brio-logo.png" width=100/></a></td>
+			<td><a href="https://play.google.com/store/apps/details?id=com.CandlHat.HeartrateMonitor"><img src="https://www.androidpolice.com/wp-content/uploads/2017/05/nexus2cee_ic_launcher_play_store_new-1.png" width=48/></a><a href="https://www.facebook.com/epilepsyalarms"><img src="https://en.facebookbrand.com/wp-content/uploads/2016/05/FB-fLogo-Blue-broadcast-2.png" width=48/></a>   </td>
+			<td><a href="https://www.epilepsyalarms.co.uk/brio/">Proprietary</a></td>
+			<td>Heart Rate</td>
+			<td><ul><li>Local Audible Alarm (Bluetooth range (up to 20m)</li></ul></td>
+			<td>unknown</td>
+			<td><a href="https://www.epilepsyalarms.co.uk/product/brio/#1497262790769-094ad492-f565">&pound;449</a></td>
+			<td>0</td>
+			<td>&pound;449</td>
+		</tr>
+		<tr>
+			<td>7</td>
+			<td><a href="https://www.samialert.com/">SAMI Smart Monitor<br/><img src="https://static1.squarespace.com/static/52cf00ede4b029f494ac9381/t/52cf0cf8e4b059b045bcd400/1500407654045/?format=1500w" width=100/></a></td>
+			<td><a href="https://www.facebook.com/samialert"><img src="https://en.facebookbrand.com/wp-content/uploads/2016/05/FB-fLogo-Blue-broadcast-2.png" width=48/></a>  </td>
+			<td>Video Camera</td>
+			<td>Motion Detection</td>
+			<td><ul><li>Wifi</li></ul></td>
+			<td>unknown</td>
+			<td><a href="https://www.samialert.com/purchase/">&pound;900</a></td>
+			<td>0</td>
+			<td>&pound;900</td>
+		</tr>
+		<tr>
+			<td>8</td>
+			<td><a href="">Emfit Bed Sensor<br/><img src="https://www.emfit.com/wp/wp-content/uploads/2016/10/emfit-logo-white.png" width=100/></a></td>
+			<td></td>
+			<td>Bed Sensor</td>
+			<td>Pressure Variation (Detail not known)</td>
+			<td><ul><li>Local Audible Alarm</li></ul></td>
+			<td>unknown</td>
+			<td><a href="https://shop-us.emfit.com/products/emfit-movement-monitor">&pound;590</a></td>
+			<td>0</td>
+			<td>&pound;590</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+
+<h3>Other Projects</h3>
+<ul>
+<li><a href="http://www.epdetect.com">Epdetect</a> - an android app that uses the accelerometer in a mobile phone to detect seizures.  I have had trouble with it crashing during testing.</li>
+ 	<li><a href="https://www.facebook.com/LongMD?fref=nf">Michael Long</a> is working on an opencv and raspberry pi video based detector - He is currently recording progress on his <a href="https://www.facebook.com/epilepSEE?fref=ts">Epilepsee Facebook page</a>, but is intending to move that to <a href="http://epilepsee.org">epilepsee.org</a>.</li>
+ 	<li><a href="http://dk2os.net/epi/EpiAlarm_Inhalt.html">Gerhard Mullenbeck</a> has done some interesting work interfacing to a commercial bed sensor, and also working on piezo electric sensors.</li>
+</ul>
+</body>
+</html>
